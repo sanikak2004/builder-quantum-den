@@ -385,7 +385,7 @@ export default function AdminKYC() {
                             </Button>
                           </div>
                         </div>
-                      ))}
+                      )) || []}
                     </div>
                   </div>
 
