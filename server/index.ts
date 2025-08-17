@@ -4,6 +4,75 @@ import multer from "multer";
 import crypto from "crypto";
 import { z } from "zod";
 
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+    files: 10, // Maximum 10 files
+  },
+  fileFilter: (req, file, cb) => {
+    // Allow only specific file types
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPEG, PNG, and PDF files are allowed'));
+    }
+  },
+});
+
+// Validation schemas
+const KYCSubmissionSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Valid email is required"),
+  phone: z.string().min(10, "Valid phone number is required"),
+  pan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Valid PAN format required"),
+  dateOfBirth: z.string().min(1, "Date of birth is required"),
+  address: z.object({
+    street: z.string().min(1, "Street address is required"),
+    city: z.string().min(1, "City is required"),
+    state: z.string().min(1, "State is required"),
+    pincode: z.string().min(6, "Valid pincode is required"),
+    country: z.string().min(1, "Country is required"),
+  }),
+});
+
+// Mock in-memory storage (replace with actual database)
+const kycRecords = new Map();
+
+// Mock services
+class MockBlockchainService {
+  static async submitKYC(kycData: any, documentHashes: string[]) {
+    // Simulate blockchain transaction
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const txHash = crypto.randomBytes(32).toString('hex');
+    return {
+      success: true,
+      txHash,
+      blockNumber: Math.floor(Math.random() * 1000000),
+      gasUsed: Math.floor(Math.random() * 100000),
+      message: "KYC record successfully recorded on blockchain",
+    };
+  }
+}
+
+class MockIPFSService {
+  static async uploadFile(file: Buffer, filename: string) {
+    // Simulate IPFS upload
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const hash = crypto.createHash('sha256').update(file).digest('hex');
+    return {
+      success: true,
+      hash: `Qm${hash.substring(0, 44)}`, // IPFS-style hash
+      url: `https://ipfs.io/ipfs/Qm${hash.substring(0, 44)}`,
+      size: file.length,
+    };
+  }
+}
+
 export const createServer = () => {
   const app = express();
 
