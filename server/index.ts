@@ -107,11 +107,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.log(`📊 API endpoints:`);
     console.log(`   GET  /api/ping                - Health check`);
     console.log(`   GET  /api/demo                - Demo endpoint`);
-    console.log(`   POST /api/kyc/submit          - Submit KYC documents`);
-    console.log(`   GET  /api/kyc/verify          - Verify KYC status`);
-    console.log(`   GET  /api/kyc/history         - Get KYC history`);
-    console.log(`   GET  /api/kyc/stats           - Get KYC statistics`);
-    console.log(`🔐 Blockchain: Hyperledger Fabric integration ready`);
-    console.log(`📂 Storage: IPFS integration ready`);
+    console.log(`   GET  /api/kyc/stats           - Get KYC statistics (mock)`);
+    console.log(`   GET  /api/kyc/verify          - Verify KYC status (mock)`);
+    console.log(`   POST /api/kyc/submit          - Submit KYC documents (mock)`);
+    console.log(`   GET  /api/kyc/history         - Get KYC history (mock)`);
+    console.log(`🔧 Note: Using simplified mock endpoints for now`);
   });
 }
