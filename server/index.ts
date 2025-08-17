@@ -130,13 +130,109 @@ export const createServer = () => {
     });
   });
 
-  // KYC Submit endpoint (mock)
-  app.post("/api/kyc/submit", (req, res) => {
-    res.json({
-      success: false,
-      message: "KYC submission not implemented yet",
-      timestamp: new Date().toISOString(),
-    });
+  // KYC Submit endpoint (fully implemented)
+  app.post("/api/kyc/submit", upload.array('documents'), async (req, res) => {
+    try {
+      console.log('Received KYC submission request');
+      console.log('Body:', req.body);
+      console.log('Files:', req.files);
+
+      // Parse form data
+      const formData = JSON.parse(req.body.data || '{}');
+      console.log('Parsed form data:', formData);
+
+      // Validate data
+      const validatedData = KYCSubmissionSchema.parse(formData);
+
+      const files = req.files as Express.Multer.File[] || [];
+
+      if (files.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "At least one document is required",
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Generate unique KYC ID
+      const kycId = `KYC-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+
+      // Process documents
+      console.log(`Processing ${files.length} documents...`);
+      const documentPromises = files.map(async (file, index) => {
+        console.log(`Processing file ${index + 1}: ${file.originalname} (${file.size} bytes)`);
+
+        // Upload to IPFS (mock)
+        const ipfsResult = await MockIPFSService.uploadFile(file.buffer, file.originalname);
+
+        // Generate document hash
+        const documentHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
+
+        return {
+          id: crypto.randomUUID(),
+          type: file.originalname.toLowerCase().includes('pan') ? 'PAN' :
+                file.originalname.toLowerCase().includes('aadhaar') ? 'AADHAAR' :
+                file.originalname.toLowerCase().includes('passport') ? 'PASSPORT' : 'OTHER',
+          documentHash,
+          ipfsHash: ipfsResult.hash,
+          uploadedAt: new Date().toISOString(),
+        };
+      });
+
+      const documents = await Promise.all(documentPromises);
+      const documentHashes = documents.map(doc => doc.documentHash);
+
+      console.log('Documents processed:', documents.length);
+
+      // Submit to blockchain (mock)
+      console.log('Submitting to blockchain...');
+      const blockchainResult = await MockBlockchainService.submitKYC(validatedData, documentHashes);
+      console.log('Blockchain result:', blockchainResult);
+
+      // Create KYC record
+      const kycRecord = {
+        id: kycId,
+        userId: crypto.randomUUID(), // In real implementation, get from authenticated user
+        ...validatedData,
+        documents,
+        status: 'PENDING',
+        verificationLevel: 'L1',
+        blockchainTxHash: blockchainResult.txHash,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Save to in-memory storage (replace with database)
+      kycRecords.set(kycId, kycRecord);
+      console.log(`KYC record saved with ID: ${kycId}`);
+
+      // Return success response
+      res.json({
+        success: true,
+        data: kycRecord,
+        message: "KYC submission successful! Your application is being processed on the blockchain.",
+        timestamp: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      console.error('KYC submission error:', error);
+
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          message: `Validation error: ${error.errors[0].message}`,
+          error: error.errors,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        message: "KYC submission failed. Please try again.",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
   });
 
   // KYC History endpoint (mock)
