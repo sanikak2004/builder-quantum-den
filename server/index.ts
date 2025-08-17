@@ -121,13 +121,68 @@ export const createServer = () => {
     }
   });
 
-  // KYC Verify endpoint (mock)
-  app.get("/api/kyc/verify", (req, res) => {
-    res.json({
-      success: false,
-      message: "KYC verification not implemented yet",
-      timestamp: new Date().toISOString(),
-    });
+  // KYC Verify endpoint
+  app.get("/api/kyc/verify", async (req, res) => {
+    try {
+      const { id, pan, email } = req.query;
+
+      let record = null;
+
+      if (id) {
+        record = kycRecords.get(id as string);
+      } else if (pan) {
+        // Search by PAN
+        for (const [key, value] of kycRecords.entries()) {
+          if (value.pan === pan) {
+            record = value;
+            break;
+          }
+        }
+      } else if (email) {
+        // Search by email
+        for (const [key, value] of kycRecords.entries()) {
+          if (value.email === email) {
+            record = value;
+            break;
+          }
+        }
+      }
+
+      if (!record) {
+        return res.status(404).json({
+          success: false,
+          message: "KYC record not found",
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Simulate blockchain verification
+      const blockchainVerified = true;
+
+      const verificationResult = {
+        success: true,
+        record,
+        message: `KYC status: ${record.status}`,
+        verificationLevel: record.verificationLevel,
+        blockchainVerified,
+      };
+
+      res.json({
+        success: true,
+        data: verificationResult,
+        message: "Verification completed",
+        timestamp: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      console.error('KYC verification error:', error);
+      res.status(500).json({
+        success: false,
+        message: "Verification failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
   });
 
   // KYC Submit endpoint (fully implemented)
