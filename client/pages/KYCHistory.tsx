@@ -43,6 +43,28 @@ export default function KYCHistory() {
     }
   }, []);
 
+  const fetchAllRecords = async () => {
+    setIsLoading(true);
+    setSearchError("");
+    setAllRecords([]);
+    setShowAllRecords(true);
+
+    try {
+      const response = await fetch('/api/admin/kyc/all?status=all&limit=100');
+      const result: ApiResponse = await response.json();
+
+      if (result.success && result.data) {
+        setAllRecords(result.data.records || []);
+      } else {
+        setSearchError(result.message || 'Failed to fetch records');
+      }
+    } catch (error) {
+      setSearchError('Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const fetchHistory = async () => {
     if (!searchQuery.trim()) {
       setSearchError("Please enter a KYC ID");
@@ -52,6 +74,7 @@ export default function KYCHistory() {
     setIsLoading(true);
     setSearchError("");
     setHistoryEntries([]);
+    setShowAllRecords(false);
 
     try {
       const params = new URLSearchParams({
