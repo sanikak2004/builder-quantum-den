@@ -2,24 +2,6 @@ import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
 
-// Configure multer for file uploads
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-    files: 10 // Maximum 10 files
-  },
-  fileFilter: (req, file, cb) => {
-    // Allow only specific file types
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only JPEG, PNG, and PDF files are allowed'));
-    }
-  }
-});
-
 export const createServer = () => {
   const app = express();
 
@@ -38,11 +20,60 @@ export const createServer = () => {
   // Demo endpoint
   app.get("/api/demo", handleDemo);
 
-  // KYC endpoints
-  app.post("/api/kyc/submit", upload.array('documents'), handleKYCSubmission);
-  app.get("/api/kyc/verify", handleKYCVerification);
-  app.get("/api/kyc/history", handleKYCHistory);
-  app.get("/api/kyc/stats", handleKYCStats);
+  // KYC Stats endpoint with mock data
+  app.get("/api/kyc/stats", (req, res) => {
+    try {
+      const stats = {
+        totalSubmissions: 15234,
+        pendingVerifications: 89,
+        verifiedRecords: 14832,
+        rejectedRecords: 313,
+        averageProcessingTime: 2.5
+      };
+
+      res.json({
+        success: true,
+        data: stats,
+        message: "Stats retrieved successfully",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Stats error:', error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch stats",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // KYC Verify endpoint (mock)
+  app.get("/api/kyc/verify", (req, res) => {
+    res.json({
+      success: false,
+      message: "KYC verification not implemented yet",
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // KYC Submit endpoint (mock)
+  app.post("/api/kyc/submit", (req, res) => {
+    res.json({
+      success: false,
+      message: "KYC submission not implemented yet",
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // KYC History endpoint (mock)
+  app.get("/api/kyc/history", (req, res) => {
+    res.json({
+      success: false,
+      message: "KYC history not implemented yet",
+      timestamp: new Date().toISOString()
+    });
+  });
 
   // Error handling middleware for multer
   app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
