@@ -192,6 +192,10 @@ export default function AdminKYC() {
                 <span className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-purple-600" />
                   KYC Records Management
+                  <span className="inline-flex items-center bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>
+                    LIVE UPDATES
+                  </span>
                 </span>
                 <Button onClick={fetchKYCRecords} disabled={isLoading} size="sm">
                   <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
