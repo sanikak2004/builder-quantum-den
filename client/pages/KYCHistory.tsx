@@ -257,6 +257,23 @@ export default function KYCHistory() {
                       </>
                     )}
                   </Button>
+                  <Button
+                    onClick={fetchAllRecords}
+                    disabled={isLoading}
+                    variant="outline"
+                    className="whitespace-nowrap"
+                  >
+                    Show All Records
+                  </Button>
+                  <Link to="/admin">
+                    <Button
+                      variant="outline"
+                      className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 whitespace-nowrap"
+                    >
+                      <Shield className="h-4 w-4 mr-2" />
+                      Admin Panel
+                    </Button>
+                  </Link>
                 </div>
               </div>
 
