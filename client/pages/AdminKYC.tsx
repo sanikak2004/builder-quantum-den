@@ -443,7 +443,7 @@ export default function AdminKYC() {
                             className="bg-green-600 hover:bg-green-700"
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
-                            Approve KYC
+                            {isUpdating ? 'Approving...' : '✅ Approve KYC'}
                           </Button>
                           <Button
                             variant="destructive"
@@ -451,7 +451,7 @@ export default function AdminKYC() {
                             disabled={isUpdating}
                           >
                             <XCircle className="h-4 w-4 mr-2" />
-                            Reject KYC
+                            {isUpdating ? 'Rejecting...' : '❌ Reject KYC'}
                           </Button>
                         </div>
                       </div>
