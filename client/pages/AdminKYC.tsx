@@ -63,10 +63,26 @@ export default function AdminKYC() {
     }
   };
 
-  const updateKYCStatus = async (recordId: string, status: string) => {
+  const updateKYCStatus = async (recordId: string, status: string, customRemarks?: string) => {
+    // Confirmation dialog
+    const confirmMessage = status === 'VERIFIED'
+      ? '✅ APPROVE this KYC application? This will mark the user as VERIFIED.'
+      : '❌ REJECT this KYC application? This will require the user to resubmit.';
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
     setIsUpdating(true);
+    console.log(`🔄 LIVE UPDATE: ${status} KYC ID: ${recordId}`);
 
     try {
+      const finalRemarks = customRemarks || remarks || (
+        status === 'VERIFIED'
+          ? 'KYC approved by admin - all documents verified ✅'
+          : 'KYC rejected - please resubmit with correct documents ❌'
+      );
+
       const response = await fetch(`/api/admin/kyc/${recordId}/status`, {
         method: 'PUT',
         headers: {
@@ -74,7 +90,7 @@ export default function AdminKYC() {
         },
         body: JSON.stringify({
           status,
-          remarks,
+          remarks: finalRemarks,
           verifiedBy: 'admin@ekyc.com'
         }),
       });
@@ -82,18 +98,34 @@ export default function AdminKYC() {
       const result: ApiResponse<KYCRecord> = await response.json();
 
       if (result.success && result.data) {
-        // Update the record in the list
-        setRecords(prev => prev.map(record => 
+        console.log(`✅ LIVE UPDATE SUCCESS: Status changed to ${status}`);
+
+        // Update the record in the list with live data
+        setRecords(prev => prev.map(record =>
           record.id === recordId ? result.data! : record
         ));
         setSelectedRecord(null);
         setRemarks("");
-        alert(`KYC record ${status.toLowerCase()} successfully!`);
+
+        // Show success message with live update confirmation
+        const successMessage = status === 'VERIFIED'
+          ? `✅ APPROVED! KYC for ${result.data.name} is now VERIFIED`
+          : `❌ REJECTED! KYC for ${result.data.name} has been rejected`;
+
+        alert(successMessage);
+
+        // Auto-refresh to show live updates
+        setTimeout(() => {
+          fetchKYCRecords();
+        }, 1000);
+
       } else {
-        alert(result.message || 'Update failed');
+        console.error('❌ UPDATE FAILED:', result.message);
+        alert(`❌ Update failed: ${result.message || 'Unknown error'}`);
       }
     } catch (error) {
-      alert('Network error. Please try again.');
+      console.error('❌ NETWORK ERROR:', error);
+      alert('❌ Network error. Please check connection and try again.');
     } finally {
       setIsUpdating(false);
     }
