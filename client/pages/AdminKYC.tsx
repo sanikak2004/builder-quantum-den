@@ -373,7 +373,7 @@ export default function AdminKYC() {
                             <FileText className="h-4 w-4 text-blue-600" />
                             <div>
                               <p className="text-sm font-medium text-slate-700">{doc.type}</p>
-                              <p className="text-xs text-slate-500">Hash: {doc.documentHash.substring(0, 16)}...</p>
+                              <p className="text-xs text-slate-500">Hash: {doc.documentHash?.substring(0, 16) || 'N/A'}...</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
