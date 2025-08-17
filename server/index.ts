@@ -16,8 +16,10 @@ export const createServer = () => {
     res.json({ message: "pong", timestamp: new Date().toISOString() });
   });
 
-  // Demo endpoint
-  app.get("/api/demo", handleDemo);
+  // Demo endpoint (simplified)
+  app.get("/api/demo", (req, res) => {
+    res.json({ message: "Hello from Express server" });
+  });
 
   // KYC Stats endpoint with mock data
   app.get("/api/kyc/stats", (req, res) => {
