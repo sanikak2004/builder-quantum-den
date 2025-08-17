@@ -476,8 +476,8 @@ export default function KYCHistory() {
                                   </p>
                                   <div className="flex items-center gap-2">
                                     <code className="font-mono text-slate-600 break-all">
-                                      {entry.blockchainTxHash.substring(0, 20)}
-                                      ...
+                                      {entry.blockchainTxHash?.substring(0, 20) || 'N/A'}
+                                      {entry.blockchainTxHash && '...'}
                                     </code>
                                     <Button
                                       variant="ghost"
