@@ -31,9 +31,11 @@ export default function KYCHistory() {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("id") || "");
   const [historyEntries, setHistoryEntries] = useState<KYCHistoryEntry[]>([]);
+  const [allRecords, setAllRecords] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [filterAction, setFilterAction] = useState<string>("all");
+  const [showAllRecords, setShowAllRecords] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("id")) {
