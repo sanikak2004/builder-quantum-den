@@ -8,6 +8,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import KYCSubmission from "./pages/KYCSubmission";
+import KYCVerification from "./pages/KYCVerification";
+import KYCHistory from "./pages/KYCHistory";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +23,10 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/submit" element={<KYCSubmission />} />
+          <Route path="/verify" element={<KYCVerification />} />
+          <Route path="/history" element={<KYCHistory />} />
+          <Route path="/auth/:mode" element={<Auth />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
