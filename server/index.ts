@@ -1,13 +1,6 @@
 import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
-import { 
-  handleKYCSubmission, 
-  handleKYCVerification, 
-  handleKYCHistory, 
-  handleKYCStats 
-} from "./routes/kyc";
-import multer from "multer";
 
 // Configure multer for file uploads
 const upload = multer({
