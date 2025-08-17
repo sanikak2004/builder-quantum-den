@@ -75,35 +75,8 @@ export const createServer = () => {
     });
   });
 
-  // Error handling middleware for multer
+  // Basic error handling
   app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (error instanceof multer.MulterError) {
-      if (error.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({
-          success: false,
-          message: 'File too large. Maximum size is 5MB per file.',
-          error: error.message,
-          timestamp: new Date().toISOString()
-        });
-      }
-      if (error.code === 'LIMIT_FILE_COUNT') {
-        return res.status(400).json({
-          success: false,
-          message: 'Too many files. Maximum 10 files allowed.',
-          error: error.message,
-          timestamp: new Date().toISOString()
-        });
-      }
-    }
-    
-    if (error.message === 'Only JPEG, PNG, and PDF files are allowed') {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-
     console.error('Server error:', error);
     res.status(500).json({
       success: false,
