@@ -262,16 +262,16 @@ export default function AdminKYC() {
 
                         {/* Documents */}
                         <div>
-                          <p className="text-xs text-slate-500 mb-1">Documents ({record.documents.length})</p>
+                          <p className="text-xs text-slate-500 mb-1">Documents ({record.documents?.length || 0})</p>
                           <div className="space-y-1">
-                            {record.documents.slice(0, 2).map((doc, index) => (
+                            {record.documents?.slice(0, 2).map((doc, index) => (
                               <div key={index} className="flex items-center gap-1">
                                 <FileText className="h-3 w-3 text-blue-600" />
                                 <span className="text-xs text-slate-600">{doc.type}</span>
                               </div>
-                            ))}
-                            {record.documents.length > 2 && (
-                              <span className="text-xs text-slate-500">+{record.documents.length - 2} more</span>
+                            )) || []}
+                            {(record.documents?.length || 0) > 2 && (
+                              <span className="text-xs text-slate-500">+{(record.documents?.length || 0) - 2} more</span>
                             )}
                           </div>
                         </div>
