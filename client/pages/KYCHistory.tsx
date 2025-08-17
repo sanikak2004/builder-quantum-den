@@ -288,8 +288,80 @@ export default function KYCHistory() {
             </CardContent>
           </Card>
 
+          {/* All Records Results */}
+          {showAllRecords && allRecords.length > 0 && (
+            <div className="space-y-6">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    All KYC Records ({allRecords.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {allRecords.map((record, index) => (
+                      <div key={record.id} className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <User className="h-4 w-4 text-slate-500" />
+                                <span className="font-medium text-slate-700">{record.name}</span>
+                              </div>
+                              <p className="text-xs text-slate-500">Email: {record.email}</p>
+                              <p className="text-xs text-slate-500">Phone: {record.phone}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">KYC ID</p>
+                              <p className="font-mono text-xs font-medium text-slate-700 break-all">{record.id}</p>
+                              <p className="text-xs text-slate-500 mt-1">PAN: {record.pan}</p>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge className={
+                                  record.status === 'VERIFIED' ? 'bg-green-100 text-green-800' :
+                                  record.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-red-100 text-red-800'
+                                }>
+                                  {record.status}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-slate-500">Submitted: {new Date(record.createdAt).toLocaleDateString()}</p>
+                              <p className="text-xs text-slate-500">Documents: {record.documents?.length || 0}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 ml-4">
+                            <Link to={`/history?id=${record.id}`}>
+                              <Button variant="outline" size="sm">
+                                <History className="h-3 w-3 mr-1" />
+                                History
+                              </Button>
+                            </Link>
+                            <Link to={`/verify?id=${record.id}`}>
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                        {record.remarks && (
+                          <div className="mt-3 pt-3 border-t border-slate-200">
+                            <p className="text-xs text-slate-500 mb-1">Remarks</p>
+                            <p className="text-sm text-slate-700">{record.remarks}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* History Results */}
-          {historyEntries.length > 0 && (
+          {!showAllRecords && historyEntries.length > 0 && (
             <div className="space-y-6">
               {/* Summary */}
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
