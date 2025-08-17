@@ -365,9 +365,9 @@ export default function AdminKYC() {
 
                   {/* Documents */}
                   <div>
-                    <h4 className="font-medium text-slate-700 mb-3">Documents ({selectedRecord.documents.length})</h4>
+                    <h4 className="font-medium text-slate-700 mb-3">Documents ({selectedRecord.documents?.length || 0})</h4>
                     <div className="space-y-2">
-                      {selectedRecord.documents.map((doc, index) => (
+                      {selectedRecord.documents?.map((doc, index) => (
                         <div key={index} className="flex items-center justify-between bg-slate-50 p-3 rounded-lg">
                           <div className="flex items-center space-x-3">
                             <FileText className="h-4 w-4 text-blue-600" />
