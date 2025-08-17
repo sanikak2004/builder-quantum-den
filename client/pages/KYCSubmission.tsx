@@ -136,14 +136,16 @@ export default function KYCSubmission() {
         // Provide specific error feedback
         let errorMessage = result.message || "Submission failed";
 
-        if (errorMessage.includes('PAN format')) {
-          errorMessage = 'PAN Number format is invalid. Please use format: ABCDE1234F (5 letters + 4 digits + 1 letter)';
-        } else if (errorMessage.includes('email')) {
-          errorMessage = 'Please enter a valid email address';
-        } else if (errorMessage.includes('phone')) {
-          errorMessage = 'Please enter a valid phone number';
-        } else if (errorMessage.includes('document')) {
-          errorMessage = 'Please upload at least one valid document (PDF, JPG, PNG)';
+        if (errorMessage.includes("PAN format")) {
+          errorMessage =
+            "PAN Number format is invalid. Please use format: ABCDE1234F (5 letters + 4 digits + 1 letter)";
+        } else if (errorMessage.includes("email")) {
+          errorMessage = "Please enter a valid email address";
+        } else if (errorMessage.includes("phone")) {
+          errorMessage = "Please enter a valid phone number";
+        } else if (errorMessage.includes("document")) {
+          errorMessage =
+            "Please upload at least one valid document (PDF, JPG, PNG)";
         }
 
         setSubmitError(errorMessage);
@@ -403,19 +405,23 @@ export default function KYCSubmission() {
                       placeholder="ABCDE1234F"
                       maxLength={10}
                       className={
-                        formData.pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan)
+                        formData.pan &&
+                        !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan)
                           ? "border-red-300 focus:border-red-500"
                           : ""
                       }
                     />
-                    {formData.pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan) && (
-                      <p className="text-xs text-red-600 mt-1">
-                        PAN must be 10 characters: 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F)
-                      </p>
-                    )}
+                    {formData.pan &&
+                      !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan) && (
+                        <p className="text-xs text-red-600 mt-1">
+                          PAN must be 10 characters: 5 letters + 4 digits + 1
+                          letter (e.g., ABCDE1234F)
+                        </p>
+                      )}
                     {!formData.pan && (
                       <p className="text-xs text-slate-500 mt-1">
-                        Format: 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F)
+                        Format: 5 letters + 4 digits + 1 letter (e.g.,
+                        ABCDE1234F)
                       </p>
                     )}
                   </div>

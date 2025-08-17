@@ -13,11 +13,16 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     // Allow only specific file types
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "application/pdf",
+    ];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only JPEG, PNG, and PDF files are allowed'));
+      cb(new Error("Only JPEG, PNG, and PDF files are allowed"));
     }
   },
 });
@@ -27,7 +32,9 @@ const KYCSubmissionSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Valid email is required"),
   phone: z.string().min(10, "Valid phone number is required"),
-  pan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Valid PAN format required"),
+  pan: z
+    .string()
+    .regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Valid PAN format required"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   address: z.object({
     street: z.string().min(1, "Street address is required"),
@@ -45,9 +52,9 @@ const kycRecords = new Map();
 class MockBlockchainService {
   static async submitKYC(kycData: any, documentHashes: string[]) {
     // Simulate blockchain transaction
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const txHash = crypto.randomBytes(32).toString('hex');
+    const txHash = crypto.randomBytes(32).toString("hex");
     return {
       success: true,
       txHash,
@@ -61,9 +68,9 @@ class MockBlockchainService {
 class MockIPFSService {
   static async uploadFile(file: Buffer, filename: string) {
     // Simulate IPFS upload
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const hash = crypto.createHash('sha256').update(file).digest('hex');
+    const hash = crypto.createHash("sha256").update(file).digest("hex");
     return {
       success: true,
       hash: `Qm${hash.substring(0, 44)}`, // IPFS-style hash
@@ -173,9 +180,8 @@ export const createServer = () => {
         message: "Verification completed",
         timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
-      console.error('KYC verification error:', error);
+      console.error("KYC verification error:", error);
       res.status(500).json({
         success: false,
         message: "Verification failed",
@@ -186,20 +192,20 @@ export const createServer = () => {
   });
 
   // KYC Submit endpoint (fully implemented)
-  app.post("/api/kyc/submit", upload.array('documents'), async (req, res) => {
+  app.post("/api/kyc/submit", upload.array("documents"), async (req, res) => {
     try {
-      console.log('Received KYC submission request');
-      console.log('Body:', req.body);
-      console.log('Files:', req.files);
+      console.log("Received KYC submission request");
+      console.log("Body:", req.body);
+      console.log("Files:", req.files);
 
       // Parse form data
-      const formData = JSON.parse(req.body.data || '{}');
-      console.log('Parsed form data:', formData);
+      const formData = JSON.parse(req.body.data || "{}");
+      console.log("Parsed form data:", formData);
 
       // Validate data
       const validatedData = KYCSubmissionSchema.parse(formData);
 
-      const files = req.files as Express.Multer.File[] || [];
+      const files = (req.files as Express.Multer.File[]) || [];
 
       if (files.length === 0) {
         return res.status(400).json({
@@ -210,24 +216,36 @@ export const createServer = () => {
       }
 
       // Generate unique KYC ID
-      const kycId = `KYC-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+      const kycId = `KYC-${Date.now()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 
       // Process documents
       console.log(`Processing ${files.length} documents...`);
       const documentPromises = files.map(async (file, index) => {
-        console.log(`Processing file ${index + 1}: ${file.originalname} (${file.size} bytes)`);
+        console.log(
+          `Processing file ${index + 1}: ${file.originalname} (${file.size} bytes)`,
+        );
 
         // Upload to IPFS (mock)
-        const ipfsResult = await MockIPFSService.uploadFile(file.buffer, file.originalname);
+        const ipfsResult = await MockIPFSService.uploadFile(
+          file.buffer,
+          file.originalname,
+        );
 
         // Generate document hash
-        const documentHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
+        const documentHash = crypto
+          .createHash("sha256")
+          .update(file.buffer)
+          .digest("hex");
 
         return {
           id: crypto.randomUUID(),
-          type: file.originalname.toLowerCase().includes('pan') ? 'PAN' :
-                file.originalname.toLowerCase().includes('aadhaar') ? 'AADHAAR' :
-                file.originalname.toLowerCase().includes('passport') ? 'PASSPORT' : 'OTHER',
+          type: file.originalname.toLowerCase().includes("pan")
+            ? "PAN"
+            : file.originalname.toLowerCase().includes("aadhaar")
+              ? "AADHAAR"
+              : file.originalname.toLowerCase().includes("passport")
+                ? "PASSPORT"
+                : "OTHER",
           documentHash,
           ipfsHash: ipfsResult.hash,
           uploadedAt: new Date().toISOString(),
@@ -235,14 +253,17 @@ export const createServer = () => {
       });
 
       const documents = await Promise.all(documentPromises);
-      const documentHashes = documents.map(doc => doc.documentHash);
+      const documentHashes = documents.map((doc) => doc.documentHash);
 
-      console.log('Documents processed:', documents.length);
+      console.log("Documents processed:", documents.length);
 
       // Submit to blockchain (mock)
-      console.log('Submitting to blockchain...');
-      const blockchainResult = await MockBlockchainService.submitKYC(validatedData, documentHashes);
-      console.log('Blockchain result:', blockchainResult);
+      console.log("Submitting to blockchain...");
+      const blockchainResult = await MockBlockchainService.submitKYC(
+        validatedData,
+        documentHashes,
+      );
+      console.log("Blockchain result:", blockchainResult);
 
       // Create KYC record
       const kycRecord = {
@@ -250,8 +271,8 @@ export const createServer = () => {
         userId: crypto.randomUUID(), // In real implementation, get from authenticated user
         ...validatedData,
         documents,
-        status: 'PENDING',
-        verificationLevel: 'L1',
+        status: "PENDING",
+        verificationLevel: "L1",
         blockchainTxHash: blockchainResult.txHash,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -265,12 +286,12 @@ export const createServer = () => {
       res.json({
         success: true,
         data: kycRecord,
-        message: "KYC submission successful! Your application is being processed on the blockchain.",
+        message:
+          "KYC submission successful! Your application is being processed on the blockchain.",
         timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
-      console.error('KYC submission error:', error);
+      console.error("KYC submission error:", error);
 
       if (error instanceof z.ZodError) {
         return res.status(400).json({
@@ -308,30 +329,30 @@ export const createServer = () => {
         {
           id: crypto.randomUUID(),
           kycId: kycId as string,
-          action: 'CREATED',
-          performedBy: 'system',
+          action: "CREATED",
+          performedBy: "system",
           performedAt: new Date(Date.now() - 86400000).toISOString(),
-          txId: crypto.randomBytes(32).toString('hex'),
+          txId: crypto.randomBytes(32).toString("hex"),
           details: { initialSubmission: true },
-          remarks: 'Initial KYC submission'
+          remarks: "Initial KYC submission",
         },
         {
           id: crypto.randomUUID(),
           kycId: kycId as string,
-          action: 'UPDATED',
-          performedBy: 'admin@ekyc.com',
+          action: "UPDATED",
+          performedBy: "admin@ekyc.com",
           performedAt: new Date(Date.now() - 43200000).toISOString(),
-          txId: crypto.randomBytes(32).toString('hex'),
+          txId: crypto.randomBytes(32).toString("hex"),
           details: { documentsReviewed: true },
-          remarks: 'Documents under review'
-        }
+          remarks: "Documents under review",
+        },
       ];
 
       let history = mockHistory;
 
       // Filter by action if specified
-      if (action && action !== 'all') {
-        history = history.filter(entry => entry.action === action);
+      if (action && action !== "all") {
+        history = history.filter((entry) => entry.action === action);
       }
 
       res.json({
@@ -340,9 +361,8 @@ export const createServer = () => {
         message: `Found ${history.length} history entries`,
         timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
-      console.error('KYC history error:', error);
+      console.error("KYC history error:", error);
       res.status(500).json({
         success: false,
         message: "Failed to fetch history",
@@ -362,14 +382,19 @@ export const createServer = () => {
 
       // Filter by status if specified
       let filteredRecords = allRecords;
-      if (status && status !== 'all') {
-        filteredRecords = allRecords.filter(record => record.status === status);
+      if (status && status !== "all") {
+        filteredRecords = allRecords.filter(
+          (record) => record.status === status,
+        );
       }
 
       // Apply pagination
       const startIndex = parseInt(offset as string);
       const limitNum = parseInt(limit as string);
-      const paginatedRecords = filteredRecords.slice(startIndex, startIndex + limitNum);
+      const paginatedRecords = filteredRecords.slice(
+        startIndex,
+        startIndex + limitNum,
+      );
 
       res.json({
         success: true,
@@ -377,14 +402,13 @@ export const createServer = () => {
           records: paginatedRecords,
           total: filteredRecords.length,
           offset: startIndex,
-          limit: limitNum
+          limit: limitNum,
         },
         message: `Found ${filteredRecords.length} KYC records`,
         timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
-      console.error('Admin KYC fetch error:', error);
+      console.error("Admin KYC fetch error:", error);
       res.status(500).json({
         success: false,
         message: "Failed to fetch KYC records",
@@ -412,12 +436,12 @@ export const createServer = () => {
       // Update record
       record.status = status;
       record.remarks = remarks;
-      record.verifiedBy = verifiedBy || 'admin@ekyc.com';
+      record.verifiedBy = verifiedBy || "admin@ekyc.com";
       record.updatedAt = new Date().toISOString();
 
-      if (status === 'VERIFIED') {
+      if (status === "VERIFIED") {
         record.verifiedAt = record.updatedAt;
-        record.verificationLevel = 'L2';
+        record.verificationLevel = "L2";
       }
 
       // Save updated record
@@ -429,9 +453,8 @@ export const createServer = () => {
         message: `KYC record ${status.toLowerCase()} successfully`,
         timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
-      console.error('Admin KYC update error:', error);
+      console.error("Admin KYC update error:", error);
       res.status(500).json({
         success: false,
         message: "Failed to update KYC status",
@@ -450,25 +473,25 @@ export const createServer = () => {
       next: express.NextFunction,
     ) => {
       if (error instanceof multer.MulterError) {
-        if (error.code === 'LIMIT_FILE_SIZE') {
+        if (error.code === "LIMIT_FILE_SIZE") {
           return res.status(400).json({
             success: false,
-            message: 'File too large. Maximum size is 5MB per file.',
+            message: "File too large. Maximum size is 5MB per file.",
             error: error.message,
             timestamp: new Date().toISOString(),
           });
         }
-        if (error.code === 'LIMIT_FILE_COUNT') {
+        if (error.code === "LIMIT_FILE_COUNT") {
           return res.status(400).json({
             success: false,
-            message: 'Too many files. Maximum 10 files allowed.',
+            message: "Too many files. Maximum 10 files allowed.",
             error: error.message,
             timestamp: new Date().toISOString(),
           });
         }
       }
 
-      if (error.message === 'Only JPEG, PNG, and PDF files are allowed') {
+      if (error.message === "Only JPEG, PNG, and PDF files are allowed") {
         return res.status(400).json({
           success: false,
           message: error.message,

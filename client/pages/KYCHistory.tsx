@@ -50,16 +50,16 @@ export default function KYCHistory() {
     setShowAllRecords(true);
 
     try {
-      const response = await fetch('/api/admin/kyc/all?status=all&limit=100');
+      const response = await fetch("/api/admin/kyc/all?status=all&limit=100");
       const result: ApiResponse = await response.json();
 
       if (result.success && result.data) {
         setAllRecords(result.data.records || []);
       } else {
-        setSearchError(result.message || 'Failed to fetch records');
+        setSearchError(result.message || "Failed to fetch records");
       }
     } catch (error) {
-      setSearchError('Network error. Please try again.');
+      setSearchError("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -301,34 +301,60 @@ export default function KYCHistory() {
                 <CardContent>
                   <div className="space-y-4">
                     {allRecords.map((record, index) => (
-                      <div key={record.id} className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors">
+                      <div
+                        key={record.id}
+                        className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors"
+                      >
                         <div className="flex items-start justify-between">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
                             <div>
                               <div className="flex items-center gap-2 mb-2">
                                 <User className="h-4 w-4 text-slate-500" />
-                                <span className="font-medium text-slate-700">{record.name}</span>
+                                <span className="font-medium text-slate-700">
+                                  {record.name}
+                                </span>
                               </div>
-                              <p className="text-xs text-slate-500">Email: {record.email}</p>
-                              <p className="text-xs text-slate-500">Phone: {record.phone}</p>
+                              <p className="text-xs text-slate-500">
+                                Email: {record.email}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                Phone: {record.phone}
+                              </p>
                             </div>
                             <div>
-                              <p className="text-xs text-slate-500 mb-1">KYC ID</p>
-                              <p className="font-mono text-xs font-medium text-slate-700 break-all">{record.id}</p>
-                              <p className="text-xs text-slate-500 mt-1">PAN: {record.pan}</p>
+                              <p className="text-xs text-slate-500 mb-1">
+                                KYC ID
+                              </p>
+                              <p className="font-mono text-xs font-medium text-slate-700 break-all">
+                                {record.id}
+                              </p>
+                              <p className="text-xs text-slate-500 mt-1">
+                                PAN: {record.pan}
+                              </p>
                             </div>
                             <div>
                               <div className="flex items-center gap-2 mb-2">
-                                <Badge className={
-                                  record.status === 'VERIFIED' ? 'bg-green-100 text-green-800' :
-                                  record.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-red-100 text-red-800'
-                                }>
+                                <Badge
+                                  className={
+                                    record.status === "VERIFIED"
+                                      ? "bg-green-100 text-green-800"
+                                      : record.status === "PENDING"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : "bg-red-100 text-red-800"
+                                  }
+                                >
                                   {record.status}
                                 </Badge>
                               </div>
-                              <p className="text-xs text-slate-500">Submitted: {new Date(record.createdAt).toLocaleDateString()}</p>
-                              <p className="text-xs text-slate-500">Documents: {record.documents?.length || 0}</p>
+                              <p className="text-xs text-slate-500">
+                                Submitted:{" "}
+                                {new Date(
+                                  record.createdAt,
+                                ).toLocaleDateString()}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                Documents: {record.documents?.length || 0}
+                              </p>
                             </div>
                           </div>
                           <div className="flex gap-2 ml-4">
@@ -348,8 +374,12 @@ export default function KYCHistory() {
                         </div>
                         {record.remarks && (
                           <div className="mt-3 pt-3 border-t border-slate-200">
-                            <p className="text-xs text-slate-500 mb-1">Remarks</p>
-                            <p className="text-sm text-slate-700">{record.remarks}</p>
+                            <p className="text-xs text-slate-500 mb-1">
+                              Remarks
+                            </p>
+                            <p className="text-sm text-slate-700">
+                              {record.remarks}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -476,8 +506,11 @@ export default function KYCHistory() {
                                   </p>
                                   <div className="flex items-center gap-2">
                                     <code className="font-mono text-slate-600 break-all">
-                                      {entry.blockchainTxHash?.substring(0, 20) || 'N/A'}
-                                      {entry.blockchainTxHash && '...'}
+                                      {entry.blockchainTxHash?.substring(
+                                        0,
+                                        20,
+                                      ) || "N/A"}
+                                      {entry.blockchainTxHash && "..."}
                                     </code>
                                     <Button
                                       variant="ghost"
