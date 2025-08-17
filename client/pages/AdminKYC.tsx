@@ -324,22 +324,22 @@ export default function AdminKYC() {
                           <>
                             <Button
                               size="sm"
-                              onClick={() => updateKYCStatus(record.id, 'VERIFIED')}
+                              onClick={() => updateKYCStatus(record.id, 'VERIFIED', `✅ APPROVED: All documents verified for ${record.name}`)}
                               disabled={isUpdating}
                               className="bg-green-600 hover:bg-green-700 whitespace-nowrap"
                             >
                               <CheckCircle className="h-3 w-3 mr-1" />
-                              Approve
+                              {isUpdating ? 'Approving...' : '✅ Approve'}
                             </Button>
                             <Button
                               variant="destructive"
                               size="sm"
-                              onClick={() => updateKYCStatus(record.id, 'REJECTED')}
+                              onClick={() => updateKYCStatus(record.id, 'REJECTED', `❌ REJECTED: Please resubmit documents for ${record.name}`)}
                               disabled={isUpdating}
                               className="whitespace-nowrap"
                             >
                               <XCircle className="h-3 w-3 mr-1" />
-                              Reject
+                              {isUpdating ? 'Rejecting...' : '❌ Reject'}
                             </Button>
                           </>
                         )}
