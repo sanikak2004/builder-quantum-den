@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import { handleDemo } from "./routes/demo";
 
 export const createServer = () => {
   const app = express();
