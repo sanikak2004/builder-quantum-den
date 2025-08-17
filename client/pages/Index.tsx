@@ -76,7 +76,7 @@ export default function Index() {
       <section className="py-20 px-6">
         <div className="container mx-auto text-center">
           <div className="inline-flex items-center bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Blockchain className="h-4 w-4 mr-2" />
+            <Link2 className="h-4 w-4 mr-2" />
             Powered by Hyperledger Fabric
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-slate-800 mb-6 leading-tight">
