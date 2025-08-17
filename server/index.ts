@@ -290,13 +290,155 @@ export const createServer = () => {
     }
   });
 
-  // KYC History endpoint (mock)
-  app.get("/api/kyc/history", (req, res) => {
-    res.json({
-      success: false,
-      message: "KYC history not implemented yet",
-      timestamp: new Date().toISOString(),
-    });
+  // KYC History endpoint
+  app.get("/api/kyc/history", async (req, res) => {
+    try {
+      const { kycId, action } = req.query;
+
+      if (!kycId) {
+        return res.status(400).json({
+          success: false,
+          message: "KYC ID is required",
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Mock history data for the specific KYC ID
+      const mockHistory = [
+        {
+          id: crypto.randomUUID(),
+          kycId: kycId as string,
+          action: 'CREATED',
+          performedBy: 'system',
+          performedAt: new Date(Date.now() - 86400000).toISOString(),
+          txId: crypto.randomBytes(32).toString('hex'),
+          details: { initialSubmission: true },
+          remarks: 'Initial KYC submission'
+        },
+        {
+          id: crypto.randomUUID(),
+          kycId: kycId as string,
+          action: 'UPDATED',
+          performedBy: 'admin@ekyc.com',
+          performedAt: new Date(Date.now() - 43200000).toISOString(),
+          txId: crypto.randomBytes(32).toString('hex'),
+          details: { documentsReviewed: true },
+          remarks: 'Documents under review'
+        }
+      ];
+
+      let history = mockHistory;
+
+      // Filter by action if specified
+      if (action && action !== 'all') {
+        history = history.filter(entry => entry.action === action);
+      }
+
+      res.json({
+        success: true,
+        data: history,
+        message: `Found ${history.length} history entries`,
+        timestamp: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      console.error('KYC history error:', error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch history",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
+  // Admin: Get all KYC records
+  app.get("/api/admin/kyc/all", async (req, res) => {
+    try {
+      const { status, limit = 50, offset = 0 } = req.query;
+
+      // Get all records from in-memory storage
+      const allRecords = Array.from(kycRecords.values());
+
+      // Filter by status if specified
+      let filteredRecords = allRecords;
+      if (status && status !== 'all') {
+        filteredRecords = allRecords.filter(record => record.status === status);
+      }
+
+      // Apply pagination
+      const startIndex = parseInt(offset as string);
+      const limitNum = parseInt(limit as string);
+      const paginatedRecords = filteredRecords.slice(startIndex, startIndex + limitNum);
+
+      res.json({
+        success: true,
+        data: {
+          records: paginatedRecords,
+          total: filteredRecords.length,
+          offset: startIndex,
+          limit: limitNum
+        },
+        message: `Found ${filteredRecords.length} KYC records`,
+        timestamp: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      console.error('Admin KYC fetch error:', error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch KYC records",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
+  // Admin: Update KYC status (approve/reject)
+  app.put("/api/admin/kyc/:id/status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, remarks, verifiedBy } = req.body;
+
+      const record = kycRecords.get(id);
+      if (!record) {
+        return res.status(404).json({
+          success: false,
+          message: "KYC record not found",
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Update record
+      record.status = status;
+      record.remarks = remarks;
+      record.verifiedBy = verifiedBy || 'admin@ekyc.com';
+      record.updatedAt = new Date().toISOString();
+
+      if (status === 'VERIFIED') {
+        record.verifiedAt = record.updatedAt;
+        record.verificationLevel = 'L2';
+      }
+
+      // Save updated record
+      kycRecords.set(id, record);
+
+      res.json({
+        success: true,
+        data: record,
+        message: `KYC record ${status.toLowerCase()} successfully`,
+        timestamp: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      console.error('Admin KYC update error:', error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to update KYC status",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
   });
 
   // Error handling middleware for multer and general errors
