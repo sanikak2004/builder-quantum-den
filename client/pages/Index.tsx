@@ -3,18 +3,18 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Shield, 
-  Lock, 
-  FileCheck, 
-  History, 
-  Users, 
-  Zap, 
-  CheckCircle, 
-  Clock, 
+import {
+  Shield,
+  Lock,
+  FileCheck,
+  History,
+  Users,
+  Zap,
+  CheckCircle,
+  Clock,
   AlertTriangle,
   ArrowRight,
-  Blockchain,
+  Link2,
   Database,
   Cloud
 } from "lucide-react";
