@@ -132,7 +132,20 @@ export default function KYCSubmission() {
         setSubmitSuccess(true);
         setSubmittedRecord(result.data);
       } else {
-        setSubmitError(result.message || "Submission failed");
+        // Provide specific error feedback
+        let errorMessage = result.message || "Submission failed";
+
+        if (errorMessage.includes('PAN format')) {
+          errorMessage = 'PAN Number format is invalid. Please use format: ABCDE1234F (5 letters + 4 digits + 1 letter)';
+        } else if (errorMessage.includes('email')) {
+          errorMessage = 'Please enter a valid email address';
+        } else if (errorMessage.includes('phone')) {
+          errorMessage = 'Please enter a valid phone number';
+        } else if (errorMessage.includes('document')) {
+          errorMessage = 'Please upload at least one valid document (PDF, JPG, PNG)';
+        }
+
+        setSubmitError(errorMessage);
       }
     } catch (error) {
       setSubmitError("Network error. Please try again.");
