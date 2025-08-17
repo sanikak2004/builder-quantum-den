@@ -6,12 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Shield, 
-  Search, 
-  CheckCircle, 
-  Clock, 
-  AlertTriangle, 
+import {
+  Shield,
+  Search,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
   XCircle,
   ArrowLeft,
   FileText,
@@ -21,20 +21,21 @@ import {
   Hash,
   Calendar,
   User,
-  ExternalLink
+  ExternalLink,
 } from "lucide-react";
 import { KYCRecord, KYCVerificationResponse, ApiResponse } from "@shared/api";
 
 export default function KYCVerification() {
   const [searchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('id') || "");
-  const [searchType, setSearchType] = useState<'id' | 'pan' | 'email'>('id');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("id") || "");
+  const [searchType, setSearchType] = useState<"id" | "pan" | "email">("id");
   const [isSearching, setIsSearching] = useState(false);
-  const [verificationResult, setVerificationResult] = useState<KYCVerificationResponse | null>(null);
+  const [verificationResult, setVerificationResult] =
+    useState<KYCVerificationResponse | null>(null);
   const [searchError, setSearchError] = useState("");
 
   useEffect(() => {
-    if (searchParams.get('id')) {
+    if (searchParams.get("id")) {
       handleSearch();
     }
   }, []);
@@ -51,19 +52,20 @@ export default function KYCVerification() {
 
     try {
       const params = new URLSearchParams({
-        [searchType]: searchQuery.trim()
+        [searchType]: searchQuery.trim(),
       });
 
       const response = await fetch(`/api/kyc/verify?${params}`);
-      const result: ApiResponse<KYCVerificationResponse> = await response.json();
+      const result: ApiResponse<KYCVerificationResponse> =
+        await response.json();
 
       if (result.success && result.data) {
         setVerificationResult(result.data);
       } else {
-        setSearchError(result.message || 'Verification failed');
+        setSearchError(result.message || "Verification failed");
       }
     } catch (error) {
-      setSearchError('Network error. Please try again.');
+      setSearchError("Network error. Please try again.");
     } finally {
       setIsSearching(false);
     }
@@ -71,28 +73,28 @@ export default function KYCVerification() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'VERIFIED':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'REJECTED':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'EXPIRED':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "VERIFIED":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "PENDING":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "REJECTED":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "EXPIRED":
+        return "bg-gray-100 text-gray-800 border-gray-200";
       default:
-        return 'bg-slate-100 text-slate-800 border-slate-200';
+        return "bg-slate-100 text-slate-800 border-slate-200";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'VERIFIED':
+      case "VERIFIED":
         return <CheckCircle className="h-5 w-5" />;
-      case 'PENDING':
+      case "PENDING":
         return <Clock className="h-5 w-5" />;
-      case 'REJECTED':
+      case "REJECTED":
         return <XCircle className="h-5 w-5" />;
-      case 'EXPIRED':
+      case "EXPIRED":
         return <AlertTriangle className="h-5 w-5" />;
       default:
         return <Clock className="h-5 w-5" />;
@@ -101,14 +103,14 @@ export default function KYCVerification() {
 
   const getVerificationLevelColor = (level: string) => {
     switch (level) {
-      case 'L3':
-        return 'bg-purple-100 text-purple-800';
-      case 'L2':
-        return 'bg-blue-100 text-blue-800';
-      case 'L1':
-        return 'bg-orange-100 text-orange-800';
+      case "L3":
+        return "bg-purple-100 text-purple-800";
+      case "L2":
+        return "bg-blue-100 text-blue-800";
+      case "L1":
+        return "bg-orange-100 text-orange-800";
       default:
-        return 'bg-slate-100 text-slate-800';
+        return "bg-slate-100 text-slate-800";
     }
   };
 
@@ -123,7 +125,9 @@ export default function KYCVerification() {
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-800">eKYC Verify</h1>
+                <h1 className="text-xl font-bold text-slate-800">
+                  eKYC Verify
+                </h1>
                 <p className="text-xs text-slate-500">Verify KYC Status</p>
               </div>
             </div>
@@ -151,11 +155,15 @@ export default function KYCVerification() {
             <CardContent className="space-y-4">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
-                  <Label htmlFor="search">Search by KYC ID, PAN, or Email</Label>
+                  <Label htmlFor="search">
+                    Search by KYC ID, PAN, or Email
+                  </Label>
                   <div className="flex mt-2">
                     <select
                       value={searchType}
-                      onChange={(e) => setSearchType(e.target.value as 'id' | 'pan' | 'email')}
+                      onChange={(e) =>
+                        setSearchType(e.target.value as "id" | "pan" | "email")
+                      }
                       className="rounded-l-lg border border-r-0 border-slate-300 px-3 py-2 text-sm bg-white"
                     >
                       <option value="id">KYC ID</option>
@@ -166,9 +174,9 @@ export default function KYCVerification() {
                       id="search"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={`Enter ${searchType === 'id' ? 'KYC ID' : searchType === 'pan' ? 'PAN number' : 'email address'}`}
+                      placeholder={`Enter ${searchType === "id" ? "KYC ID" : searchType === "pan" ? "PAN number" : "email address"}`}
                       className="rounded-l-none"
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                      onKeyPress={(e) => e.key === "Enter" && handleSearch()}
                     />
                   </div>
                 </div>
@@ -194,7 +202,9 @@ export default function KYCVerification() {
               {searchError && (
                 <Alert className="border-red-200 bg-red-50">
                   <AlertTriangle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-red-800">{searchError}</AlertDescription>
+                  <AlertDescription className="text-red-800">
+                    {searchError}
+                  </AlertDescription>
                 </Alert>
               )}
             </CardContent>
@@ -208,11 +218,17 @@ export default function KYCVerification() {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      {getStatusIcon(verificationResult.record?.status || 'PENDING')}
+                      {getStatusIcon(
+                        verificationResult.record?.status || "PENDING",
+                      )}
                       Verification Status
                     </span>
                     <div className="flex items-center gap-2">
-                      <Badge className={getStatusColor(verificationResult.record?.status || 'PENDING')}>
+                      <Badge
+                        className={getStatusColor(
+                          verificationResult.record?.status || "PENDING",
+                        )}
+                      >
                         {verificationResult.record?.status}
                       </Badge>
                       {verificationResult.blockchainVerified && (
@@ -227,13 +243,21 @@ export default function KYCVerification() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                      <p className="text-sm text-slate-500 mb-1">Verification Level</p>
-                      <Badge className={getVerificationLevelColor(verificationResult.verificationLevel || 'L1')}>
+                      <p className="text-sm text-slate-500 mb-1">
+                        Verification Level
+                      </p>
+                      <Badge
+                        className={getVerificationLevelColor(
+                          verificationResult.verificationLevel || "L1",
+                        )}
+                      >
                         {verificationResult.verificationLevel}
                       </Badge>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500 mb-1">Blockchain Status</p>
+                      <p className="text-sm text-slate-500 mb-1">
+                        Blockchain Status
+                      </p>
                       <div className="flex items-center gap-2">
                         {verificationResult.blockchainVerified ? (
                           <Badge className="bg-green-100 text-green-800">
@@ -250,7 +274,9 @@ export default function KYCVerification() {
                     </div>
                     <div>
                       <p className="text-sm text-slate-500 mb-1">Message</p>
-                      <p className="text-sm font-medium text-slate-700">{verificationResult.message}</p>
+                      <p className="text-sm font-medium text-slate-700">
+                        {verificationResult.message}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -271,23 +297,35 @@ export default function KYCVerification() {
                       <div className="grid grid-cols-1 gap-3">
                         <div>
                           <p className="text-sm text-slate-500">Name</p>
-                          <p className="font-medium text-slate-800">{verificationResult.record.name}</p>
+                          <p className="font-medium text-slate-800">
+                            {verificationResult.record.name}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-slate-500">Email</p>
-                          <p className="font-medium text-slate-800">{verificationResult.record.email}</p>
+                          <p className="font-medium text-slate-800">
+                            {verificationResult.record.email}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-slate-500">Phone</p>
-                          <p className="font-medium text-slate-800">{verificationResult.record.phone}</p>
+                          <p className="font-medium text-slate-800">
+                            {verificationResult.record.phone}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-slate-500">PAN</p>
-                          <p className="font-mono font-medium text-slate-800">{verificationResult.record.pan}</p>
+                          <p className="font-mono font-medium text-slate-800">
+                            {verificationResult.record.pan}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-sm text-slate-500">Date of Birth</p>
-                          <p className="font-medium text-slate-800">{verificationResult.record.dateOfBirth}</p>
+                          <p className="text-sm text-slate-500">
+                            Date of Birth
+                          </p>
+                          <p className="font-medium text-slate-800">
+                            {verificationResult.record.dateOfBirth}
+                          </p>
                         </div>
                       </div>
                     </CardContent>
@@ -304,34 +342,48 @@ export default function KYCVerification() {
                     <CardContent className="space-y-4">
                       <div>
                         <p className="text-sm text-slate-500">KYC ID</p>
-                        <p className="font-mono text-sm font-medium text-slate-800 break-all">{verificationResult.record.id}</p>
+                        <p className="font-mono text-sm font-medium text-slate-800 break-all">
+                          {verificationResult.record.id}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-slate-500">Created At</p>
                         <p className="text-sm font-medium text-slate-800">
-                          {new Date(verificationResult.record.createdAt).toLocaleString()}
+                          {new Date(
+                            verificationResult.record.createdAt,
+                          ).toLocaleString()}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-slate-500">Last Updated</p>
                         <p className="text-sm font-medium text-slate-800">
-                          {new Date(verificationResult.record.updatedAt).toLocaleString()}
+                          {new Date(
+                            verificationResult.record.updatedAt,
+                          ).toLocaleString()}
                         </p>
                       </div>
                       {verificationResult.record.verifiedAt && (
                         <div>
                           <p className="text-sm text-slate-500">Verified At</p>
                           <p className="text-sm font-medium text-slate-800">
-                            {new Date(verificationResult.record.verifiedAt).toLocaleString()}
+                            {new Date(
+                              verificationResult.record.verifiedAt,
+                            ).toLocaleString()}
                           </p>
                         </div>
                       )}
                       {verificationResult.record.blockchainTxHash && (
                         <div>
-                          <p className="text-sm text-slate-500">Blockchain Transaction</p>
+                          <p className="text-sm text-slate-500">
+                            Blockchain Transaction
+                          </p>
                           <div className="flex items-center gap-2">
                             <p className="font-mono text-xs text-slate-600 break-all">
-                              {verificationResult.record.blockchainTxHash.substring(0, 20)}...
+                              {verificationResult.record.blockchainTxHash.substring(
+                                0,
+                                20,
+                              )}
+                              ...
                             </p>
                             <Button variant="ghost" size="sm" className="p-1">
                               <ExternalLink className="h-3 w-3" />
@@ -356,10 +408,12 @@ export default function KYCVerification() {
                           {verificationResult.record.address.street}
                         </p>
                         <p className="text-sm text-slate-800">
-                          {verificationResult.record.address.city}, {verificationResult.record.address.state}
+                          {verificationResult.record.address.city},{" "}
+                          {verificationResult.record.address.state}
                         </p>
                         <p className="text-sm text-slate-800">
-                          {verificationResult.record.address.pincode}, {verificationResult.record.address.country}
+                          {verificationResult.record.address.pincode},{" "}
+                          {verificationResult.record.address.country}
                         </p>
                       </div>
                     </CardContent>
@@ -375,27 +429,37 @@ export default function KYCVerification() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {verificationResult.record.documents.map((doc, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                            <div className="flex items-center space-x-3">
-                              <FileText className="h-5 w-5 text-blue-600" />
-                              <div>
-                                <p className="text-sm font-medium text-slate-700">{doc.type}</p>
-                                <p className="text-xs text-slate-500">
-                                  Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}
-                                </p>
+                        {verificationResult.record.documents.map(
+                          (doc, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <FileText className="h-5 w-5 text-blue-600" />
+                                <div>
+                                  <p className="text-sm font-medium text-slate-700">
+                                    {doc.type}
+                                  </p>
+                                  <p className="text-xs text-slate-500">
+                                    Uploaded:{" "}
+                                    {new Date(
+                                      doc.uploadedAt,
+                                    ).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Download className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                          ),
+                        )}
                       </div>
                     </CardContent>
                   </Card>

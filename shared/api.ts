@@ -18,7 +18,7 @@ export interface DemoResponse {
 // KYC Document Types
 export interface KYCDocument {
   id: string;
-  type: 'PAN' | 'AADHAAR' | 'PASSPORT' | 'DRIVING_LICENSE' | 'VOTER_ID';
+  type: "PAN" | "AADHAAR" | "PASSPORT" | "DRIVING_LICENSE" | "VOTER_ID";
   documentHash: string;
   ipfsHash?: string;
   uploadedAt: string;
@@ -41,8 +41,8 @@ export interface KYCRecord {
     country: string;
   };
   documents: KYCDocument[];
-  status: 'PENDING' | 'VERIFIED' | 'REJECTED' | 'EXPIRED';
-  verificationLevel: 'L1' | 'L2' | 'L3';
+  status: "PENDING" | "VERIFIED" | "REJECTED" | "EXPIRED";
+  verificationLevel: "L1" | "L2" | "L3";
   blockchainTxHash?: string;
   createdAt: string;
   updatedAt: string;
@@ -80,7 +80,7 @@ export interface KYCVerificationResponse {
   success: boolean;
   record?: KYCRecord;
   message: string;
-  verificationLevel?: 'L1' | 'L2' | 'L3';
+  verificationLevel?: "L1" | "L2" | "L3";
   blockchainVerified: boolean;
 }
 
@@ -88,7 +88,7 @@ export interface KYCVerificationResponse {
 export interface KYCHistoryEntry {
   id: string;
   kycId: string;
-  action: 'CREATED' | 'UPDATED' | 'VERIFIED' | 'REJECTED' | 'RESUBMITTED';
+  action: "CREATED" | "UPDATED" | "VERIFIED" | "REJECTED" | "RESUBMITTED";
   performedBy: string;
   performedAt: string;
   blockchainTxHash: string;
@@ -110,9 +110,9 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
-  role: 'USER' | 'VERIFIER' | 'ADMIN';
+  role: "USER" | "VERIFIER" | "ADMIN";
   isVerified: boolean;
-  kycStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  kycStatus?: "PENDING" | "VERIFIED" | "REJECTED";
 }
 
 export interface LoginRequest {
@@ -124,7 +124,7 @@ export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
-  role?: 'USER' | 'VERIFIER';
+  role?: "USER" | "VERIFIER";
 }
 
 export interface AuthResponse {

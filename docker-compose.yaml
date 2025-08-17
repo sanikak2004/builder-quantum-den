@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-version: '3.8'
+version: "3.8"
 
 volumes:
   orderer.ekyc.com:
@@ -17,7 +17,6 @@ networks:
     name: ekyc_network
 
 services:
-
   couchdb0:
     container_name: couchdb0
     image: couchdb:3.3.2
@@ -71,10 +70,10 @@ services:
     working_dir: /root
     command: orderer
     volumes:
-        - ./fabric-config/system-genesis-block/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
-        - ./fabric-config/organizations/ordererOrganizations/ekyc.com/orderers/orderer.ekyc.com/msp:/var/hyperledger/orderer/msp
-        - ./fabric-config/organizations/ordererOrganizations/ekyc.com/orderers/orderer.ekyc.com/tls:/var/hyperledger/orderer/tls
-        - orderer.ekyc.com:/var/hyperledger/production/orderer
+      - ./fabric-config/system-genesis-block/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+      - ./fabric-config/organizations/ordererOrganizations/ekyc.com/orderers/orderer.ekyc.com/msp:/var/hyperledger/orderer/msp
+      - ./fabric-config/organizations/ordererOrganizations/ekyc.com/orderers/orderer.ekyc.com/tls:/var/hyperledger/orderer/tls
+      - orderer.ekyc.com:/var/hyperledger/production/orderer
     ports:
       - "7050:7050"
       - "7053:7053"
@@ -113,8 +112,8 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     volumes:
-        - ./fabric-config/organizations/peerOrganizations/org1.ekyc.com/peers/peer0.org1.ekyc.com:/etc/hyperledger/fabric
-        - peer0.org1.ekyc.com:/var/hyperledger/production
+      - ./fabric-config/organizations/peerOrganizations/org1.ekyc.com/peers/peer0.org1.ekyc.com:/etc/hyperledger/fabric
+      - peer0.org1.ekyc.com:/var/hyperledger/production
     working_dir: /root
     command: peer node start
     ports:
@@ -156,8 +155,8 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     volumes:
-        - ./fabric-config/organizations/peerOrganizations/org2.ekyc.com/peers/peer0.org2.ekyc.com:/etc/hyperledger/fabric
-        - peer0.org2.ekyc.com:/var/hyperledger/production
+      - ./fabric-config/organizations/peerOrganizations/org2.ekyc.com/peers/peer0.org2.ekyc.com:/etc/hyperledger/fabric
+      - peer0.org2.ekyc.com:/var/hyperledger/production
     working_dir: /root
     command: peer node start
     ports:
@@ -182,9 +181,9 @@ services:
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: /bin/bash
     volumes:
-        - ./fabric-config/organizations:/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations
-        - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
-        - ./chaincode:/opt/gopath/src/github.com/hyperledger/fabric/peer/chaincode
+      - ./fabric-config/organizations:/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations
+      - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
+      - ./chaincode:/opt/gopath/src/github.com/hyperledger/fabric/peer/chaincode
     depends_on:
       - peer0.org1.ekyc.com
       - peer0.org2.ekyc.com

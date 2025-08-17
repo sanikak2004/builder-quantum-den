@@ -26,24 +26,28 @@ A complete **electronic Know Your Customer (eKYC) system** built on **Hyperledge
 ## ✨ Features
 
 ### 🔐 Blockchain Security
+
 - **Immutable Records**: All KYC data hashes stored on Hyperledger Fabric
 - **Consensus Mechanism**: Multi-peer validation with orderer consensus
 - **Audit Trail**: Complete history of all KYC actions recorded on-chain
 - **Smart Contracts**: Automated verification and validation logic
 
 ### 📄 Document Management
+
 - **IPFS Storage**: Encrypted documents stored off-chain on IPFS
 - **Hash Verification**: Document integrity verified via blockchain hashes
 - **Multi-format Support**: PDF, JPG, PNG document uploads
 - **Secure Access**: Role-based document access control
 
 ### 🌐 User Experience
+
 - **Modern Interface**: React 18 with TailwindCSS and Shadcn/UI
 - **Real-time Updates**: Live status tracking and notifications
 - **Responsive Design**: Mobile-first responsive design
 - **Multi-step Forms**: Guided KYC submission process
 
 ### 🔍 Verification System
+
 - **Instant Verification**: Real-time KYC status checking
 - **Multi-level KYC**: L1, L2, L3 verification levels
 - **Blockchain Proof**: Cryptographic verification of authenticity
@@ -80,6 +84,7 @@ chmod +x scripts/*.sh
 ```
 
 This script will:
+
 - ✅ Generate crypto material for organizations
 - ✅ Start Hyperledger Fabric network (orderer, peers, CouchDB)
 - ✅ Create and configure the eKYC channel
@@ -94,7 +99,7 @@ Once deployment completes, access:
 
 - **🌐 Frontend**: http://localhost (Main eKYC interface)
 - **🔗 API**: http://localhost:8080/api (REST API endpoints)
-- **📊 CouchDB**: http://localhost:5984/_utils (Database admin)
+- **📊 CouchDB**: http://localhost:5984/\_utils (Database admin)
 - **📁 IPFS**: http://localhost:8080 (IPFS web interface)
 
 ## 📋 Project Structure
@@ -132,6 +137,7 @@ ekyc-blockchain-system/
 ## 🔧 API Endpoints
 
 ### KYC Operations
+
 - `POST /api/kyc/submit` - Submit new KYC application
 - `GET /api/kyc/verify?id={kycId}` - Verify KYC status
 - `GET /api/kyc/verify?pan={panNumber}` - Verify by PAN
@@ -140,6 +146,7 @@ ekyc-blockchain-system/
 - `GET /api/kyc/stats` - Get system statistics
 
 ### System Health
+
 - `GET /api/ping` - Health check endpoint
 
 ## ��️ Hyperledger Fabric Network
@@ -147,15 +154,18 @@ ekyc-blockchain-system/
 ### Network Components
 
 #### Organizations
+
 - **Orderer Org**: `ekyc.com` - Consensus management
 - **Org1**: `org1.ekyc.com` - KYC verification entity
 - **Org2**: `org2.ekyc.com` - Regulatory compliance entity
 
 #### Peers
+
 - **peer0.org1.ekyc.com:7051** - Primary peer for Org1
 - **peer0.org2.ekyc.com:9051** - Primary peer for Org2
 
 #### Services
+
 - **Orderer**: `orderer.ekyc.com:7050` - Transaction ordering
 - **CouchDB**: State database for rich queries
 - **CLI**: Command-line interface for network operations
@@ -180,12 +190,14 @@ VerifyDocumentHash(kycID, documentHash string) (bool, error)
 ## 🔒 Security Features
 
 ### Data Protection
+
 - **On-chain**: Only document hashes and metadata
 - **Off-chain**: Encrypted documents on IPFS
 - **Access Control**: Role-based permissions
 - **Audit Trail**: Immutable transaction history
 
 ### Network Security
+
 - **TLS Encryption**: All peer-to-peer communication
 - **Certificate Authority**: PKI-based identity management
 - **Multi-signature**: Consensus-based approvals
@@ -228,6 +240,7 @@ COUCHDB_URL=http://admin:adminpw@localhost:5984
 ## 🚢 Deployment
 
 ### Local Deployment
+
 ```bash
 ./scripts/deploy-network.sh
 ```
@@ -235,6 +248,7 @@ COUCHDB_URL=http://admin:adminpw@localhost:5984
 ### Production Deployment
 
 #### Using Docker Swarm
+
 ```bash
 # Initialize swarm
 docker swarm init
@@ -244,6 +258,7 @@ docker stack deploy -c docker-compose.prod.yaml ekyc
 ```
 
 #### Using Kubernetes
+
 ```bash
 # Generate K8s manifests
 kompose convert -f docker-compose.yaml
@@ -255,6 +270,7 @@ kubectl apply -f ./k8s/
 ### Cloud Deployment
 
 The system supports deployment on:
+
 - **AWS** (using ECS/EKS)
 - **Azure** (using Container Instances/AKS)
 - **GCP** (using Cloud Run/GKE)
@@ -265,11 +281,13 @@ For cloud deployment guides, see `/docs/deployment/`
 ## 📊 Monitoring
 
 ### Health Checks
+
 - Application: `GET /api/ping`
 - Fabric Network: `docker exec cli peer channel list`
 - IPFS: `curl http://localhost:5001/api/v0/version`
 
 ### Logs
+
 ```bash
 # Application logs
 docker logs ekyc_application
@@ -282,6 +300,7 @@ docker logs orderer.ekyc.com
 ```
 
 ### Metrics
+
 - Prometheus metrics exposed on `/metrics`
 - Grafana dashboards for visualization
 - Custom KYC business metrics
@@ -289,11 +308,13 @@ docker logs orderer.ekyc.com
 ## 🧪 Testing
 
 ### Unit Tests
+
 ```bash
 pnpm test
 ```
 
 ### Integration Tests
+
 ```bash
 # Test chaincode
 cd chaincode && go test ./...
@@ -303,6 +324,7 @@ pnpm test:api
 ```
 
 ### Load Testing
+
 ```bash
 # Install k6
 brew install k6
@@ -316,6 +338,7 @@ k6 run tests/load/api-load-test.js
 ### Common Issues
 
 #### Network Won't Start
+
 ```bash
 # Check Docker
 docker info
@@ -326,6 +349,7 @@ docker info
 ```
 
 #### Chaincode Installation Fails
+
 ```bash
 # Check Go installation
 go version
@@ -335,6 +359,7 @@ cd chaincode && go build
 ```
 
 #### IPFS Connection Issues
+
 ```bash
 # Check IPFS daemon
 docker logs ipfs_node
@@ -344,6 +369,7 @@ rm -rf ipfs_data && ./scripts/deploy-network.sh
 ```
 
 ### Debug Mode
+
 ```bash
 # Enable debug logging
 export FABRIC_LOGGING_SPEC=DEBUG
@@ -359,6 +385,7 @@ export FABRIC_LOGGING_SPEC=DEBUG
 5. Submit a Pull Request
 
 ### Development Guidelines
+
 - Follow TypeScript best practices
 - Write comprehensive tests
 - Update documentation for new features
@@ -388,18 +415,21 @@ This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENS
 ## 🎯 Roadmap
 
 ### Phase 1 (Current)
+
 - ✅ Basic KYC submission and verification
 - ✅ Hyperledger Fabric integration
 - ✅ IPFS document storage
 - ✅ React frontend
 
 ### Phase 2 (Next)
+
 - 🔄 Advanced authentication (OAuth, SSO)
 - 🔄 Role-based access control
 - 🔄 Advanced analytics dashboard
 - 🔄 Mobile application
 
 ### Phase 3 (Future)
+
 - 📋 AI-powered document verification
 - 📋 Cross-border KYC sharing
 - 📋 Regulatory reporting tools

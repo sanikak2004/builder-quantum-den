@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Shield, 
-  History, 
-  Search, 
+import {
+  Shield,
+  History,
+  Search,
   ArrowLeft,
   Calendar,
   User,
@@ -23,20 +23,20 @@ import {
   ExternalLink,
   Filter,
   Download,
-  Eye
+  Eye,
 } from "lucide-react";
 import { KYCHistoryEntry, ApiResponse } from "@shared/api";
 
 export default function KYCHistory() {
   const [searchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('id') || "");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("id") || "");
   const [historyEntries, setHistoryEntries] = useState<KYCHistoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [filterAction, setFilterAction] = useState<string>('all');
+  const [filterAction, setFilterAction] = useState<string>("all");
 
   useEffect(() => {
-    if (searchParams.get('id')) {
+    if (searchParams.get("id")) {
       fetchHistory();
     }
   }, []);
@@ -53,11 +53,11 @@ export default function KYCHistory() {
 
     try {
       const params = new URLSearchParams({
-        kycId: searchQuery.trim()
+        kycId: searchQuery.trim(),
       });
 
-      if (filterAction !== 'all') {
-        params.append('action', filterAction);
+      if (filterAction !== "all") {
+        params.append("action", filterAction);
       }
 
       const response = await fetch(`/api/kyc/history?${params}`);
@@ -66,10 +66,10 @@ export default function KYCHistory() {
       if (result.success && result.data) {
         setHistoryEntries(result.data);
       } else {
-        setSearchError(result.message || 'Failed to fetch history');
+        setSearchError(result.message || "Failed to fetch history");
       }
     } catch (error) {
-      setSearchError('Network error. Please try again.');
+      setSearchError("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -77,32 +77,32 @@ export default function KYCHistory() {
 
   const getActionColor = (action: string) => {
     switch (action) {
-      case 'CREATED':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'UPDATED':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'VERIFIED':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'REJECTED':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'RESUBMITTED':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case "CREATED":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "UPDATED":
+        return "bg-orange-100 text-orange-800 border-orange-200";
+      case "VERIFIED":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "REJECTED":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "RESUBMITTED":
+        return "bg-purple-100 text-purple-800 border-purple-200";
       default:
-        return 'bg-slate-100 text-slate-800 border-slate-200';
+        return "bg-slate-100 text-slate-800 border-slate-200";
     }
   };
 
   const getActionIcon = (action: string) => {
     switch (action) {
-      case 'CREATED':
+      case "CREATED":
         return <FileText className="h-4 w-4" />;
-      case 'UPDATED':
+      case "UPDATED":
         return <AlertTriangle className="h-4 w-4" />;
-      case 'VERIFIED':
+      case "VERIFIED":
         return <CheckCircle className="h-4 w-4" />;
-      case 'REJECTED':
+      case "REJECTED":
         return <XCircle className="h-4 w-4" />;
-      case 'RESUBMITTED':
+      case "RESUBMITTED":
         return <FileText className="h-4 w-4" />;
       default:
         return <Clock className="h-4 w-4" />;
@@ -113,27 +113,35 @@ export default function KYCHistory() {
     const date = new Date(dateString);
     return {
       date: date.toLocaleDateString(),
-      time: date.toLocaleTimeString()
+      time: date.toLocaleTimeString(),
     };
   };
 
   const exportHistory = () => {
     const csvContent = [
-      ['Timestamp', 'Action', 'Performed By', 'Transaction Hash', 'Remarks'].join(','),
-      ...historyEntries.map(entry => [
-        entry.performedAt,
-        entry.action,
-        entry.performedBy,
-        entry.blockchainTxHash,
-        entry.remarks || ''
-      ].join(','))
-    ].join('\n');
+      [
+        "Timestamp",
+        "Action",
+        "Performed By",
+        "Transaction Hash",
+        "Remarks",
+      ].join(","),
+      ...historyEntries.map((entry) =>
+        [
+          entry.performedAt,
+          entry.action,
+          entry.performedBy,
+          entry.blockchainTxHash,
+          entry.remarks || "",
+        ].join(","),
+      ),
+    ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `kyc-history-${searchQuery}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `kyc-history-${searchQuery}-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -149,8 +157,12 @@ export default function KYCHistory() {
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-800">eKYC Verify</h1>
-                <p className="text-xs text-slate-500">KYC History & Audit Trail</p>
+                <h1 className="text-xl font-bold text-slate-800">
+                  eKYC Verify
+                </h1>
+                <p className="text-xs text-slate-500">
+                  KYC History & Audit Trail
+                </p>
               </div>
             </div>
             <Link to="/">
@@ -183,7 +195,7 @@ export default function KYCHistory() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Enter KYC ID to view history"
-                    onKeyPress={(e) => e.key === 'Enter' && fetchHistory()}
+                    onKeyPress={(e) => e.key === "Enter" && fetchHistory()}
                   />
                 </div>
                 <div>
@@ -226,7 +238,9 @@ export default function KYCHistory() {
               {searchError && (
                 <Alert className="border-red-200 bg-red-50">
                   <AlertTriangle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-red-800">{searchError}</AlertDescription>
+                  <AlertDescription className="text-red-800">
+                    {searchError}
+                  </AlertDescription>
                 </Alert>
               )}
             </CardContent>
@@ -244,8 +258,14 @@ export default function KYCHistory() {
                       Audit Trail Summary
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">{historyEntries.length} entries</Badge>
-                      <Button variant="outline" size="sm" onClick={exportHistory}>
+                      <Badge variant="outline">
+                        {historyEntries.length} entries
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={exportHistory}
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         Export
                       </Button>
@@ -254,12 +274,24 @@ export default function KYCHistory() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {['CREATED', 'UPDATED', 'VERIFIED', 'REJECTED', 'RESUBMITTED'].map(action => {
-                      const count = historyEntries.filter(entry => entry.action === action).length;
+                    {[
+                      "CREATED",
+                      "UPDATED",
+                      "VERIFIED",
+                      "REJECTED",
+                      "RESUBMITTED",
+                    ].map((action) => {
+                      const count = historyEntries.filter(
+                        (entry) => entry.action === action,
+                      ).length;
                       return (
                         <div key={action} className="text-center">
-                          <div className="text-2xl font-bold text-slate-800">{count}</div>
-                          <div className="text-sm text-slate-500 capitalize">{action.toLowerCase()}</div>
+                          <div className="text-2xl font-bold text-slate-800">
+                            {count}
+                          </div>
+                          <div className="text-sm text-slate-500 capitalize">
+                            {action.toLowerCase()}
+                          </div>
                         </div>
                       );
                     })}
@@ -280,10 +312,15 @@ export default function KYCHistory() {
                     {historyEntries.map((entry, index) => {
                       const { date, time } = formatDate(entry.performedAt);
                       return (
-                        <div key={entry.id} className="flex items-start space-x-4">
+                        <div
+                          key={entry.id}
+                          className="flex items-start space-x-4"
+                        >
                           {/* Timeline indicator */}
                           <div className="flex flex-col items-center">
-                            <div className={`p-2 rounded-full ${getActionColor(entry.action).split(' ')[0]} border-2 border-white shadow-sm`}>
+                            <div
+                              className={`p-2 rounded-full ${getActionColor(entry.action).split(" ")[0]} border-2 border-white shadow-sm`}
+                            >
                               {getActionIcon(entry.action)}
                             </div>
                             {index < historyEntries.length - 1 && (
@@ -296,7 +333,9 @@ export default function KYCHistory() {
                             <div className="bg-slate-50 rounded-lg p-4">
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex items-center gap-2">
-                                  <Badge className={getActionColor(entry.action)}>
+                                  <Badge
+                                    className={getActionColor(entry.action)}
+                                  >
                                     {entry.action}
                                   </Badge>
                                   <span className="text-sm text-slate-600">
@@ -310,46 +349,64 @@ export default function KYCHistory() {
                               </div>
 
                               {entry.remarks && (
-                                <p className="text-sm text-slate-700 mb-3">{entry.remarks}</p>
+                                <p className="text-sm text-slate-700 mb-3">
+                                  {entry.remarks}
+                                </p>
                               )}
 
                               {/* Transaction Details */}
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                                 <div>
-                                  <p className="text-slate-500 mb-1">Transaction Hash</p>
+                                  <p className="text-slate-500 mb-1">
+                                    Transaction Hash
+                                  </p>
                                   <div className="flex items-center gap-2">
                                     <code className="font-mono text-slate-600 break-all">
-                                      {entry.blockchainTxHash.substring(0, 20)}...
+                                      {entry.blockchainTxHash.substring(0, 20)}
+                                      ...
                                     </code>
-                                    <Button variant="ghost" size="sm" className="p-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="p-1"
+                                    >
                                       <ExternalLink className="h-3 w-3" />
                                     </Button>
                                   </div>
                                 </div>
                                 <div>
-                                  <p className="text-slate-500 mb-1">Entry ID</p>
-                                  <code className="font-mono text-slate-600">{entry.id}</code>
+                                  <p className="text-slate-500 mb-1">
+                                    Entry ID
+                                  </p>
+                                  <code className="font-mono text-slate-600">
+                                    {entry.id}
+                                  </code>
                                 </div>
                               </div>
 
                               {/* Additional Details */}
-                              {entry.details && Object.keys(entry.details).length > 0 && (
-                                <div className="mt-3 pt-3 border-t border-slate-200">
-                                  <details className="text-xs">
-                                    <summary className="cursor-pointer text-slate-600 hover:text-slate-800">
-                                      <span className="inline-flex items-center gap-1">
-                                        <Eye className="h-3 w-3" />
-                                        View Details
-                                      </span>
-                                    </summary>
-                                    <div className="mt-2 bg-white rounded p-2 border">
-                                      <pre className="text-xs text-slate-600 overflow-x-auto">
-                                        {JSON.stringify(entry.details, null, 2)}
-                                      </pre>
-                                    </div>
-                                  </details>
-                                </div>
-                              )}
+                              {entry.details &&
+                                Object.keys(entry.details).length > 0 && (
+                                  <div className="mt-3 pt-3 border-t border-slate-200">
+                                    <details className="text-xs">
+                                      <summary className="cursor-pointer text-slate-600 hover:text-slate-800">
+                                        <span className="inline-flex items-center gap-1">
+                                          <Eye className="h-3 w-3" />
+                                          View Details
+                                        </span>
+                                      </summary>
+                                      <div className="mt-2 bg-white rounded p-2 border">
+                                        <pre className="text-xs text-slate-600 overflow-x-auto">
+                                          {JSON.stringify(
+                                            entry.details,
+                                            null,
+                                            2,
+                                          )}
+                                        </pre>
+                                      </div>
+                                    </details>
+                                  </div>
+                                )}
                             </div>
                           </div>
                         </div>
@@ -362,27 +419,36 @@ export default function KYCHistory() {
           )}
 
           {/* Empty State */}
-          {!isLoading && historyEntries.length === 0 && searchQuery && !searchError && (
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardContent className="py-12 text-center">
-                <History className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-slate-700 mb-2">No History Found</h3>
-                <p className="text-slate-500 mb-6">
-                  No audit trail entries found for the specified KYC ID and filters.
-                </p>
-                <div className="flex justify-center gap-4">
-                  <Button variant="outline" onClick={() => setSearchQuery("")}>
-                    Clear Search
-                  </Button>
-                  <Link to="/verify">
-                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-600">
-                      Verify KYC Status
+          {!isLoading &&
+            historyEntries.length === 0 &&
+            searchQuery &&
+            !searchError && (
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="py-12 text-center">
+                  <History className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-slate-700 mb-2">
+                    No History Found
+                  </h3>
+                  <p className="text-slate-500 mb-6">
+                    No audit trail entries found for the specified KYC ID and
+                    filters.
+                  </p>
+                  <div className="flex justify-center gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setSearchQuery("")}
+                    >
+                      Clear Search
                     </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                    <Link to="/verify">
+                      <Button className="bg-gradient-to-r from-blue-600 to-indigo-600">
+                        Verify KYC Status
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
           {/* Quick Actions */}
           {!isLoading && historyEntries.length === 0 && !searchQuery && (

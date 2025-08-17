@@ -5,19 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Shield, 
-  Mail, 
-  Lock, 
-  User, 
+import {
+  Shield,
+  Mail,
+  Lock,
+  User,
   ArrowLeft,
   Loader2,
   Eye,
-  EyeOff
+  EyeOff,
 } from "lucide-react";
 
 export default function Auth() {
-  const { mode } = useParams<{ mode: 'login' | 'register' }>();
+  const { mode } = useParams<{ mode: "login" | "register" }>();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -25,14 +25,14 @@ export default function Auth() {
     name: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
 
-  if (!mode || !['login', 'register'].includes(mode)) {
+  if (!mode || !["login", "register"].includes(mode)) {
     return <Navigate to="/auth/login" replace />;
   }
 
-  const isLogin = mode === 'login';
+  const isLogin = mode === "login";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,14 +42,16 @@ export default function Auth() {
     // Placeholder implementation
     setTimeout(() => {
       setIsLoading(false);
-      setError("Authentication is not yet implemented. This is a placeholder page.");
+      setError(
+        "Authentication is not yet implemented. This is a placeholder page.",
+      );
     }, 1000);
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -64,8 +66,12 @@ export default function Auth() {
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-800">eKYC Verify</h1>
-                <p className="text-xs text-slate-500">{isLogin ? 'Sign In' : 'Create Account'}</p>
+                <h1 className="text-xl font-bold text-slate-800">
+                  eKYC Verify
+                </h1>
+                <p className="text-xs text-slate-500">
+                  {isLogin ? "Sign In" : "Create Account"}
+                </p>
               </div>
             </div>
             <Link to="/">
@@ -85,13 +91,12 @@ export default function Auth() {
             <CardHeader className="text-center">
               <CardTitle className="flex items-center justify-center gap-2 text-2xl">
                 <User className="h-6 w-6 text-blue-600" />
-                {isLogin ? 'Welcome Back' : 'Create Account'}
+                {isLogin ? "Welcome Back" : "Create Account"}
               </CardTitle>
               <p className="text-slate-600">
-                {isLogin 
-                  ? 'Sign in to access your KYC dashboard' 
-                  : 'Join our secure blockchain identity platform'
-                }
+                {isLogin
+                  ? "Sign in to access your KYC dashboard"
+                  : "Join our secure blockchain identity platform"}
               </p>
             </CardHeader>
             <CardContent>
@@ -103,7 +108,9 @@ export default function Auth() {
                       id="name"
                       type="text"
                       value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("name", e.target.value)
+                      }
                       placeholder="Enter your full name"
                       required={!isLogin}
                     />
@@ -118,7 +125,9 @@ export default function Auth() {
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("email", e.target.value)
+                      }
                       placeholder="Enter your email"
                       className="pl-10"
                       required
@@ -134,7 +143,9 @@ export default function Auth() {
                       id="password"
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
-                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("password", e.target.value)
+                      }
                       placeholder="Enter your password"
                       className="pl-10 pr-10"
                       required
@@ -144,7 +155,11 @@ export default function Auth() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -158,7 +173,9 @@ export default function Auth() {
                         id="confirmPassword"
                         type="password"
                         value={formData.confirmPassword}
-                        onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("confirmPassword", e.target.value)
+                        }
                         placeholder="Confirm your password"
                         className="pl-10"
                         required={!isLogin}
@@ -169,7 +186,9 @@ export default function Auth() {
 
                 {error && (
                   <Alert className="border-red-200 bg-red-50">
-                    <AlertDescription className="text-red-800">{error}</AlertDescription>
+                    <AlertDescription className="text-red-800">
+                      {error}
+                    </AlertDescription>
                   </Alert>
                 )}
 
@@ -181,21 +200,25 @@ export default function Auth() {
                   {isLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {isLogin ? 'Signing In...' : 'Creating Account...'}
+                      {isLogin ? "Signing In..." : "Creating Account..."}
                     </>
+                  ) : isLogin ? (
+                    "Sign In"
                   ) : (
-                    isLogin ? 'Sign In' : 'Create Account'
+                    "Create Account"
                   )}
                 </Button>
 
                 <div className="text-center pt-4">
                   <p className="text-sm text-slate-600">
-                    {isLogin ? "Don't have an account? " : "Already have an account? "}
-                    <Link 
-                      to={isLogin ? "/auth/register" : "/auth/login"} 
+                    {isLogin
+                      ? "Don't have an account? "
+                      : "Already have an account? "}
+                    <Link
+                      to={isLogin ? "/auth/register" : "/auth/login"}
                       className="text-blue-600 hover:text-blue-700 font-medium"
                     >
-                      {isLogin ? 'Sign up' : 'Sign in'}
+                      {isLogin ? "Sign up" : "Sign in"}
                     </Link>
                   </p>
                 </div>
@@ -207,10 +230,13 @@ export default function Auth() {
           <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg mt-6">
             <CardContent className="pt-6 text-center">
               <Shield className="h-8 w-8 text-blue-600 mx-auto mb-3" />
-              <h3 className="font-medium text-slate-700 mb-2">Blockchain Security</h3>
+              <h3 className="font-medium text-slate-700 mb-2">
+                Blockchain Security
+              </h3>
               <p className="text-sm text-slate-600">
-                Your identity data is protected by enterprise-grade blockchain encryption 
-                and stored across distributed networks for maximum security.
+                Your identity data is protected by enterprise-grade blockchain
+                encryption and stored across distributed networks for maximum
+                security.
               </p>
             </CardContent>
           </Card>
