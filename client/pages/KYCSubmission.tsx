@@ -94,6 +94,7 @@ export default function KYCSubmission() {
           formData.email &&
           formData.phone &&
           formData.pan &&
+          /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan) &&
           formData.dateOfBirth
         );
       case 2:
