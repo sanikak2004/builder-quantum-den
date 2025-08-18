@@ -67,7 +67,7 @@ export default function Auth() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-slate-800">
-                  eKYC Verify
+                  Authen Ledger
                 </h1>
                 <p className="text-xs text-slate-500">
                   {isLogin ? "Sign In" : "Create Account"}
