@@ -177,7 +177,7 @@ export default function AdminKYC() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-slate-800">
-                  Admin Panel
+                  Authen Ledger - Admin Panel
                 </h1>
                 <p className="text-xs text-slate-500">
                   KYC Verification Dashboard
