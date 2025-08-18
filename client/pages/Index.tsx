@@ -72,7 +72,7 @@ export default function Index() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-slate-800">
-                  eKYC Verify
+                  Authen Ledger
                 </h1>
                 <p className="text-xs text-slate-500">
                   Blockchain-Powered Identity Verification
@@ -119,13 +119,13 @@ export default function Index() {
             Powered by Hyperledger Fabric
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-slate-800 mb-6 leading-tight">
-            Secure Identity Verification
+            Authen Ledger
             <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent block">
-              On Blockchain
+              Blockchain Authentication
             </span>
           </h1>
           <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Experience the future of digital identity with our blockchain-based
+            Experience the future of digital identity with Authen Ledger's blockchain-based
             eKYC system. Immutable records, instant verification, and complete
             audit trails powered by Hyperledger Fabric technology.
           </p>
@@ -212,7 +212,7 @@ export default function Index() {
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-800 mb-4">
-              Why Choose Our eKYC Platform?
+              Why Choose Authen Ledger?
             </h2>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
               Built on enterprise-grade blockchain technology for maximum
@@ -418,10 +418,10 @@ export default function Index() {
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-lg">
                   <Shield className="h-5 w-5 text-white" />
                 </div>
-                <h3 className="text-lg font-bold">eKYC Verify</h3>
+                <h3 className="text-lg font-bold">Authen Ledger</h3>
               </div>
               <p className="text-slate-400 text-sm">
-                Blockchain-powered identity verification platform built on
+                Authen Ledger - Blockchain-powered identity verification platform built on
                 Hyperledger Fabric.
               </p>
             </div>
@@ -497,7 +497,7 @@ export default function Index() {
           </div>
           <div className="border-t border-slate-700 mt-8 pt-8 text-center text-slate-400 text-sm">
             <p>
-              &copy; 2024 eKYC Verify. All rights reserved. Powered by
+              &copy; 2024 Authen Ledger. All rights reserved. Powered by
               Hyperledger Fabric.
             </p>
           </div>
