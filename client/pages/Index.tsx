@@ -125,9 +125,10 @@ export default function Index() {
             </span>
           </h1>
           <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Experience the future of digital identity with Authen Ledger's blockchain-based
-            eKYC system. Immutable records, instant verification, and complete
-            audit trails powered by Hyperledger Fabric technology.
+            Experience the future of digital identity with Authen Ledger's
+            blockchain-based eKYC system. Immutable records, instant
+            verification, and complete audit trails powered by Hyperledger
+            Fabric technology.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/submit">
@@ -421,8 +422,8 @@ export default function Index() {
                 <h3 className="text-lg font-bold">Authen Ledger</h3>
               </div>
               <p className="text-slate-400 text-sm">
-                Authen Ledger - Blockchain-powered identity verification platform built on
-                Hyperledger Fabric.
+                Authen Ledger - Blockchain-powered identity verification
+                platform built on Hyperledger Fabric.
               </p>
             </div>
             <div>

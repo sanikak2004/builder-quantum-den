@@ -63,27 +63,27 @@ const sampleRecords = [
       city: "Mumbai",
       state: "Maharashtra",
       pincode: "400001",
-      country: "India"
+      country: "India",
     },
     documents: [
       {
         type: "PAN Card",
         documentHash: "hash_pan_" + crypto.randomBytes(16).toString("hex"),
         ipfsUrl: "https://ipfs.io/ipfs/QmExample1",
-        uploadedAt: new Date(Date.now() - 86400000).toISOString()
+        uploadedAt: new Date(Date.now() - 86400000).toISOString(),
       },
       {
         type: "Aadhaar Card",
         documentHash: "hash_aadhaar_" + crypto.randomBytes(16).toString("hex"),
         ipfsUrl: "https://ipfs.io/ipfs/QmExample2",
-        uploadedAt: new Date(Date.now() - 86400000).toISOString()
-      }
+        uploadedAt: new Date(Date.now() - 86400000).toISOString(),
+      },
     ],
     status: "PENDING",
     verificationLevel: "L1",
     blockchainTxHash: crypto.randomBytes(32).toString("hex"),
     createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString()
+    updatedAt: new Date(Date.now() - 86400000).toISOString(),
   },
   {
     id: "kyc_demo_002",
@@ -98,21 +98,21 @@ const sampleRecords = [
       city: "Delhi",
       state: "Delhi",
       pincode: "110001",
-      country: "India"
+      country: "India",
     },
     documents: [
       {
         type: "PAN Card",
         documentHash: "hash_pan_" + crypto.randomBytes(16).toString("hex"),
         ipfsUrl: "https://ipfs.io/ipfs/QmExample3",
-        uploadedAt: new Date(Date.now() - 172800000).toISOString()
-      }
+        uploadedAt: new Date(Date.now() - 172800000).toISOString(),
+      },
     ],
     status: "PENDING",
     verificationLevel: "L1",
     blockchainTxHash: crypto.randomBytes(32).toString("hex"),
     createdAt: new Date(Date.now() - 172800000).toISOString(),
-    updatedAt: new Date(Date.now() - 172800000).toISOString()
+    updatedAt: new Date(Date.now() - 172800000).toISOString(),
   },
   {
     id: "kyc_demo_003",
@@ -127,21 +127,21 @@ const sampleRecords = [
       city: "Bangalore",
       state: "Karnataka",
       pincode: "560001",
-      country: "India"
+      country: "India",
     },
     documents: [
       {
         type: "PAN Card",
         documentHash: "hash_pan_" + crypto.randomBytes(16).toString("hex"),
         ipfsUrl: "https://ipfs.io/ipfs/QmExample4",
-        uploadedAt: new Date(Date.now() - 259200000).toISOString()
+        uploadedAt: new Date(Date.now() - 259200000).toISOString(),
       },
       {
         type: "Bank Statement",
         documentHash: "hash_bank_" + crypto.randomBytes(16).toString("hex"),
         ipfsUrl: "https://ipfs.io/ipfs/QmExample5",
-        uploadedAt: new Date(Date.now() - 259200000).toISOString()
-      }
+        uploadedAt: new Date(Date.now() - 259200000).toISOString(),
+      },
     ],
     status: "VERIFIED",
     verificationLevel: "L2",
@@ -151,18 +151,20 @@ const sampleRecords = [
     verifiedAt: new Date(Date.now() - 86400000).toISOString(),
     remarks: "✅ APPROVED: All documents verified successfully",
     createdAt: new Date(Date.now() - 259200000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString()
-  }
+    updatedAt: new Date(Date.now() - 86400000).toISOString(),
+  },
 ];
 
 // Initialize sample data
-sampleRecords.forEach(record => {
+sampleRecords.forEach((record) => {
   kycRecords.set(record.id, record);
 });
 
-console.log(`🚀 Authen Ledger initialized with ${sampleRecords.length} sample KYC records`);
+console.log(
+  `🚀 Authen Ledger initialized with ${sampleRecords.length} sample KYC records`,
+);
 console.log("📋 Sample KYC IDs for testing:");
-sampleRecords.forEach(record => {
+sampleRecords.forEach((record) => {
   console.log(`   - ${record.id} (${record.name}) - Status: ${record.status}`);
 });
 
@@ -551,7 +553,9 @@ export const createServer = () => {
         });
       }
 
-      console.log(`🔄 BLOCKCHAIN UPDATE: Processing ${status} for KYC ID: ${id}`);
+      console.log(
+        `🔄 BLOCKCHAIN UPDATE: Processing ${status} for KYC ID: ${id}`,
+      );
 
       // Simulate blockchain transaction for status update (permanent storage)
       const statusUpdateData = {
@@ -563,7 +567,10 @@ export const createServer = () => {
       };
 
       // Record status update on blockchain (mock)
-      const blockchainTx = await MockBlockchainService.submitKYC(statusUpdateData, []);
+      const blockchainTx = await MockBlockchainService.submitKYC(
+        statusUpdateData,
+        [],
+      );
       console.log(`✅ BLOCKCHAIN RECORDED: TX Hash ${blockchainTx.txHash}`);
 
       // Update record with blockchain transaction
