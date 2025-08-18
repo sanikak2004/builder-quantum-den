@@ -183,7 +183,7 @@ export default function KYCHistory() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-slate-800">
-                  eKYC Verify
+                  Authen Ledger
                 </h1>
                 <p className="text-xs text-slate-500">
                   KYC History & Audit Trail
