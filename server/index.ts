@@ -48,7 +48,7 @@ const KYCSubmissionSchema = z.object({
 // Mock in-memory storage (replace with actual database)
 const kycRecords = new Map();
 
-// Simplified blockchain services - ready for real integration
+// Use simplified blockchain services for development (switch to real services when network is ready)
 import { fabricService } from "./blockchain/simple-fabric-service";
 import { ipfsService } from "./blockchain/simple-ipfs-service";
 
