@@ -218,23 +218,35 @@ export const createServer = () => {
       const kycId = `KYC-${Date.now()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 
       // Process documents
-      console.log(`Processing ${files.length} documents...`);
+      console.log(`📤 Processing ${files.length} documents for REAL IPFS upload...`);
       const documentPromises = files.map(async (file, index) => {
         console.log(
-          `Processing file ${index + 1}: ${file.originalname} (${file.size} bytes)`,
+          `🔄 Processing file ${index + 1}: ${file.originalname} (${file.size} bytes)`,
         );
 
-        // Upload to IPFS (mock)
-        const ipfsResult = await MockIPFSService.uploadFile(
-          file.buffer,
-          file.originalname,
-        );
-
-        // Generate document hash
+        // Generate document hash for verification
         const documentHash = crypto
           .createHash("sha256")
           .update(file.buffer)
           .digest("hex");
+
+        // Upload to REAL IPFS network
+        const ipfsResult = await ipfsService.uploadFile(
+          file.buffer,
+          file.originalname,
+          {
+            kycId: kycId,
+            uploadedBy: validatedData.email,
+            uploadedAt: new Date().toISOString(),
+            documentHash: documentHash
+          }
+        );
+
+        if (!ipfsResult.success) {
+          throw new Error(`IPFS upload failed for ${file.originalname}: ${ipfsResult.error}`);
+        }
+
+        console.log(`✅ File uploaded to IPFS: ${file.originalname} -> ${ipfsResult.hash}`);
 
         return {
           id: crypto.randomUUID(),
@@ -244,9 +256,14 @@ export const createServer = () => {
               ? "AADHAAR"
               : file.originalname.toLowerCase().includes("passport")
                 ? "PASSPORT"
-                : "OTHER",
+                : file.originalname.toLowerCase().includes("bank")
+                  ? "BANK_STATEMENT"
+                  : "OTHER",
           documentHash,
           ipfsHash: ipfsResult.hash,
+          ipfsUrl: ipfsResult.url,
+          fileName: file.originalname,
+          fileSize: file.size,
           uploadedAt: new Date().toISOString(),
         };
       });
@@ -254,15 +271,15 @@ export const createServer = () => {
       const documents = await Promise.all(documentPromises);
       const documentHashes = documents.map((doc) => doc.documentHash);
 
-      console.log("Documents processed:", documents.length);
+      console.log(`✅ All documents uploaded to IPFS: ${documents.length}`);
 
-      // Submit to blockchain (mock)
-      console.log("Submitting to blockchain...");
-      const blockchainResult = await MockBlockchainService.submitKYC(
-        validatedData,
+      // Submit to REAL HYPERLEDGER FABRIC BLOCKCHAIN
+      console.log("📝 Submitting KYC to Hyperledger Fabric blockchain...");
+      const blockchainResult = await fabricService.submitKYC(
+        { ...validatedData, id: kycId },
         documentHashes,
       );
-      console.log("Blockchain result:", blockchainResult);
+      console.log("✅ Real blockchain submission result:", blockchainResult);
 
       // Create KYC record
       const kycRecord = {
