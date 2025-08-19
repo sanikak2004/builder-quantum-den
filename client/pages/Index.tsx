@@ -165,7 +165,7 @@ export default function Index() {
                     <Users className="h-6 w-6 text-blue-600" />
                   </div>
                   <h3 className="text-2xl font-bold text-slate-800">
-                    {stats.totalSubmissions.toLocaleString()}
+                    {(stats.totalSubmissions || 0).toLocaleString()}
                   </h3>
                   <p className="text-slate-600">Total Submissions</p>
                 </CardContent>
