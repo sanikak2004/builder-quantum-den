@@ -45,8 +45,9 @@ const KYCSubmissionSchema = z.object({
   }),
 });
 
-// Mock in-memory storage (replace with actual database)
-const kycRecords = new Map();
+// Real database storage using Prisma PostgreSQL
+import { initializeDatabase, prisma } from './database/prisma';
+import { kycService } from './database/kyc-service';
 
 // Use simplified blockchain services for development (switch to real services when network is ready)
 import { fabricService } from "./blockchain/simple-fabric-service";
