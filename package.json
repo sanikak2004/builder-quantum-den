@@ -25,12 +25,7 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "multer": "^2.0.2",
-    "zod": "^3.25.76",
-    "fabric-network": "^2.2.20",
-    "fabric-client": "^1.4.20",
-    "fabric-ca-client": "^2.2.20",
-    "@helia/unixfs": "^4.0.1",
-    "helia": "^5.1.0"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@hookform/resolvers": "^5.2.1",
