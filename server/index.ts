@@ -57,7 +57,9 @@ console.log("🚀 Authen Ledger initialized - READY FOR REAL BLOCKCHAIN");
 console.log("📋 Hyperledger Fabric: Ready for real blockchain integration");
 console.log("📋 IPFS: Ready for real distributed file storage");
 console.log("🗃️  Storage: Clean - only actual user submissions will be stored");
-console.log("⚡ App is functional - real blockchain can be added when infrastructure is ready");
+console.log(
+  "⚡ App is functional - real blockchain can be added when infrastructure is ready",
+);
 
 // Initialize real blockchain services
 const initializeBlockchainServices = async (): Promise<void> => {
