@@ -49,19 +49,19 @@ const KYCSubmissionSchema = z.object({
 const kycRecords = new Map();
 
 // Real blockchain and IPFS services
-import { fabricService } from './blockchain/fabric-config';
-import { ipfsService } from './blockchain/ipfs-service';
+import { fabricService } from "./blockchain/fabric-config";
+import { ipfsService } from "./blockchain/ipfs-service";
 
 // Clean storage - NO DUMMY DATA - only real user uploads
-console.log('🚀 Authen Ledger initialized with REAL BLOCKCHAIN INTEGRATION');
-console.log('✅ Hyperledger Fabric: REAL blockchain transactions');
-console.log('✅ IPFS: REAL distributed file storage');
-console.log('🗃️  Storage: Clean - only actual user submissions will be stored');
+console.log("🚀 Authen Ledger initialized with REAL BLOCKCHAIN INTEGRATION");
+console.log("✅ Hyperledger Fabric: REAL blockchain transactions");
+console.log("✅ IPFS: REAL distributed file storage");
+console.log("🗃️  Storage: Clean - only actual user submissions will be stored");
 
 // Initialize real blockchain services
 const initializeBlockchainServices = async (): Promise<void> => {
   try {
-    console.log('🔄 Initializing real blockchain services...');
+    console.log("🔄 Initializing real blockchain services...");
 
     // Initialize Hyperledger Fabric connection
     await fabricService.initializeConnection();
@@ -69,10 +69,12 @@ const initializeBlockchainServices = async (): Promise<void> => {
     // Initialize IPFS connection
     await ipfsService.initializeConnection();
 
-    console.log('✅ All blockchain services initialized successfully');
+    console.log("✅ All blockchain services initialized successfully");
   } catch (error) {
-    console.error('❌ Failed to initialize blockchain services:', error);
-    console.log('⚠️  Some blockchain features may not work until services are connected');
+    console.error("❌ Failed to initialize blockchain services:", error);
+    console.log(
+      "⚠️  Some blockchain features may not work until services are connected",
+    );
   }
 };
 
@@ -105,19 +107,22 @@ export const createServer = () => {
         blockchain: {
           hyperledgerFabric: {
             connected: fabricConnected,
-            network: fabricConnected ? "Authen Ledger Network" : "Not Connected",
-            type: "REAL - Hyperledger Fabric 2.5.4"
+            network: fabricConnected
+              ? "Authen Ledger Network"
+              : "Not Connected",
+            type: "REAL - Hyperledger Fabric 2.5.4",
           },
           ipfs: {
             connected: ipfsStatus.connected,
             version: ipfsStatus.version || "Unknown",
             peerId: ipfsStatus.peerId || "Unknown",
-            type: "REAL - IPFS Network"
-          }
+            type: "REAL - IPFS Network",
+          },
         },
-        message: fabricConnected && ipfsStatus.connected
-          ? "✅ All blockchain services connected - REAL IMPLEMENTATION"
-          : "⚠️ Some blockchain services not connected",
+        message:
+          fabricConnected && ipfsStatus.connected
+            ? "✅ All blockchain services connected - REAL IMPLEMENTATION"
+            : "⚠️ Some blockchain services not connected",
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -142,14 +147,24 @@ export const createServer = () => {
       const allRecords = Array.from(kycRecords.values());
       const stats = {
         totalSubmissions: allRecords.length,
-        pendingVerifications: allRecords.filter(r => r.status === 'PENDING').length,
-        verifiedRecords: allRecords.filter(r => r.status === 'VERIFIED').length,
-        rejectedRecords: allRecords.filter(r => r.status === 'REJECTED').length,
-        averageProcessingTime: allRecords.length > 0 ?
-          allRecords
-            .filter(r => r.verifiedAt && r.createdAt)
-            .map(r => (new Date(r.verifiedAt!).getTime() - new Date(r.createdAt).getTime()) / (1000 * 60 * 60))
-            .reduce((sum, time, _, arr) => sum + time / arr.length, 0) || 0 : 0,
+        pendingVerifications: allRecords.filter((r) => r.status === "PENDING")
+          .length,
+        verifiedRecords: allRecords.filter((r) => r.status === "VERIFIED")
+          .length,
+        rejectedRecords: allRecords.filter((r) => r.status === "REJECTED")
+          .length,
+        averageProcessingTime:
+          allRecords.length > 0
+            ? allRecords
+                .filter((r) => r.verifiedAt && r.createdAt)
+                .map(
+                  (r) =>
+                    (new Date(r.verifiedAt!).getTime() -
+                      new Date(r.createdAt).getTime()) /
+                    (1000 * 60 * 60),
+                )
+                .reduce((sum, time, _, arr) => sum + time / arr.length, 0) || 0
+            : 0,
       };
 
       res.json({
@@ -262,7 +277,9 @@ export const createServer = () => {
       const kycId = `KYC-${Date.now()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 
       // Process documents
-      console.log(`📤 Processing ${files.length} documents for REAL IPFS upload...`);
+      console.log(
+        `📤 Processing ${files.length} documents for REAL IPFS upload...`,
+      );
       const documentPromises = files.map(async (file, index) => {
         console.log(
           `🔄 Processing file ${index + 1}: ${file.originalname} (${file.size} bytes)`,
@@ -282,15 +299,19 @@ export const createServer = () => {
             kycId: kycId,
             uploadedBy: validatedData.email,
             uploadedAt: new Date().toISOString(),
-            documentHash: documentHash
-          }
+            documentHash: documentHash,
+          },
         );
 
         if (!ipfsResult.success) {
-          throw new Error(`IPFS upload failed for ${file.originalname}: ${ipfsResult.error}`);
+          throw new Error(
+            `IPFS upload failed for ${file.originalname}: ${ipfsResult.error}`,
+          );
         }
 
-        console.log(`✅ File uploaded to IPFS: ${file.originalname} -> ${ipfsResult.hash}`);
+        console.log(
+          `✅ File uploaded to IPFS: ${file.originalname} -> ${ipfsResult.hash}`,
+        );
 
         return {
           id: crypto.randomUUID(),
@@ -498,14 +519,18 @@ export const createServer = () => {
       );
 
       // Submit status update to REAL HYPERLEDGER FABRIC BLOCKCHAIN
-      console.log(`📝 Recording status update on Hyperledger Fabric blockchain...`);
+      console.log(
+        `📝 Recording status update on Hyperledger Fabric blockchain...`,
+      );
       const blockchainTx = await fabricService.updateKYCStatus(
         id,
         status,
         remarks || `KYC ${status.toLowerCase()} by admin`,
-        verifiedBy || "admin@authenledger.com"
+        verifiedBy || "admin@authenledger.com",
       );
-      console.log(`✅ REAL BLOCKCHAIN RECORDED: TX Hash ${blockchainTx.txHash}`);
+      console.log(
+        `✅ REAL BLOCKCHAIN RECORDED: TX Hash ${blockchainTx.txHash}`,
+      );
 
       // Update record with blockchain transaction
       record.status = status;

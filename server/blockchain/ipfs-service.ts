@@ -1,5 +1,5 @@
-import { create, IPFSHTTPClient } from 'ipfs-http-client';
-import * as crypto from 'crypto';
+import { create, IPFSHTTPClient } from "ipfs-http-client";
+import * as crypto from "crypto";
 
 export interface IPFSUploadResult {
   success: boolean;
@@ -15,18 +15,18 @@ export class RealIPFSService {
 
   constructor() {
     // Configure IPFS client - can be local node or remote service
-    this.baseUrl = process.env.IPFS_API_URL || 'http://127.0.0.1:5001';
-    
+    this.baseUrl = process.env.IPFS_API_URL || "http://127.0.0.1:5001";
+
     try {
       this.client = create({
         host: this.parseHost(this.baseUrl),
         port: this.parsePort(this.baseUrl),
-        protocol: this.parseProtocol(this.baseUrl)
+        protocol: this.parseProtocol(this.baseUrl),
       });
-      console.log('🌐 IPFS client initialized with URL:', this.baseUrl);
+      console.log("🌐 IPFS client initialized with URL:", this.baseUrl);
     } catch (error) {
-      console.error('❌ Failed to initialize IPFS client:', error);
-      console.log('⚠️  Will attempt to connect when first upload is requested');
+      console.error("❌ Failed to initialize IPFS client:", error);
+      console.log("⚠️  Will attempt to connect when first upload is requested");
     }
   }
 
@@ -37,12 +37,12 @@ export class RealIPFSService {
 
   private parsePort(url: string): number {
     const parsed = new URL(url);
-    return parseInt(parsed.port) || (parsed.protocol === 'https:' ? 443 : 80);
+    return parseInt(parsed.port) || (parsed.protocol === "https:" ? 443 : 80);
   }
 
   private parseProtocol(url: string): string {
     const parsed = new URL(url);
-    return parsed.protocol === 'https:' ? 'https' : 'http';
+    return parsed.protocol === "https:" ? "https" : "http";
   }
 
   async initializeConnection(): Promise<void> {
@@ -51,37 +51,44 @@ export class RealIPFSService {
         this.client = create({
           host: this.parseHost(this.baseUrl),
           port: this.parsePort(this.baseUrl),
-          protocol: this.parseProtocol(this.baseUrl)
+          protocol: this.parseProtocol(this.baseUrl),
         });
       }
 
       // Test connection
       const version = await this.client.version();
-      console.log('✅ IPFS connection established. Version:', version.version);
-      
+      console.log("✅ IPFS connection established. Version:", version.version);
     } catch (error) {
-      console.error('❌ Failed to connect to IPFS:', error);
-      throw new Error(`IPFS connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("❌ Failed to connect to IPFS:", error);
+      throw new Error(
+        `IPFS connection failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   }
 
-  async uploadFile(file: Buffer, filename: string, metadata?: any): Promise<IPFSUploadResult> {
+  async uploadFile(
+    file: Buffer,
+    filename: string,
+    metadata?: any,
+  ): Promise<IPFSUploadResult> {
     try {
       if (!this.client) {
         await this.initializeConnection();
       }
 
       if (!this.client) {
-        throw new Error('IPFS client not initialized');
+        throw new Error("IPFS client not initialized");
       }
 
-      console.log(`📤 Uploading file to IPFS: ${filename} (${file.length} bytes)`);
+      console.log(
+        `📤 Uploading file to IPFS: ${filename} (${file.length} bytes)`,
+      );
 
       // Create file object with metadata
       const fileObj = {
         content: file,
         path: filename,
-        ...(metadata && { metadata: JSON.stringify(metadata) })
+        ...(metadata && { metadata: JSON.stringify(metadata) }),
       };
 
       // Upload to IPFS
@@ -92,26 +99,25 @@ export class RealIPFSService {
       await this.client.pin.add(result.cid);
 
       const ipfsUrl = `https://ipfs.io/ipfs/${hash}`;
-      
-      console.log('✅ File uploaded to IPFS successfully');
-      console.log('📋 IPFS Hash:', hash);
-      console.log('🔗 IPFS URL:', ipfsUrl);
+
+      console.log("✅ File uploaded to IPFS successfully");
+      console.log("📋 IPFS Hash:", hash);
+      console.log("🔗 IPFS URL:", ipfsUrl);
 
       return {
         success: true,
         hash,
         url: ipfsUrl,
-        size: file.length
+        size: file.length,
       };
-
     } catch (error) {
-      console.error('❌ Failed to upload file to IPFS:', error);
+      console.error("❌ Failed to upload file to IPFS:", error);
       return {
         success: false,
-        hash: '',
-        url: '',
+        hash: "",
+        url: "",
         size: 0,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
@@ -123,7 +129,7 @@ export class RealIPFSService {
       }
 
       if (!this.client) {
-        throw new Error('IPFS client not initialized');
+        throw new Error("IPFS client not initialized");
       }
 
       console.log(`📥 Retrieving file from IPFS: ${hash}`);
@@ -134,12 +140,11 @@ export class RealIPFSService {
       }
 
       const fileBuffer = Buffer.concat(chunks);
-      console.log('✅ File retrieved from IPFS successfully');
+      console.log("✅ File retrieved from IPFS successfully");
 
       return fileBuffer;
-
     } catch (error) {
-      console.error('❌ Failed to retrieve file from IPFS:', error);
+      console.error("❌ Failed to retrieve file from IPFS:", error);
       return null;
     }
   }
@@ -151,15 +156,14 @@ export class RealIPFSService {
       }
 
       if (!this.client) {
-        throw new Error('IPFS client not initialized');
+        throw new Error("IPFS client not initialized");
       }
 
       await this.client.pin.add(hash);
-      console.log('📌 File pinned to IPFS:', hash);
+      console.log("📌 File pinned to IPFS:", hash);
       return true;
-
     } catch (error) {
-      console.error('❌ Failed to pin file to IPFS:', error);
+      console.error("❌ Failed to pin file to IPFS:", error);
       return false;
     }
   }
@@ -171,15 +175,14 @@ export class RealIPFSService {
       }
 
       if (!this.client) {
-        throw new Error('IPFS client not initialized');
+        throw new Error("IPFS client not initialized");
       }
 
       await this.client.pin.rm(hash);
-      console.log('📌 File unpinned from IPFS:', hash);
+      console.log("📌 File unpinned from IPFS:", hash);
       return true;
-
     } catch (error) {
-      console.error('❌ Failed to unpin file from IPFS:', error);
+      console.error("❌ Failed to unpin file from IPFS:", error);
       return false;
     }
   }
@@ -191,13 +194,13 @@ export class RealIPFSService {
       }
 
       if (!this.client) {
-        throw new Error('IPFS client not initialized');
+        throw new Error("IPFS client not initialized");
       }
 
       const [version, id, stats] = await Promise.all([
         this.client.version(),
         this.client.id(),
-        this.client.stats.bw()
+        this.client.stats.bw(),
       ]);
 
       return {
@@ -209,21 +212,20 @@ export class RealIPFSService {
           totalIn: stats.totalIn,
           totalOut: stats.totalOut,
           rateIn: stats.rateIn,
-          rateOut: stats.rateOut
-        }
+          rateOut: stats.rateOut,
+        },
       };
-
     } catch (error) {
-      console.error('❌ Failed to get IPFS status:', error);
+      console.error("❌ Failed to get IPFS status:", error);
       return {
         connected: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
 
   generateDocumentHash(file: Buffer): string {
-    return crypto.createHash('sha256').update(file).digest('hex');
+    return crypto.createHash("sha256").update(file).digest("hex");
   }
 
   isConnected(): boolean {

@@ -5,7 +5,7 @@
 This is a **REAL Hyperledger Fabric blockchain integration** - NO MOCK/SIMULATION services. The system uses:
 
 - ✅ **Real Hyperledger Fabric Network** with actual blockchain transactions
-- ✅ **Real IPFS Network** for distributed document storage  
+- ✅ **Real IPFS Network** for distributed document storage
 - ✅ **Actual Chaincode** deployment and execution
 - ✅ **Permanent Storage** - data persists even when system is offline
 
@@ -45,6 +45,7 @@ chmod +x scripts/setup-fabric-network.sh
 ```
 
 This script will:
+
 - Download Hyperledger Fabric binaries
 - Generate cryptographic material
 - Create Docker Compose configuration
@@ -85,6 +86,7 @@ docker exec cli peer lifecycle chaincode commit -o orderer.example.com:7050 --ch
 ### Step 5: Set Up IPFS Node
 
 #### Option A: Local IPFS Node
+
 ```bash
 # Install IPFS
 wget https://dist.ipfs.tech/kubo/v0.17.0/kubo_v0.17.0_linux-amd64.tar.gz
@@ -98,7 +100,9 @@ ipfs daemon
 ```
 
 #### Option B: Use Remote IPFS Service
+
 Set environment variables:
+
 ```bash
 export IPFS_API_URL="https://ipfs.infura.io:5001"
 # or your preferred IPFS service
@@ -107,6 +111,7 @@ export IPFS_API_URL="https://ipfs.infura.io:5001"
 ### Step 6: Configure Environment Variables
 
 Create `.env` file:
+
 ```bash
 # Hyperledger Fabric Configuration
 FABRIC_CHANNEL_NAME=ekycChannel
@@ -130,6 +135,7 @@ npm run dev
 ## 🔍 Verification
 
 ### Check Network Status
+
 ```bash
 # Check running containers
 docker ps
@@ -142,6 +148,7 @@ docker exec cli peer lifecycle chaincode querycommitted --channelID ekycChannel
 ```
 
 ### Test IPFS Connection
+
 ```bash
 # Check IPFS status
 curl http://localhost:5001/api/v0/version
@@ -151,7 +158,9 @@ echo "Hello Authen Ledger" | curl -F file=@- http://localhost:5001/api/v0/add
 ```
 
 ### Test Blockchain Integration
+
 Access the application at `http://localhost:3000` and:
+
 1. Submit a KYC application
 2. Check admin panel for verification
 3. Verify transactions on blockchain
@@ -159,16 +168,19 @@ Access the application at `http://localhost:3000` and:
 ## 📊 Real Blockchain Features
 
 ### Actual Transaction Recording
+
 - Every KYC submission creates a real blockchain transaction
 - Admin verifications/rejections are recorded on-chain
 - Immutable audit trail with cryptographic proof
 
-### Real IPFS Storage  
+### Real IPFS Storage
+
 - Documents uploaded to actual IPFS network
 - Content-addressed storage with cryptographic hashes
 - Distributed, decentralized file storage
 
 ### Permanent Data Persistence
+
 - Data stored on blockchain cannot be deleted or modified
 - IPFS files are pinned for permanent availability
 - System restart does not affect stored data
@@ -176,17 +188,20 @@ Access the application at `http://localhost:3000` and:
 ## 🚨 Important Notes
 
 ### Network Requirements
+
 - **Orderer**: Consensus mechanism for transaction ordering
 - **Peer**: Endorses and commits transactions
 - **CA**: Certificate Authority for identity management
 - **CLI**: Command-line interface for network operations
 
 ### Security Considerations
+
 - Private keys stored securely in crypto-config
 - TLS disabled for development (enable for production)
 - Admin access controlled through MSP certificates
 
 ### Performance
+
 - Transaction throughput: ~1000 TPS
 - Block generation: 2-second intervals
 - Endorsement policy: Majority approval required
@@ -196,6 +211,7 @@ Access the application at `http://localhost:3000` and:
 ### Common Issues
 
 **Network not starting:**
+
 ```bash
 docker-compose down
 docker system prune -a
@@ -203,6 +219,7 @@ docker-compose up -d
 ```
 
 **Chaincode deployment fails:**
+
 ```bash
 # Check peer logs
 docker logs peer0.org1.example.com
@@ -212,6 +229,7 @@ docker exec cli peer lifecycle chaincode install ekyc.tar.gz --force
 ```
 
 **IPFS connection issues:**
+
 ```bash
 # Restart IPFS daemon
 pkill ipfs
@@ -219,6 +237,7 @@ ipfs daemon
 ```
 
 ### Logs and Monitoring
+
 ```bash
 # Server logs
 npm run dev
@@ -234,6 +253,7 @@ ipfs log tail
 ## 🎯 Production Deployment
 
 For production use:
+
 1. Enable TLS encryption
 2. Set up multiple peers and organizations
 3. Configure persistent volumes for data
