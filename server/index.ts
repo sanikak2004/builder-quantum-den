@@ -99,21 +99,29 @@ export const createServer = () => {
     res.json({ message: "Hello from Express server" });
   });
 
-  // KYC Stats endpoint with mock data
+  // KYC Stats endpoint with REAL data
   app.get("/api/kyc/stats", (req, res) => {
     try {
+      // Calculate real stats from actual KYC records
+      const allRecords = Array.from(kycRecords.values());
       const stats = {
-        totalSubmissions: 15234,
-        pendingVerifications: 89,
-        verifiedRecords: 14832,
-        rejectedRecords: 313,
-        averageProcessingTime: 2.5,
+        totalSubmissions: allRecords.length,
+        pendingVerifications: allRecords.filter(r => r.status === 'PENDING').length,
+        verifiedRecords: allRecords.filter(r => r.status === 'VERIFIED').length,
+        rejectedRecords: allRecords.filter(r => r.status === 'REJECTED').length,
+        averageProcessingTime: allRecords.length > 0 ?
+          allRecords
+            .filter(r => r.verifiedAt && r.createdAt)
+            .map(r => (new Date(r.verifiedAt!).getTime() - new Date(r.createdAt).getTime()) / (1000 * 60 * 60))
+            .reduce((sum, time, _, arr) => sum + time / arr.length, 0) || 0 : 0,
       };
 
       res.json({
         success: true,
         data: stats,
-        message: "Stats retrieved successfully",
+        message: "Real KYC stats retrieved successfully",
+        blockchainConnected: fabricService.isConnected(),
+        ipfsConnected: ipfsService.isConnected(),
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
