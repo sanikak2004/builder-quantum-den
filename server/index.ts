@@ -325,22 +325,18 @@ export const createServer = () => {
       );
       console.log("✅ Real blockchain submission result:", blockchainResult);
 
-      // Create KYC record
-      const kycRecord = {
-        id: kycId,
-        userId: crypto.randomUUID(), // In real implementation, get from authenticated user
-        ...validatedData,
+      // Save to PostgreSQL database
+      const kycRecord = await kycService.createKYCRecord(
+        {
+          id: kycId,
+          userId: crypto.randomUUID(), // In real implementation, get from authenticated user
+          ...validatedData,
+        },
         documents,
-        status: "PENDING",
-        verificationLevel: "L1",
-        blockchainTxHash: blockchainResult.txHash,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+        blockchainResult.txHash
+      );
 
-      // Save to in-memory storage (replace with database)
-      kycRecords.set(kycId, kycRecord);
-      console.log(`KYC record saved with ID: ${kycId}`);
+      console.log(`✅ KYC record permanently saved to database: ${kycId}`);
 
       // Return success response
       res.json({
