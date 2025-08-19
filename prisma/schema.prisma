@@ -1,0 +1,172 @@
+// Prisma schema for eKYC system with real persistent storage
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication and basic info
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  kycRecords KYCRecord[]
+  auditLogs  AuditLog[]
+
+  @@map("users")
+}
+
+// Main KYC record model - stores all user submission data
+model KYCRecord {
+  id               String   @id @default(cuid())
+  userId           String?  // Optional for anonymous submissions
+  
+  // Personal Information
+  name             String
+  email            String
+  phone            String
+  pan              String   @unique
+  dateOfBirth      String
+  
+  // Address Information (stored as JSON)
+  address          Json
+  
+  // KYC Status and Verification
+  status           KYCStatus        @default(PENDING)
+  verificationLevel VerificationLevel @default(L1)
+  
+  // Admin Actions
+  remarks          String?
+  verifiedBy       String?
+  verifiedAt       DateTime?
+  rejectedAt       DateTime?
+  
+  // Blockchain Integration
+  blockchainTxHash           String?  // Initial submission transaction
+  lastBlockchainTxHash       String?  // Latest blockchain transaction
+  blockchainVerificationTx   String?  // Verification transaction hash
+  blockchainRejectionTx      String?  // Rejection transaction hash
+  
+  // Timestamps
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // Relations
+  user             User?        @relation(fields: [userId], references: [id])
+  documents        Document[]
+  auditLogs        AuditLog[]
+  
+  @@map("kyc_records")
+}
+
+// Document storage model - stores file metadata and IPFS hashes
+model Document {
+  id          String   @id @default(cuid())
+  kycRecordId String
+  
+  // Document Information
+  type        DocumentType
+  fileName    String
+  fileSize    Int
+  
+  // Security and Verification
+  documentHash String  // SHA256 hash of file content
+  ipfsHash     String  // IPFS content hash
+  ipfsUrl      String  // IPFS gateway URL
+  
+  // Timestamps
+  uploadedAt  DateTime @default(now())
+  
+  // Relations
+  kycRecord   KYCRecord @relation(fields: [kycRecordId], references: [id], onDelete: Cascade)
+  
+  @@map("documents")
+}
+
+// Audit log for complete traceability
+model AuditLog {
+  id          String   @id @default(cuid())
+  kycRecordId String
+  userId      String?
+  
+  // Action Details
+  action      AuditAction
+  performedBy String
+  
+  // Transaction Information
+  txId        String?   // Blockchain transaction ID
+  details     Json?     // Additional action details
+  remarks     String?
+  
+  // Timestamps
+  performedAt DateTime  @default(now())
+  
+  // Relations
+  kycRecord   KYCRecord @relation(fields: [kycRecordId], references: [id], onDelete: Cascade)
+  user        User?     @relation(fields: [userId], references: [id])
+  
+  @@map("audit_logs")
+}
+
+// System statistics for dashboard
+model SystemStats {
+  id        String   @id @default("system_stats")
+  
+  // KYC Statistics
+  totalSubmissions     Int @default(0)
+  pendingVerifications Int @default(0)
+  verifiedRecords      Int @default(0)
+  rejectedRecords      Int @default(0)
+  
+  // Performance Metrics
+  averageProcessingTimeHours Float @default(0)
+  
+  // System Information
+  lastUpdated DateTime @updatedAt
+  
+  @@map("system_stats")
+}
+
+// Enums for type safety
+enum KYCStatus {
+  PENDING
+  UNDER_REVIEW
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum VerificationLevel {
+  L1  // Basic verification
+  L2  // Full verification
+  L3  // Enhanced verification
+}
+
+enum DocumentType {
+  PAN
+  AADHAAR
+  PASSPORT
+  BANK_STATEMENT
+  UTILITY_BILL
+  DRIVING_LICENSE
+  VOTER_ID
+  OTHER
+}
+
+enum AuditAction {
+  CREATED
+  UPDATED
+  VERIFIED
+  REJECTED
+  DOCUMENT_UPLOADED
+  STATUS_CHANGED
+  ADMIN_REVIEW
+  BLOCKCHAIN_TRANSACTION
+}

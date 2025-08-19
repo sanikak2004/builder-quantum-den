@@ -1,6 +1,31 @@
-import { createHelia } from "helia";
-import { unixfs } from "@helia/unixfs";
+// import { createHelia } from "helia";
+// import { unixfs } from "@helia/unixfs";
 import * as crypto from "crypto";
+
+// Temporary types until packages are installed
+interface IPFSHTTPClient {
+  add: (data: any) => Promise<{ cid: { toString: () => string } }>;
+  cat: (hash: string) => AsyncIterable<Buffer>;
+  pin: {
+    add: (cid: any) => Promise<void>;
+    rm: (hash: string) => Promise<void>;
+  };
+  version: () => Promise<{ version: string }>;
+  id: () => Promise<{ id: string; addresses: string[] }>;
+  stats: {
+    bw: () => Promise<{
+      totalIn: number;
+      totalOut: number;
+      rateIn: number;
+      rateOut: number;
+    }>;
+  };
+}
+
+function create(config: any): IPFSHTTPClient {
+  // Mock implementation
+  return {} as IPFSHTTPClient;
+}
 
 export interface IPFSUploadResult {
   success: boolean;

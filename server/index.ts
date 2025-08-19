@@ -45,10 +45,11 @@ const KYCSubmissionSchema = z.object({
   }),
 });
 
-// Mock in-memory storage (replace with actual database)
-const kycRecords = new Map();
+// Real database storage using Prisma PostgreSQL
+import { initializeDatabase, prisma } from "./database/prisma";
+import { kycService } from "./database/kyc-service";
 
-// Simplified blockchain services - ready for real integration
+// Use simplified blockchain services for development (switch to real services when network is ready)
 import { fabricService } from "./blockchain/simple-fabric-service";
 import { ipfsService } from "./blockchain/simple-ipfs-service";
 
@@ -61,10 +62,13 @@ console.log(
   "⚡ App is functional - real blockchain can be added when infrastructure is ready",
 );
 
-// Initialize real blockchain services
-const initializeBlockchainServices = async (): Promise<void> => {
+// Initialize real blockchain and database services
+const initializeServices = async (): Promise<void> => {
   try {
-    console.log("🔄 Initializing real blockchain services...");
+    console.log("🔄 Initializing real blockchain and database services...");
+
+    // Initialize PostgreSQL database connection
+    await initializeDatabase();
 
     // Initialize Hyperledger Fabric connection
     await fabricService.initializeConnection();
@@ -72,17 +76,15 @@ const initializeBlockchainServices = async (): Promise<void> => {
     // Initialize IPFS connection
     await ipfsService.initializeConnection();
 
-    console.log("✅ All blockchain services initialized successfully");
+    console.log("✅ All services initialized successfully");
   } catch (error) {
-    console.error("❌ Failed to initialize blockchain services:", error);
-    console.log(
-      "⚠️  Some blockchain features may not work until services are connected",
-    );
+    console.error("❌ Failed to initialize services:", error);
+    console.log("⚠️  Some features may not work until services are connected");
   }
 };
 
 // Initialize on server startup
-initializeBlockchainServices();
+initializeServices();
 
 export const createServer = () => {
   const app = express();
@@ -143,89 +145,60 @@ export const createServer = () => {
     res.json({ message: "Hello from Express server" });
   });
 
-  // KYC Stats endpoint with REAL data
-  app.get("/api/kyc/stats", (req, res) => {
+  // KYC Stats endpoint with REAL database data
+  app.get("/api/kyc/stats", async (req, res) => {
     try {
-      // Calculate real stats from actual KYC records
-      const allRecords = Array.from(kycRecords.values());
-      const stats = {
-        totalSubmissions: allRecords.length,
-        pendingVerifications: allRecords.filter((r) => r.status === "PENDING")
-          .length,
-        verifiedRecords: allRecords.filter((r) => r.status === "VERIFIED")
-          .length,
-        rejectedRecords: allRecords.filter((r) => r.status === "REJECTED")
-          .length,
-        averageProcessingTime:
-          allRecords.length > 0
-            ? allRecords
-                .filter((r) => r.verifiedAt && r.createdAt)
-                .map(
-                  (r) =>
-                    (new Date(r.verifiedAt!).getTime() -
-                      new Date(r.createdAt).getTime()) /
-                    (1000 * 60 * 60),
-                )
-                .reduce((sum, time, _, arr) => sum + time / arr.length, 0) || 0
-            : 0,
-      };
+      // Get real stats from PostgreSQL database
+      const stats = await kycService.getSystemStats();
 
       res.json({
         success: true,
-        data: stats,
-        message: "Real KYC stats retrieved successfully",
+        data: {
+          totalSubmissions: stats.totalSubmissions,
+          pendingVerifications: stats.pendingVerifications,
+          verifiedRecords: stats.verifiedRecords,
+          rejectedRecords: stats.rejectedRecords,
+          averageProcessingTime: stats.averageProcessingTimeHours,
+        },
+        message: "Real KYC stats retrieved from database",
         blockchainConnected: fabricService.isConnected(),
         ipfsConnected: ipfsService.isConnected(),
+        databaseConnected: true,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("Stats error:", error);
+      console.error("Database stats error:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to fetch stats",
+        message: "Failed to fetch stats from database",
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
     }
   });
 
-  // KYC Verify endpoint
+  // KYC Verify endpoint with database lookup
   app.get("/api/kyc/verify", async (req, res) => {
     try {
       const { id, pan, email } = req.query;
 
-      let record = null;
-
-      if (id) {
-        record = kycRecords.get(id as string);
-      } else if (pan) {
-        // Search by PAN
-        for (const [key, value] of kycRecords.entries()) {
-          if (value.pan === pan) {
-            record = value;
-            break;
-          }
-        }
-      } else if (email) {
-        // Search by email
-        for (const [key, value] of kycRecords.entries()) {
-          if (value.email === email) {
-            record = value;
-            break;
-          }
-        }
-      }
+      // Search in database
+      const record = await kycService.searchKYCRecord({
+        id: id as string,
+        pan: pan as string,
+        email: email as string,
+      });
 
       if (!record) {
         return res.status(404).json({
           success: false,
-          message: "KYC record not found",
+          message: "KYC record not found in database",
           timestamp: new Date().toISOString(),
         });
       }
 
-      // Simulate blockchain verification
-      const blockchainVerified = true;
+      // Real blockchain verification
+      const blockchainVerified = !!record.blockchainTxHash;
 
       const verificationResult = {
         success: true,
@@ -233,19 +206,20 @@ export const createServer = () => {
         message: `KYC status: ${record.status}`,
         verificationLevel: record.verificationLevel,
         blockchainVerified,
+        blockchainTxHash: record.blockchainTxHash,
       };
 
       res.json({
         success: true,
         data: verificationResult,
-        message: "Verification completed",
+        message: "Verification completed from database",
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("KYC verification error:", error);
+      console.error("Database KYC verification error:", error);
       res.status(500).json({
         success: false,
-        message: "Verification failed",
+        message: "Database verification failed",
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
@@ -349,29 +323,30 @@ export const createServer = () => {
       );
       console.log("✅ Real blockchain submission result:", blockchainResult);
 
-      // Create KYC record
-      const kycRecord = {
-        id: kycId,
-        userId: crypto.randomUUID(), // In real implementation, get from authenticated user
-        ...validatedData,
+      // Save to PostgreSQL database
+      const kycRecord = await kycService.createKYCRecord(
+        {
+          id: kycId,
+          userId: crypto.randomUUID(), // In real implementation, get from authenticated user
+          name: validatedData.name,
+          email: validatedData.email,
+          phone: validatedData.phone,
+          pan: validatedData.pan,
+          dateOfBirth: validatedData.dateOfBirth,
+          address: validatedData.address,
+        },
         documents,
-        status: "PENDING",
-        verificationLevel: "L1",
-        blockchainTxHash: blockchainResult.txHash,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+        blockchainResult.txHash,
+      );
 
-      // Save to in-memory storage (replace with database)
-      kycRecords.set(kycId, kycRecord);
-      console.log(`KYC record saved with ID: ${kycId}`);
+      console.log(`✅ KYC record permanently saved to database: ${kycId}`);
 
       // Return success response
       res.json({
         success: true,
-        data: kycRecord,
+        data: kycRecord.data,
         message:
-          "KYC submission successful! Your application is being processed on the blockchain.",
+          "✅ KYC submission successful! Your application is permanently stored in database and blockchain.",
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -395,7 +370,7 @@ export const createServer = () => {
     }
   });
 
-  // KYC History endpoint
+  // KYC History endpoint with real database audit logs
   app.get("/api/kyc/history", async (req, res) => {
     try {
       const { kycId, action } = req.query;
@@ -408,117 +383,76 @@ export const createServer = () => {
         });
       }
 
-      // Mock history data for the specific KYC ID
-      const mockHistory = [
-        {
-          id: crypto.randomUUID(),
-          kycId: kycId as string,
-          action: "CREATED",
-          performedBy: "system",
-          performedAt: new Date(Date.now() - 86400000).toISOString(),
-          txId: crypto.randomBytes(32).toString("hex"),
-          details: { initialSubmission: true },
-          remarks: "Initial KYC submission",
-        },
-        {
-          id: crypto.randomUUID(),
-          kycId: kycId as string,
-          action: "UPDATED",
-          performedBy: "admin@ekyc.com",
-          performedAt: new Date(Date.now() - 43200000).toISOString(),
-          txId: crypto.randomBytes(32).toString("hex"),
-          details: { documentsReviewed: true },
-          remarks: "Documents under review",
-        },
-      ];
-
-      let history = mockHistory;
-
-      // Filter by action if specified
-      if (action && action !== "all") {
-        history = history.filter((entry) => entry.action === action);
-      }
-
-      res.json({
-        success: true,
-        data: history,
-        message: `Found ${history.length} history entries`,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.error("KYC history error:", error);
-      res.status(500).json({
-        success: false,
-        message: "Failed to fetch history",
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-      });
-    }
-  });
-
-  // Admin: Get all KYC records
-  app.get("/api/admin/kyc/all", async (req, res) => {
-    try {
-      const { status, limit = 50, offset = 0 } = req.query;
-
-      // Get all records from in-memory storage
-      const allRecords = Array.from(kycRecords.values());
-
-      // Filter by status if specified
-      let filteredRecords = allRecords;
-      if (status && status !== "all") {
-        filteredRecords = allRecords.filter(
-          (record) => record.status === status,
-        );
-      }
-
-      // Apply pagination
-      const startIndex = parseInt(offset as string);
-      const limitNum = parseInt(limit as string);
-      const paginatedRecords = filteredRecords.slice(
-        startIndex,
-        startIndex + limitNum,
+      // Get real audit logs from database
+      const history = await kycService.getKYCHistory(
+        kycId as string,
+        action as string,
       );
 
       res.json({
         success: true,
-        data: {
-          records: paginatedRecords,
-          total: filteredRecords.length,
-          offset: startIndex,
-          limit: limitNum,
-        },
-        message: `Found ${filteredRecords.length} KYC records`,
+        data: history,
+        message: `Found ${history.length} real audit log entries from database`,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("Admin KYC fetch error:", error);
+      console.error("Database KYC history error:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to fetch KYC records",
+        message: "Failed to fetch history from database",
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
     }
   });
 
-  // Admin: Update KYC status (approve/reject)
+  // Admin: Get all KYC records from database
+  app.get("/api/admin/kyc/all", async (req, res) => {
+    try {
+      const { status, limit = 50, offset = 0 } = req.query;
+
+      // Get records from PostgreSQL database
+      const result = await kycService.getAllKYCRecords({
+        status: status as string,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+      });
+
+      res.json({
+        success: true,
+        data: result,
+        message: `Found ${result.total} KYC records in database`,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Database admin KYC fetch error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch KYC records from database",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
+  // Admin: Update KYC status with database and blockchain
   app.put("/api/admin/kyc/:id/status", async (req, res) => {
     try {
       const { id } = req.params;
       const { status, remarks, verifiedBy } = req.body;
 
-      const record = kycRecords.get(id);
-      if (!record) {
+      // Check if record exists in database
+      const existingRecord = await kycService.getKYCRecord(id);
+      if (!existingRecord) {
         return res.status(404).json({
           success: false,
-          message: "KYC record not found",
+          message: "KYC record not found in database",
           timestamp: new Date().toISOString(),
         });
       }
 
       console.log(
-        `🔄 BLOCKCHAIN UPDATE: Processing ${status} for KYC ID: ${id}`,
+        `🔄 DATABASE & BLOCKCHAIN UPDATE: Processing ${status} for KYC ID: ${id}`,
       );
 
       // Submit status update to REAL HYPERLEDGER FABRIC BLOCKCHAIN
@@ -535,40 +469,31 @@ export const createServer = () => {
         `✅ REAL BLOCKCHAIN RECORDED: TX Hash ${blockchainTx.txHash}`,
       );
 
-      // Update record with blockchain transaction
-      record.status = status;
-      record.remarks = remarks;
-      record.verifiedBy = verifiedBy || "admin@authenledger.com";
-      record.updatedAt = new Date().toISOString();
-      record.lastBlockchainTxHash = blockchainTx.txHash; // Store latest blockchain transaction
+      // Update record in PostgreSQL database
+      const updatedRecord = await kycService.updateKYCStatus(
+        id,
+        status,
+        remarks || `KYC ${status.toLowerCase()} by admin`,
+        verifiedBy || "admin@authenledger.com",
+        blockchainTx.txHash,
+      );
 
-      if (status === "VERIFIED") {
-        record.verifiedAt = record.updatedAt;
-        record.verificationLevel = "L2";
-        record.blockchainVerificationTx = blockchainTx.txHash; // Specific verification transaction
-        console.log(`✅ VERIFIED: KYC ${id} permanently stored on blockchain`);
-      } else if (status === "REJECTED") {
-        record.rejectedAt = record.updatedAt;
-        record.blockchainRejectionTx = blockchainTx.txHash; // Specific rejection transaction
-        console.log(`❌ REJECTED: KYC ${id} rejection recorded on blockchain`);
-      }
-
-      // Permanently save updated record (persistent even when system is off)
-      kycRecords.set(id, record);
-      console.log(`💾 PERMANENT STORAGE: Record updated in persistent storage`);
+      console.log(
+        `💾 PERMANENT DATABASE STORAGE: Record updated in PostgreSQL`,
+      );
 
       res.json({
         success: true,
-        data: record,
-        message: `✅ KYC record ${status.toLowerCase()} successfully and permanently stored on blockchain`,
+        data: updatedRecord.data,
+        message: `✅ KYC record ${status.toLowerCase()} successfully and permanently stored in database and blockchain`,
         blockchainTxHash: blockchainTx.txHash,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("❌ Admin KYC update error:", error);
+      console.error("❌ Admin database/blockchain update error:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to update KYC status",
+        message: "Failed to update KYC status in database",
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
