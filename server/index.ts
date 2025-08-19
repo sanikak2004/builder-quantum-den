@@ -179,43 +179,28 @@ export const createServer = () => {
     }
   });
 
-  // KYC Verify endpoint
+  // KYC Verify endpoint with database lookup
   app.get("/api/kyc/verify", async (req, res) => {
     try {
       const { id, pan, email } = req.query;
 
-      let record = null;
-
-      if (id) {
-        record = kycRecords.get(id as string);
-      } else if (pan) {
-        // Search by PAN
-        for (const [key, value] of kycRecords.entries()) {
-          if (value.pan === pan) {
-            record = value;
-            break;
-          }
-        }
-      } else if (email) {
-        // Search by email
-        for (const [key, value] of kycRecords.entries()) {
-          if (value.email === email) {
-            record = value;
-            break;
-          }
-        }
-      }
+      // Search in database
+      const record = await kycService.searchKYCRecord({
+        id: id as string,
+        pan: pan as string,
+        email: email as string,
+      });
 
       if (!record) {
         return res.status(404).json({
           success: false,
-          message: "KYC record not found",
+          message: "KYC record not found in database",
           timestamp: new Date().toISOString(),
         });
       }
 
-      // Simulate blockchain verification
-      const blockchainVerified = true;
+      // Real blockchain verification
+      const blockchainVerified = !!record.blockchainTxHash;
 
       const verificationResult = {
         success: true,
@@ -223,19 +208,20 @@ export const createServer = () => {
         message: `KYC status: ${record.status}`,
         verificationLevel: record.verificationLevel,
         blockchainVerified,
+        blockchainTxHash: record.blockchainTxHash,
       };
 
       res.json({
         success: true,
         data: verificationResult,
-        message: "Verification completed",
+        message: "Verification completed from database",
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("KYC verification error:", error);
+      console.error("Database KYC verification error:", error);
       res.status(500).json({
         success: false,
-        message: "Verification failed",
+        message: "Database verification failed",
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
