@@ -367,7 +367,7 @@ export const createServer = () => {
     }
   });
 
-  // KYC History endpoint
+  // KYC History endpoint with real database audit logs
   app.get("/api/kyc/history", async (req, res) => {
     try {
       const { kycId, action } = req.query;
@@ -380,48 +380,23 @@ export const createServer = () => {
         });
       }
 
-      // Mock history data for the specific KYC ID
-      const mockHistory = [
-        {
-          id: crypto.randomUUID(),
-          kycId: kycId as string,
-          action: "CREATED",
-          performedBy: "system",
-          performedAt: new Date(Date.now() - 86400000).toISOString(),
-          txId: crypto.randomBytes(32).toString("hex"),
-          details: { initialSubmission: true },
-          remarks: "Initial KYC submission",
-        },
-        {
-          id: crypto.randomUUID(),
-          kycId: kycId as string,
-          action: "UPDATED",
-          performedBy: "admin@ekyc.com",
-          performedAt: new Date(Date.now() - 43200000).toISOString(),
-          txId: crypto.randomBytes(32).toString("hex"),
-          details: { documentsReviewed: true },
-          remarks: "Documents under review",
-        },
-      ];
-
-      let history = mockHistory;
-
-      // Filter by action if specified
-      if (action && action !== "all") {
-        history = history.filter((entry) => entry.action === action);
-      }
+      // Get real audit logs from database
+      const history = await kycService.getKYCHistory(
+        kycId as string,
+        action as string
+      );
 
       res.json({
         success: true,
         data: history,
-        message: `Found ${history.length} history entries`,
+        message: `Found ${history.length} real audit log entries from database`,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("KYC history error:", error);
+      console.error("Database KYC history error:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to fetch history",
+        message: "Failed to fetch history from database",
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
