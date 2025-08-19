@@ -25,7 +25,11 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "multer": "^2.0.2",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "fabric-network": "^2.2.20",
+    "fabric-client": "^1.4.22",
+    "fabric-ca-client": "^2.2.20",
+    "ipfs-http-client": "^60.0.1"
   },
   "devDependencies": {
     "@hookform/resolvers": "^5.2.1",
