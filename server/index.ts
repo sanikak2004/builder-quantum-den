@@ -432,23 +432,24 @@ export const createServer = () => {
     }
   });
 
-  // Admin: Update KYC status (approve/reject)
+  // Admin: Update KYC status with database and blockchain
   app.put("/api/admin/kyc/:id/status", async (req, res) => {
     try {
       const { id } = req.params;
       const { status, remarks, verifiedBy } = req.body;
 
-      const record = kycRecords.get(id);
-      if (!record) {
+      // Check if record exists in database
+      const existingRecord = await kycService.getKYCRecord(id);
+      if (!existingRecord) {
         return res.status(404).json({
           success: false,
-          message: "KYC record not found",
+          message: "KYC record not found in database",
           timestamp: new Date().toISOString(),
         });
       }
 
       console.log(
-        `🔄 BLOCKCHAIN UPDATE: Processing ${status} for KYC ID: ${id}`,
+        `🔄 DATABASE & BLOCKCHAIN UPDATE: Processing ${status} for KYC ID: ${id}`,
       );
 
       // Submit status update to REAL HYPERLEDGER FABRIC BLOCKCHAIN
@@ -465,40 +466,29 @@ export const createServer = () => {
         `✅ REAL BLOCKCHAIN RECORDED: TX Hash ${blockchainTx.txHash}`,
       );
 
-      // Update record with blockchain transaction
-      record.status = status;
-      record.remarks = remarks;
-      record.verifiedBy = verifiedBy || "admin@authenledger.com";
-      record.updatedAt = new Date().toISOString();
-      record.lastBlockchainTxHash = blockchainTx.txHash; // Store latest blockchain transaction
+      // Update record in PostgreSQL database
+      const updatedRecord = await kycService.updateKYCStatus(
+        id,
+        status,
+        remarks || `KYC ${status.toLowerCase()} by admin`,
+        verifiedBy || "admin@authenledger.com",
+        blockchainTx.txHash
+      );
 
-      if (status === "VERIFIED") {
-        record.verifiedAt = record.updatedAt;
-        record.verificationLevel = "L2";
-        record.blockchainVerificationTx = blockchainTx.txHash; // Specific verification transaction
-        console.log(`✅ VERIFIED: KYC ${id} permanently stored on blockchain`);
-      } else if (status === "REJECTED") {
-        record.rejectedAt = record.updatedAt;
-        record.blockchainRejectionTx = blockchainTx.txHash; // Specific rejection transaction
-        console.log(`❌ REJECTED: KYC ${id} rejection recorded on blockchain`);
-      }
-
-      // Permanently save updated record (persistent even when system is off)
-      kycRecords.set(id, record);
-      console.log(`💾 PERMANENT STORAGE: Record updated in persistent storage`);
+      console.log(`💾 PERMANENT DATABASE STORAGE: Record updated in PostgreSQL`);
 
       res.json({
         success: true,
-        data: record,
-        message: `✅ KYC record ${status.toLowerCase()} successfully and permanently stored on blockchain`,
+        data: updatedRecord.data,
+        message: `✅ KYC record ${status.toLowerCase()} successfully and permanently stored in database and blockchain`,
         blockchainTxHash: blockchainTx.txHash,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("❌ Admin KYC update error:", error);
+      console.error("❌ Admin database/blockchain update error:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to update KYC status",
+        message: "Failed to update KYC status in database",
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
