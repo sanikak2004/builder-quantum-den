@@ -36,7 +36,7 @@ const PrismaClient = MockPrismaClient;
 
 // Create global Prisma client instance
 declare global {
-  var prisma: PrismaClient | undefined;
+  var prisma: any | undefined;
 }
 
 // Use global instance in development to prevent multiple connections
