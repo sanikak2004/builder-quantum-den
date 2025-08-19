@@ -94,6 +94,42 @@ export const createServer = () => {
     res.json({ message: "pong", timestamp: new Date().toISOString() });
   });
 
+  // Blockchain status endpoint
+  app.get("/api/blockchain/status", async (req, res) => {
+    try {
+      const fabricConnected = fabricService.isConnected();
+      const ipfsStatus = await ipfsService.getStatus();
+
+      res.json({
+        success: true,
+        blockchain: {
+          hyperledgerFabric: {
+            connected: fabricConnected,
+            network: fabricConnected ? "Authen Ledger Network" : "Not Connected",
+            type: "REAL - Hyperledger Fabric 2.5.4"
+          },
+          ipfs: {
+            connected: ipfsStatus.connected,
+            version: ipfsStatus.version || "Unknown",
+            peerId: ipfsStatus.peerId || "Unknown",
+            type: "REAL - IPFS Network"
+          }
+        },
+        message: fabricConnected && ipfsStatus.connected
+          ? "✅ All blockchain services connected - REAL IMPLEMENTATION"
+          : "⚠️ Some blockchain services not connected",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Failed to check blockchain status",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
   // Demo endpoint (simplified)
   app.get("/api/demo", (req, res) => {
     res.json({ message: "Hello from Express server" });
