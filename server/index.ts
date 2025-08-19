@@ -341,9 +341,9 @@ export const createServer = () => {
       // Return success response
       res.json({
         success: true,
-        data: kycRecord,
+        data: kycRecord.data,
         message:
-          "KYC submission successful! Your application is being processed on the blockchain.",
+          "✅ KYC submission successful! Your application is permanently stored in database and blockchain.",
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
