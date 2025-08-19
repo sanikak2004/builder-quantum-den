@@ -86,7 +86,7 @@ const initializeServices = async (): Promise<void> => {
 };
 
 // Initialize on server startup
-initializeBlockchainServices();
+initializeServices();
 
 export const createServer = () => {
   const app = express();
