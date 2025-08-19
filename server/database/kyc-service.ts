@@ -1,5 +1,43 @@
 import { prisma } from './prisma';
-import { KYCStatus, VerificationLevel, DocumentType, AuditAction } from '@prisma/client';
+// Import Prisma enums (will be available after db:generate)
+// import { KYCStatus, VerificationLevel, DocumentType, AuditAction } from '@prisma/client';
+
+// Temporary enum definitions until Prisma client is generated
+enum KYCStatus {
+  PENDING = 'PENDING',
+  UNDER_REVIEW = 'UNDER_REVIEW',
+  VERIFIED = 'VERIFIED',
+  REJECTED = 'REJECTED',
+  EXPIRED = 'EXPIRED'
+}
+
+enum VerificationLevel {
+  L1 = 'L1',
+  L2 = 'L2',
+  L3 = 'L3'
+}
+
+enum DocumentType {
+  PAN = 'PAN',
+  AADHAAR = 'AADHAAR',
+  PASSPORT = 'PASSPORT',
+  BANK_STATEMENT = 'BANK_STATEMENT',
+  UTILITY_BILL = 'UTILITY_BILL',
+  DRIVING_LICENSE = 'DRIVING_LICENSE',
+  VOTER_ID = 'VOTER_ID',
+  OTHER = 'OTHER'
+}
+
+enum AuditAction {
+  CREATED = 'CREATED',
+  UPDATED = 'UPDATED',
+  VERIFIED = 'VERIFIED',
+  REJECTED = 'REJECTED',
+  DOCUMENT_UPLOADED = 'DOCUMENT_UPLOADED',
+  STATUS_CHANGED = 'STATUS_CHANGED',
+  ADMIN_REVIEW = 'ADMIN_REVIEW',
+  BLOCKCHAIN_TRANSACTION = 'BLOCKCHAIN_TRANSACTION'
+}
 
 export interface KYCSubmissionData {
   id: string;
