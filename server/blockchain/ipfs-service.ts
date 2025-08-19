@@ -13,7 +13,12 @@ interface IPFSHTTPClient {
   version: () => Promise<{ version: string }>;
   id: () => Promise<{ id: string; addresses: string[] }>;
   stats: {
-    bw: () => Promise<{ totalIn: number; totalOut: number; rateIn: number; rateOut: number }>;
+    bw: () => Promise<{
+      totalIn: number;
+      totalOut: number;
+      rateIn: number;
+      rateOut: number;
+    }>;
   };
 }
 

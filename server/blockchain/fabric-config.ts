@@ -23,9 +23,9 @@ class MockGateway implements Gateway {
   async getNetwork(): Promise<Network> {
     return {
       getContract: () => ({
-        submitTransaction: async () => Buffer.from('mock-tx-id'),
-        evaluateTransaction: async () => Buffer.from('{}')
-      })
+        submitTransaction: async () => Buffer.from("mock-tx-id"),
+        evaluateTransaction: async () => Buffer.from("{}"),
+      }),
     };
   }
   disconnect() {}
@@ -34,8 +34,8 @@ class MockGateway implements Gateway {
 const Wallets = {
   newFileSystemWallet: async () => ({
     get: async () => null,
-    put: async () => {}
-  })
+    put: async () => {},
+  }),
 };
 
 export interface FabricConfig {

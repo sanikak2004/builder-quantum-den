@@ -46,8 +46,8 @@ const KYCSubmissionSchema = z.object({
 });
 
 // Real database storage using Prisma PostgreSQL
-import { initializeDatabase, prisma } from './database/prisma';
-import { kycService } from './database/kyc-service';
+import { initializeDatabase, prisma } from "./database/prisma";
+import { kycService } from "./database/kyc-service";
 
 // Use simplified blockchain services for development (switch to real services when network is ready)
 import { fabricService } from "./blockchain/simple-fabric-service";
@@ -79,9 +79,7 @@ const initializeServices = async (): Promise<void> => {
     console.log("✅ All services initialized successfully");
   } catch (error) {
     console.error("❌ Failed to initialize services:", error);
-    console.log(
-      "⚠️  Some features may not work until services are connected",
-    );
+    console.log("⚠️  Some features may not work until services are connected");
   }
 };
 
@@ -338,7 +336,7 @@ export const createServer = () => {
           address: validatedData.address,
         },
         documents,
-        blockchainResult.txHash
+        blockchainResult.txHash,
       );
 
       console.log(`✅ KYC record permanently saved to database: ${kycId}`);
@@ -388,7 +386,7 @@ export const createServer = () => {
       // Get real audit logs from database
       const history = await kycService.getKYCHistory(
         kycId as string,
-        action as string
+        action as string,
       );
 
       res.json({
@@ -477,10 +475,12 @@ export const createServer = () => {
         status,
         remarks || `KYC ${status.toLowerCase()} by admin`,
         verifiedBy || "admin@authenledger.com",
-        blockchainTx.txHash
+        blockchainTx.txHash,
       );
 
-      console.log(`💾 PERMANENT DATABASE STORAGE: Record updated in PostgreSQL`);
+      console.log(
+        `💾 PERMANENT DATABASE STORAGE: Record updated in PostgreSQL`,
+      );
 
       res.json({
         success: true,

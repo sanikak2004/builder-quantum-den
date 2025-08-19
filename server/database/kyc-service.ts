@@ -1,42 +1,42 @@
-import { prisma } from './prisma';
+import { prisma } from "./prisma";
 // Import Prisma enums (will be available after db:generate)
 // import { KYCStatus, VerificationLevel, DocumentType, AuditAction } from '@prisma/client';
 
 // Temporary enum definitions until Prisma client is generated
 enum KYCStatus {
-  PENDING = 'PENDING',
-  UNDER_REVIEW = 'UNDER_REVIEW',
-  VERIFIED = 'VERIFIED',
-  REJECTED = 'REJECTED',
-  EXPIRED = 'EXPIRED'
+  PENDING = "PENDING",
+  UNDER_REVIEW = "UNDER_REVIEW",
+  VERIFIED = "VERIFIED",
+  REJECTED = "REJECTED",
+  EXPIRED = "EXPIRED",
 }
 
 enum VerificationLevel {
-  L1 = 'L1',
-  L2 = 'L2',
-  L3 = 'L3'
+  L1 = "L1",
+  L2 = "L2",
+  L3 = "L3",
 }
 
 enum DocumentType {
-  PAN = 'PAN',
-  AADHAAR = 'AADHAAR',
-  PASSPORT = 'PASSPORT',
-  BANK_STATEMENT = 'BANK_STATEMENT',
-  UTILITY_BILL = 'UTILITY_BILL',
-  DRIVING_LICENSE = 'DRIVING_LICENSE',
-  VOTER_ID = 'VOTER_ID',
-  OTHER = 'OTHER'
+  PAN = "PAN",
+  AADHAAR = "AADHAAR",
+  PASSPORT = "PASSPORT",
+  BANK_STATEMENT = "BANK_STATEMENT",
+  UTILITY_BILL = "UTILITY_BILL",
+  DRIVING_LICENSE = "DRIVING_LICENSE",
+  VOTER_ID = "VOTER_ID",
+  OTHER = "OTHER",
 }
 
 enum AuditAction {
-  CREATED = 'CREATED',
-  UPDATED = 'UPDATED',
-  VERIFIED = 'VERIFIED',
-  REJECTED = 'REJECTED',
-  DOCUMENT_UPLOADED = 'DOCUMENT_UPLOADED',
-  STATUS_CHANGED = 'STATUS_CHANGED',
-  ADMIN_REVIEW = 'ADMIN_REVIEW',
-  BLOCKCHAIN_TRANSACTION = 'BLOCKCHAIN_TRANSACTION'
+  CREATED = "CREATED",
+  UPDATED = "UPDATED",
+  VERIFIED = "VERIFIED",
+  REJECTED = "REJECTED",
+  DOCUMENT_UPLOADED = "DOCUMENT_UPLOADED",
+  STATUS_CHANGED = "STATUS_CHANGED",
+  ADMIN_REVIEW = "ADMIN_REVIEW",
+  BLOCKCHAIN_TRANSACTION = "BLOCKCHAIN_TRANSACTION",
 }
 
 export interface KYCSubmissionData {
@@ -70,7 +70,7 @@ export class KYCDatabaseService {
   async createKYCRecord(
     kycData: KYCSubmissionData,
     documents: DocumentData[],
-    blockchainTxHash?: string
+    blockchainTxHash?: string,
   ) {
     try {
       console.log(`💾 Creating KYC record in database: ${kycData.id}`);
@@ -94,12 +94,12 @@ export class KYCDatabaseService {
           include: {
             documents: true,
             auditLogs: true,
-          }
+          },
         });
 
         // Create documents
         const documentRecords = await Promise.all(
-          documents.map(doc => 
+          documents.map((doc) =>
             tx.document.create({
               data: {
                 kycRecordId: kycRecord.id,
@@ -109,9 +109,9 @@ export class KYCDatabaseService {
                 documentHash: doc.documentHash,
                 ipfsHash: doc.ipfsHash,
                 ipfsUrl: doc.ipfsUrl,
-              }
-            })
-          )
+              },
+            }),
+          ),
         );
 
         // Create audit log entry
@@ -126,13 +126,13 @@ export class KYCDatabaseService {
               documentsCount: documents.length,
               initialSubmission: true,
             },
-            remarks: 'Initial KYC submission',
-          }
+            remarks: "Initial KYC submission",
+          },
         });
 
         // Update system stats
-        await this.updateSystemStats(tx, 'increment', 'totalSubmissions');
-        await this.updateSystemStats(tx, 'increment', 'pendingVerifications');
+        await this.updateSystemStats(tx, "increment", "totalSubmissions");
+        await this.updateSystemStats(tx, "increment", "pendingVerifications");
 
         return {
           ...kycRecord,
@@ -142,10 +142,11 @@ export class KYCDatabaseService {
 
       console.log(`✅ KYC record created successfully: ${kycData.id}`);
       return { success: true, data: result };
-
     } catch (error) {
-      console.error('❌ Failed to create KYC record:', error);
-      throw new Error(`Database creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("❌ Failed to create KYC record:", error);
+      throw new Error(
+        `Database creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   }
 
@@ -157,9 +158,9 @@ export class KYCDatabaseService {
         include: {
           documents: true,
           auditLogs: {
-            orderBy: { performedAt: 'desc' }
-          }
-        }
+            orderBy: { performedAt: "desc" },
+          },
+        },
       });
 
       return record;
@@ -170,10 +171,14 @@ export class KYCDatabaseService {
   }
 
   // Search KYC records
-  async searchKYCRecord(criteria: { id?: string; pan?: string; email?: string }) {
+  async searchKYCRecord(criteria: {
+    id?: string;
+    pan?: string;
+    email?: string;
+  }) {
     try {
       const where: any = {};
-      
+
       if (criteria.id) where.id = criteria.id;
       if (criteria.pan) where.pan = criteria.pan;
       if (criteria.email) where.email = criteria.email;
@@ -183,14 +188,14 @@ export class KYCDatabaseService {
         include: {
           documents: true,
           auditLogs: {
-            orderBy: { performedAt: 'desc' }
-          }
-        }
+            orderBy: { performedAt: "desc" },
+          },
+        },
       });
 
       return record;
     } catch (error) {
-      console.error('❌ Failed to search KYC record:', error);
+      console.error("❌ Failed to search KYC record:", error);
       throw error;
     }
   }
@@ -201,7 +206,7 @@ export class KYCDatabaseService {
     status: string,
     remarks: string,
     verifiedBy: string,
-    blockchainTxHash?: string
+    blockchainTxHash?: string,
   ) {
     try {
       console.log(`💾 Updating KYC status in database: ${kycId} -> ${status}`);
@@ -215,11 +220,11 @@ export class KYCDatabaseService {
           lastBlockchainTxHash: blockchainTxHash,
         };
 
-        if (status === 'VERIFIED') {
+        if (status === "VERIFIED") {
           updateData.verifiedAt = new Date();
           updateData.verificationLevel = VerificationLevel.L2;
           updateData.blockchainVerificationTx = blockchainTxHash;
-        } else if (status === 'REJECTED') {
+        } else if (status === "REJECTED") {
           updateData.rejectedAt = new Date();
           updateData.blockchainRejectionTx = blockchainTxHash;
         }
@@ -231,31 +236,36 @@ export class KYCDatabaseService {
           include: {
             documents: true,
             auditLogs: true,
-          }
+          },
         });
 
         // Create audit log entry
         await tx.auditLog.create({
           data: {
             kycRecordId: kycId,
-            action: status === 'VERIFIED' ? AuditAction.VERIFIED : AuditAction.REJECTED,
+            action:
+              status === "VERIFIED"
+                ? AuditAction.VERIFIED
+                : AuditAction.REJECTED,
             performedBy: verifiedBy,
             txId: blockchainTxHash,
             details: { newStatus: status },
             remarks,
-          }
+          },
         });
 
         // Update system stats
-        const oldRecord = await tx.kYCRecord.findUnique({ where: { id: kycId } });
-        if (oldRecord?.status === 'PENDING') {
-          await this.updateSystemStats(tx, 'decrement', 'pendingVerifications');
+        const oldRecord = await tx.kYCRecord.findUnique({
+          where: { id: kycId },
+        });
+        if (oldRecord?.status === "PENDING") {
+          await this.updateSystemStats(tx, "decrement", "pendingVerifications");
         }
-        
-        if (status === 'VERIFIED') {
-          await this.updateSystemStats(tx, 'increment', 'verifiedRecords');
-        } else if (status === 'REJECTED') {
-          await this.updateSystemStats(tx, 'increment', 'rejectedRecords');
+
+        if (status === "VERIFIED") {
+          await this.updateSystemStats(tx, "increment", "verifiedRecords");
+        } else if (status === "REJECTED") {
+          await this.updateSystemStats(tx, "increment", "rejectedRecords");
         }
 
         return kycRecord;
@@ -263,24 +273,27 @@ export class KYCDatabaseService {
 
       console.log(`✅ KYC status updated successfully: ${kycId}`);
       return { success: true, data: result };
-
     } catch (error) {
-      console.error('❌ Failed to update KYC status:', error);
-      throw new Error(`Database update failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("❌ Failed to update KYC status:", error);
+      throw new Error(
+        `Database update failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   }
 
   // Get all KYC records (admin)
-  async getAllKYCRecords(filters: {
-    status?: string;
-    limit?: number;
-    offset?: number;
-  } = {}) {
+  async getAllKYCRecords(
+    filters: {
+      status?: string;
+      limit?: number;
+      offset?: number;
+    } = {},
+  ) {
     try {
       const { status, limit = 50, offset = 0 } = filters;
-      
+
       const where: any = {};
-      if (status && status !== 'all') {
+      if (status && status !== "all") {
         where.status = status as KYCStatus;
       }
 
@@ -291,14 +304,14 @@ export class KYCDatabaseService {
             documents: true,
             auditLogs: {
               take: 5,
-              orderBy: { performedAt: 'desc' }
-            }
+              orderBy: { performedAt: "desc" },
+            },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: limit,
           skip: offset,
         }),
-        prisma.kYCRecord.count({ where })
+        prisma.kYCRecord.count({ where }),
       ]);
 
       return {
@@ -308,7 +321,7 @@ export class KYCDatabaseService {
         limit,
       };
     } catch (error) {
-      console.error('❌ Failed to get all KYC records:', error);
+      console.error("❌ Failed to get all KYC records:", error);
       throw error;
     }
   }
@@ -317,18 +330,18 @@ export class KYCDatabaseService {
   async getKYCHistory(kycId: string, action?: string) {
     try {
       const where: any = { kycRecordId: kycId };
-      if (action && action !== 'all') {
+      if (action && action !== "all") {
         where.action = action as AuditAction;
       }
 
       const history = await prisma.auditLog.findMany({
         where,
-        orderBy: { performedAt: 'desc' }
+        orderBy: { performedAt: "desc" },
       });
 
       return history;
     } catch (error) {
-      console.error('❌ Failed to get KYC history:', error);
+      console.error("❌ Failed to get KYC history:", error);
       throw error;
     }
   }
@@ -338,10 +351,12 @@ export class KYCDatabaseService {
     try {
       // For now, return mock data since we're using a mock Prisma client
       // This will be replaced with real database queries when the real database is connected
-      console.log('📊 Returning mock stats data until real database is connected');
+      console.log(
+        "📊 Returning mock stats data until real database is connected",
+      );
 
       return {
-        id: 'system_stats',
+        id: "system_stats",
         totalSubmissions: 0,
         pendingVerifications: 0,
         verifiedRecords: 0,
@@ -350,10 +365,10 @@ export class KYCDatabaseService {
         lastUpdated: new Date(),
       };
     } catch (error) {
-      console.error('❌ Failed to get system stats:', error);
+      console.error("❌ Failed to get system stats:", error);
       // Return default stats on error
       return {
-        id: 'system_stats',
+        id: "system_stats",
         totalSubmissions: 0,
         pendingVerifications: 0,
         verifiedRecords: 0,
@@ -365,16 +380,20 @@ export class KYCDatabaseService {
   }
 
   // Helper method to update system stats
-  private async updateSystemStats(tx: any, operation: 'increment' | 'decrement', field: string) {
+  private async updateSystemStats(
+    tx: any,
+    operation: "increment" | "decrement",
+    field: string,
+  ) {
     try {
-      const increment = operation === 'increment' ? 1 : -1;
+      const increment = operation === "increment" ? 1 : -1;
       await tx.systemStats.update({
-        where: { id: 'system_stats' },
+        where: { id: "system_stats" },
         data: {
           [field]: {
-            increment
-          }
-        }
+            increment,
+          },
+        },
       });
     } catch (error) {
       console.warn(`⚠️  Could not update system stats ${field}:`, error);
@@ -384,13 +403,13 @@ export class KYCDatabaseService {
   // Helper method to map document types
   private mapDocumentType(type: string): DocumentType {
     const typeMap: { [key: string]: DocumentType } = {
-      'PAN': DocumentType.PAN,
-      'AADHAAR': DocumentType.AADHAAR,
-      'PASSPORT': DocumentType.PASSPORT,
-      'BANK_STATEMENT': DocumentType.BANK_STATEMENT,
-      'UTILITY_BILL': DocumentType.UTILITY_BILL,
-      'DRIVING_LICENSE': DocumentType.DRIVING_LICENSE,
-      'VOTER_ID': DocumentType.VOTER_ID,
+      PAN: DocumentType.PAN,
+      AADHAAR: DocumentType.AADHAAR,
+      PASSPORT: DocumentType.PASSPORT,
+      BANK_STATEMENT: DocumentType.BANK_STATEMENT,
+      UTILITY_BILL: DocumentType.UTILITY_BILL,
+      DRIVING_LICENSE: DocumentType.DRIVING_LICENSE,
+      VOTER_ID: DocumentType.VOTER_ID,
     };
 
     return typeMap[type.toUpperCase()] || DocumentType.OTHER;
