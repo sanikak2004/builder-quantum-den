@@ -48,157 +48,36 @@ const KYCSubmissionSchema = z.object({
 // Mock in-memory storage (replace with actual database)
 const kycRecords = new Map();
 
-// Add sample KYC records for demonstration
-const sampleRecords = [
-  {
-    id: "kyc_demo_001",
-    userId: "user_001",
-    name: "Aryan Maske",
-    email: "aryan.maske@example.com",
-    phone: "+91-9876543210",
-    pan: "ABCDE1234F",
-    dateOfBirth: "1995-06-15",
-    address: {
-      street: "123 Tech Street",
-      city: "Mumbai",
-      state: "Maharashtra",
-      pincode: "400001",
-      country: "India",
-    },
-    documents: [
-      {
-        type: "PAN Card",
-        documentHash: "hash_pan_" + crypto.randomBytes(16).toString("hex"),
-        ipfsUrl: "https://ipfs.io/ipfs/QmExample1",
-        uploadedAt: new Date(Date.now() - 86400000).toISOString(),
-      },
-      {
-        type: "Aadhaar Card",
-        documentHash: "hash_aadhaar_" + crypto.randomBytes(16).toString("hex"),
-        ipfsUrl: "https://ipfs.io/ipfs/QmExample2",
-        uploadedAt: new Date(Date.now() - 86400000).toISOString(),
-      },
-    ],
-    status: "PENDING",
-    verificationLevel: "L1",
-    blockchainTxHash: crypto.randomBytes(32).toString("hex"),
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: "kyc_demo_002",
-    userId: "user_002",
-    name: "Priya Sharma",
-    email: "priya.sharma@example.com",
-    phone: "+91-9876543211",
-    pan: "FGHIJ5678K",
-    dateOfBirth: "1992-03-22",
-    address: {
-      street: "456 Business Avenue",
-      city: "Delhi",
-      state: "Delhi",
-      pincode: "110001",
-      country: "India",
-    },
-    documents: [
-      {
-        type: "PAN Card",
-        documentHash: "hash_pan_" + crypto.randomBytes(16).toString("hex"),
-        ipfsUrl: "https://ipfs.io/ipfs/QmExample3",
-        uploadedAt: new Date(Date.now() - 172800000).toISOString(),
-      },
-    ],
-    status: "PENDING",
-    verificationLevel: "L1",
-    blockchainTxHash: crypto.randomBytes(32).toString("hex"),
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    updatedAt: new Date(Date.now() - 172800000).toISOString(),
-  },
-  {
-    id: "kyc_demo_003",
-    userId: "user_003",
-    name: "Raj Patel",
-    email: "raj.patel@example.com",
-    phone: "+91-9876543212",
-    pan: "LMNOP9012Q",
-    dateOfBirth: "1988-12-10",
-    address: {
-      street: "789 Finance Road",
-      city: "Bangalore",
-      state: "Karnataka",
-      pincode: "560001",
-      country: "India",
-    },
-    documents: [
-      {
-        type: "PAN Card",
-        documentHash: "hash_pan_" + crypto.randomBytes(16).toString("hex"),
-        ipfsUrl: "https://ipfs.io/ipfs/QmExample4",
-        uploadedAt: new Date(Date.now() - 259200000).toISOString(),
-      },
-      {
-        type: "Bank Statement",
-        documentHash: "hash_bank_" + crypto.randomBytes(16).toString("hex"),
-        ipfsUrl: "https://ipfs.io/ipfs/QmExample5",
-        uploadedAt: new Date(Date.now() - 259200000).toISOString(),
-      },
-    ],
-    status: "VERIFIED",
-    verificationLevel: "L2",
-    blockchainTxHash: crypto.randomBytes(32).toString("hex"),
-    blockchainVerificationTx: crypto.randomBytes(32).toString("hex"),
-    verifiedBy: "admin@authenledger.com",
-    verifiedAt: new Date(Date.now() - 86400000).toISOString(),
-    remarks: "✅ APPROVED: All documents verified successfully",
-    createdAt: new Date(Date.now() - 259200000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-];
+// Real blockchain and IPFS services
+import { fabricService } from './blockchain/fabric-config';
+import { ipfsService } from './blockchain/ipfs-service';
 
-// Initialize sample data
-sampleRecords.forEach((record) => {
-  kycRecords.set(record.id, record);
-});
+// Clean storage - NO DUMMY DATA - only real user uploads
+console.log('🚀 Authen Ledger initialized with REAL BLOCKCHAIN INTEGRATION');
+console.log('✅ Hyperledger Fabric: REAL blockchain transactions');
+console.log('✅ IPFS: REAL distributed file storage');
+console.log('🗃️  Storage: Clean - only actual user submissions will be stored');
 
-console.log(
-  `🚀 Authen Ledger initialized with ${sampleRecords.length} sample KYC records`,
-);
-console.log("📋 Sample KYC IDs for testing:");
-sampleRecords.forEach((record) => {
-  console.log(`   - ${record.id} (${record.name}) - Status: ${record.status}`);
-});
+// Initialize real blockchain services
+const initializeBlockchainServices = async (): Promise<void> => {
+  try {
+    console.log('🔄 Initializing real blockchain services...');
 
-// Mock services
-class MockBlockchainService {
-  static async submitKYC(kycData: any, documentHashes: string[]) {
-    // Simulate blockchain transaction
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Initialize Hyperledger Fabric connection
+    await fabricService.initializeConnection();
 
-    const txHash = crypto.randomBytes(32).toString("hex");
-    return {
-      success: true,
-      txHash,
-      blockNumber: Math.floor(Math.random() * 1000000),
-      gasUsed: Math.floor(Math.random() * 100000),
-      message: "KYC record successfully recorded on blockchain",
-    };
+    // Initialize IPFS connection
+    await ipfsService.initializeConnection();
+
+    console.log('✅ All blockchain services initialized successfully');
+  } catch (error) {
+    console.error('❌ Failed to initialize blockchain services:', error);
+    console.log('⚠️  Some blockchain features may not work until services are connected');
   }
-}
+};
 
-class MockIPFSService {
-  static async uploadFile(file: Buffer, filename: string) {
-    // Simulate IPFS upload
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const hash = crypto.createHash("sha256").update(file).digest("hex");
-    return {
-      success: true,
-      hash: `Qm${hash.substring(0, 44)}`, // IPFS-style hash
-      url: `https://ipfs.io/ipfs/Qm${hash.substring(0, 44)}`,
-      size: file.length,
-    };
-  }
-}
+// Initialize on server startup
+initializeBlockchainServices();
 
 export const createServer = () => {
   const app = express();
