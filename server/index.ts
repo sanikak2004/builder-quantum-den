@@ -330,7 +330,12 @@ export const createServer = () => {
         {
           id: kycId,
           userId: crypto.randomUUID(), // In real implementation, get from authenticated user
-          ...validatedData,
+          name: validatedData.name,
+          email: validatedData.email,
+          phone: validatedData.phone,
+          pan: validatedData.pan,
+          dateOfBirth: validatedData.dateOfBirth,
+          address: validatedData.address,
         },
         documents,
         blockchainResult.txHash
