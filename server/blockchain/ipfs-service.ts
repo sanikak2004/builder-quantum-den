@@ -1,4 +1,5 @@
-import { create, IPFSHTTPClient } from "ipfs-http-client";
+import { createHelia } from "helia";
+import { unixfs } from "@helia/unixfs";
 import * as crypto from "crypto";
 
 export interface IPFSUploadResult {
