@@ -147,46 +147,32 @@ export const createServer = () => {
     res.json({ message: "Hello from Express server" });
   });
 
-  // KYC Stats endpoint with REAL data
-  app.get("/api/kyc/stats", (req, res) => {
+  // KYC Stats endpoint with REAL database data
+  app.get("/api/kyc/stats", async (req, res) => {
     try {
-      // Calculate real stats from actual KYC records
-      const allRecords = Array.from(kycRecords.values());
-      const stats = {
-        totalSubmissions: allRecords.length,
-        pendingVerifications: allRecords.filter((r) => r.status === "PENDING")
-          .length,
-        verifiedRecords: allRecords.filter((r) => r.status === "VERIFIED")
-          .length,
-        rejectedRecords: allRecords.filter((r) => r.status === "REJECTED")
-          .length,
-        averageProcessingTime:
-          allRecords.length > 0
-            ? allRecords
-                .filter((r) => r.verifiedAt && r.createdAt)
-                .map(
-                  (r) =>
-                    (new Date(r.verifiedAt!).getTime() -
-                      new Date(r.createdAt).getTime()) /
-                    (1000 * 60 * 60),
-                )
-                .reduce((sum, time, _, arr) => sum + time / arr.length, 0) || 0
-            : 0,
-      };
+      // Get real stats from PostgreSQL database
+      const stats = await kycService.getSystemStats();
 
       res.json({
         success: true,
-        data: stats,
-        message: "Real KYC stats retrieved successfully",
+        data: {
+          totalSubmissions: stats.totalSubmissions,
+          pendingVerifications: stats.pendingVerifications,
+          verifiedRecords: stats.verifiedRecords,
+          rejectedRecords: stats.rejectedRecords,
+          averageProcessingTime: stats.averageProcessingTimeHours,
+        },
+        message: "Real KYC stats retrieved from database",
         blockchainConnected: fabricService.isConnected(),
         ipfsConnected: ipfsService.isConnected(),
+        databaseConnected: true,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("Stats error:", error);
+      console.error("Database stats error:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to fetch stats",
+        message: "Failed to fetch stats from database",
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
