@@ -1,6 +1,42 @@
-import { Gateway, Wallets, Contract, Network } from "fabric-network";
+// import { Gateway, Wallets, Contract, Network } from "fabric-network";
 import * as path from "path";
 import * as fs from "fs";
+
+// Temporary types until Fabric SDK is installed
+interface Gateway {
+  connect: (profile: any, options: any) => Promise<void>;
+  getNetwork: (channel: string) => Promise<Network>;
+  disconnect: () => void;
+}
+
+interface Contract {
+  submitTransaction: (func: string, ...args: string[]) => Promise<Buffer>;
+  evaluateTransaction: (func: string, ...args: string[]) => Promise<Buffer>;
+}
+
+interface Network {
+  getContract: (chaincode: string) => Contract;
+}
+
+class MockGateway implements Gateway {
+  async connect() {}
+  async getNetwork(): Promise<Network> {
+    return {
+      getContract: () => ({
+        submitTransaction: async () => Buffer.from('mock-tx-id'),
+        evaluateTransaction: async () => Buffer.from('{}')
+      })
+    };
+  }
+  disconnect() {}
+}
+
+const Wallets = {
+  newFileSystemWallet: async () => ({
+    get: async () => null,
+    put: async () => {}
+  })
+};
 
 export interface FabricConfig {
   channelName: string;
