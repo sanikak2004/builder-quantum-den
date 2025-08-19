@@ -93,7 +93,7 @@ export class HyperledgerFabricService {
       const connectionProfile = this.loadConnectionProfile();
 
       // Create gateway
-      this.gateway = new Gateway();
+      this.gateway = new MockGateway();
       await this.gateway.connect(connectionProfile, {
         wallet,
         identity: "admin",
