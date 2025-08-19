@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Shield,
   Upload,
@@ -30,17 +30,39 @@ import {
   Calendar,
   CreditCard,
   Loader2,
+  Copy,
+  ExternalLink,
+  FileCheck,
+  Hash,
+  Database,
+  Server
 } from "lucide-react";
 import { KYCSubmissionRequest, ApiResponse, KYCRecord } from "@shared/api";
+
+// Define the backend response type based on your logs
+interface BackendKYCSuccessResponse {
+  success: true;
+  txHash: string;
+  blockNumber: number;
+  message: string;
+  kycId: string;
+  // Add these fields to your backend response to get IPFS data
+  ipfsHashes?: string[];
+  documentUrls?: string[];
+}
 
 export default function KYCSubmission() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [submittedRecord, setSubmittedRecord] = useState<KYCRecord | null>(
-    null,
-  );
+  const [submittedRecord, setSubmittedRecord] = useState<KYCRecord | null>(null);
+  const [submissionDetails, setSubmissionDetails] = useState<{
+    txHash: string;
+    blockNumber: number;
+    ipfsHashes: string[];
+    kycId: string;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -118,7 +140,7 @@ export default function KYCSubmission() {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("data", JSON.stringify(formData));
-      selectedFiles.forEach((file, index) => {
+      selectedFiles.forEach((file) => {
         formDataToSend.append(`documents`, file);
       });
 
@@ -127,14 +149,48 @@ export default function KYCSubmission() {
         body: formDataToSend,
       });
 
-      const result: ApiResponse<KYCRecord> = await response.json();
+      const result: BackendKYCSuccessResponse | ApiResponse = await response.json();
 
-      if (result.success && result.data) {
+      if (result.success) {
+        const successResult = result as BackendKYCSuccessResponse;
+        
+        // Create record with the actual data from backend
+        const completeRecord: KYCRecord = {
+          id: successResult.kycId,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          pan: formData.pan,
+          dateOfBirth: formData.dateOfBirth,
+          address: formData.address,
+          status: "PENDING",
+          verificationLevel: "BASIC",
+          createdAt: new Date().toISOString(),
+          documents: selectedFiles.map((file, index) => ({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            // Use actual IPFS hash from backend if available
+            documentHash: successResult.ipfsHashes?.[index] || `IPFS_HASH_${index}`,
+            ipfsUrl: successResult.ipfsHashes?.[index] 
+              ? `https://ipfs.io/ipfs/${successResult.ipfsHashes[index]}`
+              : "#"
+          }))
+        };
+
         setSubmitSuccess(true);
-        setSubmittedRecord(result.data);
+        setSubmittedRecord(completeRecord);
+        
+        // Store the actual blockchain details from backend response
+        setSubmissionDetails({
+          txHash: successResult.txHash,
+          blockNumber: successResult.blockNumber,
+          ipfsHashes: successResult.ipfsHashes || [],
+          kycId: successResult.kycId
+        });
       } else {
-        // Provide specific error feedback
-        let errorMessage = result.message || "Submission failed";
+        const errorResult = result as ApiResponse;
+        let errorMessage = errorResult.message || "Submission failed";
 
         if (errorMessage.includes("PAN format")) {
           errorMessage =
@@ -167,7 +223,11 @@ export default function KYCSubmission() {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  if (submitSuccess && submittedRecord) {
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  if (submitSuccess && submittedRecord && submissionDetails) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         {/* Header */}
@@ -190,28 +250,52 @@ export default function KYCSubmission() {
         </header>
 
         {/* Success Content */}
-        <div className="container mx-auto px-6 py-20">
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="bg-green-100 p-6 rounded-full w-fit mx-auto mb-6">
-              <CheckCircle className="h-16 w-16 text-green-600" />
+        <div className="container mx-auto px-6 py-12">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <div className="bg-green-100 p-6 rounded-full w-fit mx-auto mb-6">
+                <CheckCircle className="h-16 w-16 text-green-600" />
+              </div>
+              <h1 className="text-4xl font-bold text-slate-800 mb-4">
+                KYC Submitted Successfully!
+              </h1>
+              <p className="text-xl text-slate-600 mb-8">
+                Your KYC application has been processed and recorded on the blockchain.
+              </p>
             </div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-4">
-              KYC Submitted Successfully!
-            </h1>
-            <p className="text-xl text-slate-600 mb-8">
-              Your KYC application has been submitted and is being processed on
-              the blockchain.
-            </p>
 
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg text-left mb-8">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-blue-600" />
-                  Submission Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <User className="h-5 w-5 text-blue-600" />
+                    Personal Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <p className="text-sm text-slate-500">Name</p>
+                    <p className="font-medium">{submittedRecord.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Email</p>
+                    <p className="font-medium">{submittedRecord.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">PAN Number</p>
+                    <p className="font-mono font-medium">{submittedRecord.pan}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    Submission Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
                   <div>
                     <p className="text-sm text-slate-500">KYC ID</p>
                     <p className="font-mono text-sm font-semibold">
@@ -230,21 +314,87 @@ export default function KYCSubmission() {
                       {new Date(submittedRecord.createdAt).toLocaleString()}
                     </p>
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Blockchain Transaction Details */}
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg mb-8">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-purple-600" />
+                  Blockchain Verification
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert className="bg-blue-50 border-blue-200">
+                  <Server className="h-4 w-4 text-blue-600" />
+                  <AlertTitle className="text-blue-800">Blockchain Confirmed</AlertTitle>
+                  <AlertDescription className="text-blue-700">
+                    Your KYC data has been securely stored on the Hyperledger Fabric blockchain and IPFS.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-slate-500">Verification Level</p>
-                    <Badge variant="outline">
-                      {submittedRecord.verificationLevel}
-                    </Badge>
+                    <p className="text-sm text-slate-500 mb-1 flex items-center gap-1">
+                      <Hash className="h-4 w-4" /> Transaction Hash
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-mono text-xs break-all bg-slate-100 p-2 rounded">
+                        {submissionDetails.txHash}
+                      </p>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="shrink-0"
+                        onClick={() => copyToClipboard(submissionDetails.txHash)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1 flex items-center gap-1">
+                      <Database className="h-4 w-4" /> Block Number
+                    </p>
+                    <p className="font-mono text-sm bg-slate-100 p-2 rounded">
+                      {submissionDetails.blockNumber}
+                    </p>
                   </div>
                 </div>
-                {submittedRecord.blockchainTxHash && (
+
+                {submissionDetails.ipfsHashes.length > 0 && (
                   <div>
-                    <p className="text-sm text-slate-500">
-                      Blockchain Transaction
+                    <p className="text-sm text-slate-500 mb-2 flex items-center gap-1">
+                      <FileCheck className="h-4 w-4" /> IPFS Document Hashes
                     </p>
-                    <p className="font-mono text-xs break-all">
-                      {submittedRecord.blockchainTxHash}
-                    </p>
+                    <div className="space-y-2">
+                      {submissionDetails.ipfsHashes.map((hash, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <p className="font-mono text-xs break-all bg-slate-100 p-2 rounded flex-1">
+                            {hash}
+                          </p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="shrink-0"
+                            onClick={() => copyToClipboard(hash)}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                          <a 
+                            href={`https://ipfs.io/ipfs/${hash}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                          >
+                            <Button variant="ghost" size="sm" className="shrink-0">
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          </a>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -256,7 +406,7 @@ export default function KYCSubmission() {
                   size="lg"
                   className="bg-gradient-to-r from-blue-600 to-indigo-600"
                 >
-                  Check Status
+                  Check Verification Status
                 </Button>
               </Link>
               <Link to="/">
@@ -270,6 +420,9 @@ export default function KYCSubmission() {
       </div>
     );
   }
+
+  // ... (keep the rest of your form UI code exactly as it was)
+  // The form UI code remains unchanged, only the submission handling has been updated
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
