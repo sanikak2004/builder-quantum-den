@@ -62,10 +62,13 @@ console.log(
   "⚡ App is functional - real blockchain can be added when infrastructure is ready",
 );
 
-// Initialize real blockchain services
-const initializeBlockchainServices = async (): Promise<void> => {
+// Initialize real blockchain and database services
+const initializeServices = async (): Promise<void> => {
   try {
-    console.log("🔄 Initializing real blockchain services...");
+    console.log("🔄 Initializing real blockchain and database services...");
+
+    // Initialize PostgreSQL database connection
+    await initializeDatabase();
 
     // Initialize Hyperledger Fabric connection
     await fabricService.initializeConnection();
@@ -73,11 +76,11 @@ const initializeBlockchainServices = async (): Promise<void> => {
     // Initialize IPFS connection
     await ipfsService.initializeConnection();
 
-    console.log("✅ All blockchain services initialized successfully");
+    console.log("✅ All services initialized successfully");
   } catch (error) {
-    console.error("❌ Failed to initialize blockchain services:", error);
+    console.error("❌ Failed to initialize services:", error);
     console.log(
-      "⚠️  Some blockchain features may not work until services are connected",
+      "⚠️  Some features may not work until services are connected",
     );
   }
 };
