@@ -403,46 +403,29 @@ export const createServer = () => {
     }
   });
 
-  // Admin: Get all KYC records
+  // Admin: Get all KYC records from database
   app.get("/api/admin/kyc/all", async (req, res) => {
     try {
       const { status, limit = 50, offset = 0 } = req.query;
 
-      // Get all records from in-memory storage
-      const allRecords = Array.from(kycRecords.values());
-
-      // Filter by status if specified
-      let filteredRecords = allRecords;
-      if (status && status !== "all") {
-        filteredRecords = allRecords.filter(
-          (record) => record.status === status,
-        );
-      }
-
-      // Apply pagination
-      const startIndex = parseInt(offset as string);
-      const limitNum = parseInt(limit as string);
-      const paginatedRecords = filteredRecords.slice(
-        startIndex,
-        startIndex + limitNum,
-      );
+      // Get records from PostgreSQL database
+      const result = await kycService.getAllKYCRecords({
+        status: status as string,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+      });
 
       res.json({
         success: true,
-        data: {
-          records: paginatedRecords,
-          total: filteredRecords.length,
-          offset: startIndex,
-          limit: limitNum,
-        },
-        message: `Found ${filteredRecords.length} KYC records`,
+        data: result,
+        message: `Found ${result.total} KYC records in database`,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("Admin KYC fetch error:", error);
+      console.error("Database admin KYC fetch error:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to fetch KYC records",
+        message: "Failed to fetch KYC records from database",
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
