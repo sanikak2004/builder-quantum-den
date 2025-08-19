@@ -286,5 +286,5 @@ export class HyperledgerFabricService {
   }
 }
 
-// Singleton instance
-export const fabricService = new HyperledgerFabricService();
+// Singleton instance - renamed to avoid conflicts
+export const realFabricService = new HyperledgerFabricService();
