@@ -7,10 +7,10 @@ A complete **electronic Know Your Customer (eKYC) system** built with **React**,
 ## 🏗️ System Architecture
 
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌────────────────��┐
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   React Frontend │    │   Express API    │    │ Hyperledger     │
 │   (Port 3000)    │────│   (Port 8080)    │────│ Fabric Network  │
-└��────────────────┘    └──────────────────┘    └─────────────────┘
+└�����───────────────┘    └──────────────────┘    └─────────────────┘
          │                        │                        │
          │              ┌──────────────────┐               │
          └──────────────│      IPFS        │───────────────┘
@@ -53,54 +53,49 @@ A complete **electronic Know Your Customer (eKYC) system** built with **React**,
 - **Blockchain Proof**: Cryptographic verification of authenticity
 - **Export Features**: Generate verification certificates
 
-## 🚀 Quick Start
+## 🚀 Quick Installation Guide
 
 ### Prerequisites
 
-- **Docker** (v20.10+) and **Docker Compose** (v2.0+)
-- **Node.js** (v18+) and **pnpm**
-- **Go** (v1.21+) for chaincode compilation
-- **Git** for version control
+- **Node.js** (v16+) - [Download here](https://nodejs.org/)
+- **pnpm** (v8+) - [Installation guide](https://pnpm.io/installation)
+- **Git** - [Download here](https://git-scm.com/)
 
-### 1. Clone and Setup
+### 1. Clone the Repository
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd ekyc-blockchain-system
-
-# Install dependencies
-pnpm install
-
-# Make scripts executable
-chmod +x scripts/*.sh
+git clone https://github.com/aryanmaske052005/builder-quantum-den.git
+cd builder-quantum-den
 ```
 
-### 2. Deploy the Network
+### 2. Install Dependencies
 
 ```bash
-# Deploy complete Hyperledger Fabric network
-./scripts/deploy-network.sh
+# Install all dependencies
+pnpm install
+
+# If you encounter lockfile issues:
+pnpm install --no-frozen-lockfile
 ```
 
-This script will:
+### 3. Start the Application
 
-- ✅ Generate crypto material for organizations
-- ✅ Start Hyperledger Fabric network (orderer, peers, CouchDB)
-- ✅ Create and configure the eKYC channel
-- ✅ Deploy and instantiate the eKYC chaincode
-- ✅ Start IPFS node for document storage
-- ✅ Launch the React/Express application
-- ✅ Configure Nginx reverse proxy
+```bash
+# Start the development server
+pnpm run dev
+```
 
-### 3. Access the System
+### 4. Access the Application
 
-Once deployment completes, access:
+Once started, you can access:
 
-- **🌐 Frontend**: http://localhost (Main eKYC interface)
-- **🔗 API**: http://localhost:8080/api (REST API endpoints)
-- **📊 CouchDB**: http://localhost:5984/\_utils (Database admin)
-- **📁 IPFS**: http://localhost:8080 (IPFS web interface)
+- **🌐 Application**: http://localhost:8080 (Main eKYC interface)
+- **📝 KYC Submission**: http://localhost:8080/submit
+- **👨‍💼 Admin Panel**: http://localhost:8080/admin
+- **🔗 API Health**: http://localhost:8080/api/ping
+
+**📋 Detailed Installation Guide**: See [INSTALLATION-GUIDE.md](./INSTALLATION-GUIDE.md) for comprehensive setup instructions.
 
 ## 📋 Project Structure
 
