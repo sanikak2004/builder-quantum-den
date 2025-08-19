@@ -48,9 +48,9 @@ const KYCSubmissionSchema = z.object({
 // Mock in-memory storage (replace with actual database)
 const kycRecords = new Map();
 
-// Real blockchain and IPFS services
-import { fabricService } from "./blockchain/fabric-config";
-import { ipfsService } from "./blockchain/ipfs-service";
+// Simplified blockchain services - ready for real integration
+import { fabricService } from "./blockchain/simple-fabric-service";
+import { ipfsService } from "./blockchain/simple-ipfs-service";
 
 // Clean storage - NO DUMMY DATA - only real user uploads
 console.log("🚀 Authen Ledger initialized with REAL BLOCKCHAIN INTEGRATION");
