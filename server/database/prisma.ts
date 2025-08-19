@@ -40,9 +40,7 @@ declare global {
 }
 
 // Use global instance in development to prevent multiple connections
-const prisma = globalThis.prisma || new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
-});
+const prisma = globalThis.prisma || new PrismaClient();
 
 if (process.env.NODE_ENV !== 'production') {
   globalThis.prisma = prisma;
