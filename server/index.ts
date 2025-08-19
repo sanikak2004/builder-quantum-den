@@ -453,21 +453,15 @@ export const createServer = () => {
         `🔄 BLOCKCHAIN UPDATE: Processing ${status} for KYC ID: ${id}`,
       );
 
-      // Simulate blockchain transaction for status update (permanent storage)
-      const statusUpdateData = {
-        kycId: id,
-        newStatus: status,
-        updatedBy: verifiedBy || "admin@authenledger.com",
-        timestamp: new Date().toISOString(),
-        remarks: remarks || `KYC ${status.toLowerCase()} by admin`,
-      };
-
-      // Record status update on blockchain (mock)
-      const blockchainTx = await MockBlockchainService.submitKYC(
-        statusUpdateData,
-        [],
+      // Submit status update to REAL HYPERLEDGER FABRIC BLOCKCHAIN
+      console.log(`📝 Recording status update on Hyperledger Fabric blockchain...`);
+      const blockchainTx = await fabricService.updateKYCStatus(
+        id,
+        status,
+        remarks || `KYC ${status.toLowerCase()} by admin`,
+        verifiedBy || "admin@authenledger.com"
       );
-      console.log(`✅ BLOCKCHAIN RECORDED: TX Hash ${blockchainTx.txHash}`);
+      console.log(`✅ REAL BLOCKCHAIN RECORDED: TX Hash ${blockchainTx.txHash}`);
 
       // Update record with blockchain transaction
       record.status = status;
