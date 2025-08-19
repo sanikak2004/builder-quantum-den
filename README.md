@@ -1,13 +1,13 @@
-# eKYC Blockchain System
+# 🔗 Authen Ledger - Blockchain eKYC Platform
 
-A complete **electronic Know Your Customer (eKYC) system** built on **Hyperledger Fabric** blockchain technology. This production-ready solution provides immutable identity verification with document storage on IPFS and a modern React frontend.
+A complete **electronic Know Your Customer (eKYC) system** built with **React**, **Express**, and **blockchain technology**. This modern platform provides secure identity verification with document management and admin verification workflows.
 
-![eKYC System Architecture](https://img.shields.io/badge/Blockchain-Hyperledger%20Fabric-blue) ![Frontend](https://img.shields.io/badge/Frontend-React%2018-61dafb) ![Backend](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-green) ![Storage](https://img.shields.io/badge/Storage-IPFS-orange)
+![eKYC System Architecture](https://img.shields.io/badge/Blockchain-Ready-blue) ![Frontend](https://img.shields.io/badge/Frontend-React%2018-61dafb) ![Backend](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-green) ![Storage](https://img.shields.io/badge/Ready-IPFS%20%2B%20Hyperledger-orange)
 
 ## 🏗️ System Architecture
 
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+┌─────────────────┐    ┌──────────────────┐    ┌────────────────��┐
 │   React Frontend │    │   Express API    │    │ Hyperledger     │
 │   (Port 3000)    │────│   (Port 8080)    │────│ Fabric Network  │
 └��────────────────┘    └──────────────────┘    └─────────────────┘
