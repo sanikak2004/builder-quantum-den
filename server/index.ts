@@ -194,8 +194,8 @@ export const createServer = () => {
           averageProcessingTime: stats.averageProcessingTimeHours,
         },
         message: "✅ REAL database stats - NO MOCK DATA",
-        blockchainConnected: fabricService.isConnected(),
-        ipfsConnected: ipfsService.isConnected(),
+        blockchainConnected: fabricService.getConnectionStatus(),
+        ipfsConnected: ipfsService.getConnectionStatus(),
         databaseConnected: true,
         timestamp: new Date().toISOString(),
       });
