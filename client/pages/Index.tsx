@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { KYCStats } from "@shared/api";
 import SystemStatus from "@/components/SystemStatus";
+import DatabaseRecords from "@/components/DatabaseRecords";
 
 export default function Index() {
   const [stats, setStats] = useState<KYCStats | null>(null);
