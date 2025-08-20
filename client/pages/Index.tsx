@@ -380,6 +380,22 @@ export default function Index() {
         </div>
       </section>
 
+      {/* System Status Section */}
+      <section className="py-20 px-6 bg-slate-50">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-slate-800 mb-6">
+              Real-Time System Status
+            </h2>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+              Monitor live system health, database status, and blockchain integration
+              with permanent data persistence.
+            </p>
+          </div>
+          <SystemStatus />
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-6 bg-gradient-to-r from-blue-600 to-indigo-600">
         <div className="container mx-auto text-center">
