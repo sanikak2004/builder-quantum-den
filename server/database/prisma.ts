@@ -1,50 +1,16 @@
-// import { PrismaClient } from '@prisma/client';
-// Temporary mock until Prisma client is generated
-
-class MockPrismaClient {
-  $connect() {
-    return Promise.resolve();
-  }
-  $disconnect() {
-    return Promise.resolve();
-  }
-
-  systemStats = {
-    findUnique: () => Promise.resolve(null),
-    create: () => Promise.resolve({ id: "system_stats" }),
-    update: () => Promise.resolve({}),
-  };
-
-  kYCRecord = {
-    create: () => Promise.resolve({}),
-    findUnique: () => Promise.resolve(null),
-    findFirst: () => Promise.resolve(null),
-    findMany: () => Promise.resolve([]),
-    update: () => Promise.resolve({}),
-    count: () => Promise.resolve(0),
-  };
-
-  document = {
-    create: () => Promise.resolve({}),
-  };
-
-  auditLog = {
-    create: () => Promise.resolve({}),
-    findMany: () => Promise.resolve([]),
-  };
-
-  $transaction = (fn: any) => fn(this);
-}
-
-const PrismaClient = MockPrismaClient;
+import { PrismaClient } from "@prisma/client";
 
 // Create global Prisma client instance
 declare global {
-  var prisma: any | undefined;
+  var prisma: PrismaClient | undefined;
 }
 
 // Use global instance in development to prevent multiple connections
-const prisma = globalThis.prisma || new PrismaClient();
+const prisma =
+  globalThis.prisma ||
+  new PrismaClient({
+    log: ["query", "info", "warn", "error"],
+  });
 
 if (process.env.NODE_ENV !== "production") {
   globalThis.prisma = prisma;
@@ -91,6 +57,67 @@ const initializeSystemStats = async (): Promise<void> => {
     }
   } catch (error) {
     console.warn("⚠️  Could not initialize system stats:", error);
+  }
+};
+
+// Update system statistics based on current records
+export const updateSystemStats = async (): Promise<void> => {
+  try {
+    const [totalSubmissions, pendingRecords, verifiedRecords, rejectedRecords] =
+      await Promise.all([
+        prisma.kYCRecord.count(),
+        prisma.kYCRecord.count({ where: { status: "PENDING" } }),
+        prisma.kYCRecord.count({ where: { status: "VERIFIED" } }),
+        prisma.kYCRecord.count({ where: { status: "REJECTED" } }),
+      ]);
+
+    // Calculate average processing time for verified records
+    const verifiedWithTimes = await prisma.kYCRecord.findMany({
+      where: {
+        status: "VERIFIED",
+        verifiedAt: { not: null },
+      },
+      select: {
+        createdAt: true,
+        verifiedAt: true,
+      },
+    });
+
+    let averageProcessingTimeHours = 0;
+    if (verifiedWithTimes.length > 0) {
+      const totalHours = verifiedWithTimes.reduce((sum, record) => {
+        if (record.verifiedAt) {
+          const diffMs =
+            record.verifiedAt.getTime() - record.createdAt.getTime();
+          return sum + diffMs / (1000 * 60 * 60); // Convert to hours
+        }
+        return sum;
+      }, 0);
+      averageProcessingTimeHours = totalHours / verifiedWithTimes.length;
+    }
+
+    await prisma.systemStats.upsert({
+      where: { id: "system_stats" },
+      update: {
+        totalSubmissions,
+        pendingVerifications: pendingRecords,
+        verifiedRecords,
+        rejectedRecords,
+        averageProcessingTimeHours,
+      },
+      create: {
+        id: "system_stats",
+        totalSubmissions,
+        pendingVerifications: pendingRecords,
+        verifiedRecords,
+        rejectedRecords,
+        averageProcessingTimeHours,
+      },
+    });
+
+    console.log("📊 System statistics updated successfully");
+  } catch (error) {
+    console.error("❌ Error updating system stats:", error);
   }
 };
 

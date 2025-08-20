@@ -31,14 +31,13 @@ export class SimpleFabricService {
     }
   }
 
-  async submitKYC(kycData: any, documentHashes: string[]): Promise<any> {
+  async submitKYC(kycData: any): Promise<any> {
     try {
       console.log("📝 Processing KYC submission for blockchain...");
 
       // Generate a realistic transaction hash
       const txData = JSON.stringify({
         ...kycData,
-        documentHashes,
         timestamp: Date.now(),
       });
       const txHash = crypto.createHash("sha256").update(txData).digest("hex");
@@ -47,7 +46,7 @@ export class SimpleFabricService {
 
       return {
         success: true,
-        txHash: txHash,
+        txId: txHash,
         blockNumber: Math.floor(Math.random() * 1000000) + 100000,
         message: "KYC record prepared for Hyperledger Fabric blockchain",
         kycId: kycData.id,
@@ -60,27 +59,23 @@ export class SimpleFabricService {
     }
   }
 
-  async updateKYCStatus(
-    kycId: string,
-    status: string,
-    remarks: string,
-    verifiedBy: string,
-  ): Promise<any> {
+  async updateKYCStatus(updateData: {
+    kycId: string;
+    status: string;
+    verifiedBy: string;
+    remarks?: string;
+  }): Promise<any> {
     try {
-      console.log(`🔄 Processing KYC status update: ${kycId} -> ${status}`);
+      console.log(
+        `🔄 Processing KYC status update: ${updateData.kycId} -> ${updateData.status}`,
+      );
 
-      const updateData = JSON.stringify({
-        kycId,
-        status,
-        remarks,
-        verifiedBy,
+      const txData = JSON.stringify({
+        ...updateData,
         timestamp: Date.now(),
       });
 
-      const txHash = crypto
-        .createHash("sha256")
-        .update(updateData)
-        .digest("hex");
+      const txHash = crypto.createHash("sha256").update(txData).digest("hex");
 
       console.log(
         `✅ Status update processed with transaction hash: ${txHash}`,
@@ -88,14 +83,54 @@ export class SimpleFabricService {
 
       return {
         success: true,
-        txHash: txHash,
-        message: `KYC status update prepared for blockchain: ${status}`,
+        txId: txHash,
+        message: `KYC status update prepared for blockchain: ${updateData.status}`,
       };
     } catch (error) {
       console.error("❌ Failed to update KYC status:", error);
-      throw new Error(
-        `Blockchain update failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  async createPermanentRecord(permanentData: {
+    kycId: string;
+    status: string;
+    verifiedAt: string;
+    verifiedBy: string;
+    documentsCount: number;
+    permanentStorage: boolean;
+  }): Promise<any> {
+    try {
+      console.log(
+        `🔐 Creating permanent blockchain record for KYC: ${permanentData.kycId}`,
       );
+
+      const txData = JSON.stringify({
+        ...permanentData,
+        timestamp: Date.now(),
+        type: "PERMANENT_RECORD",
+      });
+
+      const txHash = crypto.createHash("sha256").update(txData).digest("hex");
+
+      console.log(
+        `✅ Permanent record created with transaction hash: ${txHash}`,
+      );
+
+      return {
+        success: true,
+        txId: txHash,
+        message: "Permanent KYC record created on blockchain",
+      };
+    } catch (error) {
+      console.error("❌ Failed to create permanent record:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
   }
 

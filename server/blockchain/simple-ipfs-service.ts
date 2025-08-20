@@ -32,12 +32,11 @@ export class SimpleIPFSService {
 
   async uploadFile(
     file: Buffer,
-    filename: string,
-    metadata?: any,
+    options: { filename: string; contentType?: string },
   ): Promise<IPFSUploadResult> {
     try {
       console.log(
-        `📤 Processing file upload: ${filename} (${file.length} bytes)`,
+        `📤 Processing file upload: ${options.filename} (${file.length} bytes)`,
       );
 
       // Generate a real content hash (this would be the actual IPFS hash)
@@ -78,6 +77,26 @@ export class SimpleIPFSService {
     } catch (error) {
       console.error("❌ Failed to retrieve file:", error);
       return null;
+    }
+  }
+
+  async pinDocument(
+    hash: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      console.log(`📌 Pinning document for permanent storage: ${hash}`);
+      // In real implementation, this would pin the file in IPFS for permanent storage
+      console.log("✅ Document pinned successfully (simulated)");
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error("❌ Failed to pin document:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
   }
 

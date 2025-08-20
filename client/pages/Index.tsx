@@ -35,26 +35,10 @@ export default function Index() {
         const data = await response.json();
         setStats(data.data);
       } else {
-        console.warn("Stats API not available, using mock data");
-        // Use mock data when API is not available
-        setStats({
-          totalSubmissions: 15234,
-          pendingVerifications: 89,
-          verifiedRecords: 14832,
-          rejectedRecords: 313,
-          averageProcessingTime: 2.5,
-        });
+        console.warn("Stats API not available");
       }
     } catch (error) {
       console.error("Error fetching stats:", error);
-      // Use mock data as fallback
-      setStats({
-        totalSubmissions: 15234,
-        pendingVerifications: 89,
-        verifiedRecords: 14832,
-        rejectedRecords: 313,
-        averageProcessingTime: 2.5,
-      });
     } finally {
       setIsLoading(false);
     }
@@ -97,6 +81,12 @@ export default function Index() {
                 className="text-slate-600 hover:text-blue-600 transition-colors"
               >
                 History
+              </Link>
+              <Link
+                to="/admin/dashboard"
+                className="text-slate-600 hover:text-purple-600 transition-colors font-medium"
+              >
+                Admin Dashboard
               </Link>
               <Link to="/auth/login">
                 <Button variant="outline" size="sm">

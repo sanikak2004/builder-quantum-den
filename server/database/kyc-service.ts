@@ -1,47 +1,16 @@
-import { prisma } from "./prisma";
-// Import Prisma enums (will be available after db:generate)
-// import { KYCStatus, VerificationLevel, DocumentType, AuditAction } from '@prisma/client';
+import { prisma, updateSystemStats } from "./prisma";
+import {
+  KYCStatus,
+  VerificationLevel,
+  DocumentType,
+  AuditAction,
+} from "@prisma/client";
+import {
+  KYCRecord as SharedKYCRecord,
+  KYCDocument as SharedKYCDocument,
+} from "@shared/api";
 
-// Temporary enum definitions until Prisma client is generated
-enum KYCStatus {
-  PENDING = "PENDING",
-  UNDER_REVIEW = "UNDER_REVIEW",
-  VERIFIED = "VERIFIED",
-  REJECTED = "REJECTED",
-  EXPIRED = "EXPIRED",
-}
-
-enum VerificationLevel {
-  L1 = "L1",
-  L2 = "L2",
-  L3 = "L3",
-}
-
-enum DocumentType {
-  PAN = "PAN",
-  AADHAAR = "AADHAAR",
-  PASSPORT = "PASSPORT",
-  BANK_STATEMENT = "BANK_STATEMENT",
-  UTILITY_BILL = "UTILITY_BILL",
-  DRIVING_LICENSE = "DRIVING_LICENSE",
-  VOTER_ID = "VOTER_ID",
-  OTHER = "OTHER",
-}
-
-enum AuditAction {
-  CREATED = "CREATED",
-  UPDATED = "UPDATED",
-  VERIFIED = "VERIFIED",
-  REJECTED = "REJECTED",
-  DOCUMENT_UPLOADED = "DOCUMENT_UPLOADED",
-  STATUS_CHANGED = "STATUS_CHANGED",
-  ADMIN_REVIEW = "ADMIN_REVIEW",
-  BLOCKCHAIN_TRANSACTION = "BLOCKCHAIN_TRANSACTION",
-}
-
-export interface KYCSubmissionData {
-  id: string;
-  userId?: string;
+export interface CreateKYCRecordInput {
   name: string;
   email: string;
   phone: string;
@@ -54,56 +23,53 @@ export interface KYCSubmissionData {
     pincode: string;
     country: string;
   };
+  documents: Array<{
+    type: DocumentType;
+    fileName: string;
+    fileSize: number;
+    documentHash: string;
+    ipfsHash: string;
+    ipfsUrl: string;
+  }>;
+  blockchainTxHash?: string;
+  userId?: string;
 }
 
-export interface DocumentData {
-  type: string;
-  fileName: string;
-  fileSize: number;
-  documentHash: string;
-  ipfsHash: string;
-  ipfsUrl: string;
+export interface UpdateKYCStatusInput {
+  status: KYCStatus;
+  remarks?: string;
+  verifiedBy?: string;
+  blockchainTxHash?: string;
 }
 
-export class KYCDatabaseService {
-  // Create new KYC record with documents
-  async createKYCRecord(
-    kycData: KYCSubmissionData,
-    documents: DocumentData[],
-    blockchainTxHash?: string,
-  ) {
+export class KYCService {
+  // Create a new KYC record
+  static async createKYCRecord(data: CreateKYCRecordInput): Promise<any> {
     try {
-      console.log(`💾 Creating KYC record in database: ${kycData.id}`);
-
       const result = await prisma.$transaction(async (tx) => {
-        // Create KYC record
+        // Create the main KYC record
         const kycRecord = await tx.kYCRecord.create({
           data: {
-            id: kycData.id,
-            userId: kycData.userId,
-            name: kycData.name,
-            email: kycData.email,
-            phone: kycData.phone,
-            pan: kycData.pan,
-            dateOfBirth: kycData.dateOfBirth,
-            address: kycData.address,
-            status: KYCStatus.PENDING,
-            verificationLevel: VerificationLevel.L1,
-            blockchainTxHash: blockchainTxHash,
-          },
-          include: {
-            documents: true,
-            auditLogs: true,
+            userId: data.userId,
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            pan: data.pan,
+            dateOfBirth: data.dateOfBirth,
+            address: data.address,
+            status: "PENDING",
+            verificationLevel: "L1",
+            blockchainTxHash: data.blockchainTxHash,
           },
         });
 
         // Create documents
-        const documentRecords = await Promise.all(
-          documents.map((doc) =>
+        const documents = await Promise.all(
+          data.documents.map((doc) =>
             tx.document.create({
               data: {
                 kycRecordId: kycRecord.id,
-                type: this.mapDocumentType(doc.type),
+                type: doc.type,
                 fileName: doc.fileName,
                 fileSize: doc.fileSize,
                 documentHash: doc.documentHash,
@@ -114,44 +80,37 @@ export class KYCDatabaseService {
           ),
         );
 
-        // Create audit log entry
+        // Create audit log
         await tx.auditLog.create({
           data: {
             kycRecordId: kycRecord.id,
-            userId: kycData.userId,
-            action: AuditAction.CREATED,
-            performedBy: kycData.email,
-            txId: blockchainTxHash,
+            userId: data.userId,
+            action: "CREATED",
+            performedBy: data.email,
+            txId: data.blockchainTxHash,
             details: {
-              documentsCount: documents.length,
-              initialSubmission: true,
+              documentCount: data.documents.length,
+              submissionSource: "web",
             },
-            remarks: "Initial KYC submission",
+            remarks: "KYC record created and submitted for verification",
           },
         });
 
-        // Update system stats
-        await this.updateSystemStats(tx, "increment", "totalSubmissions");
-        await this.updateSystemStats(tx, "increment", "pendingVerifications");
-
-        return {
-          ...kycRecord,
-          documents: documentRecords,
-        };
+        return { kycRecord, documents };
       });
 
-      console.log(`✅ KYC record created successfully: ${kycData.id}`);
-      return { success: true, data: result };
+      // Update system statistics
+      await updateSystemStats();
+
+      return result;
     } catch (error) {
-      console.error("❌ Failed to create KYC record:", error);
-      throw new Error(
-        `Database creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      console.error("Error creating KYC record:", error);
+      throw error;
     }
   }
 
-  // Get KYC record by ID
-  async getKYCRecord(id: string) {
+  // Get KYC record by ID with all relations
+  static async getKYCRecordById(id: string): Promise<any> {
     try {
       const record = await prisma.kYCRecord.findUnique({
         where: { id },
@@ -163,25 +122,26 @@ export class KYCDatabaseService {
         },
       });
 
-      return record;
+      if (!record) {
+        throw new Error("KYC record not found");
+      }
+
+      return this.formatKYCRecord(record);
     } catch (error) {
-      console.error(`❌ Failed to get KYC record ${id}:`, error);
+      console.error("Error fetching KYC record:", error);
       throw error;
     }
   }
 
-  // Search KYC records
-  async searchKYCRecord(criteria: {
-    id?: string;
+  // Get KYC record by PAN or email
+  static async getKYCRecordByIdentifier(identifier: {
     pan?: string;
     email?: string;
-  }) {
+  }): Promise<any> {
     try {
-      const where: any = {};
-
-      if (criteria.id) where.id = criteria.id;
-      if (criteria.pan) where.pan = criteria.pan;
-      if (criteria.email) where.email = criteria.email;
+      const where = identifier.pan
+        ? { pan: identifier.pan }
+        : { email: identifier.email };
 
       const record = await prisma.kYCRecord.findFirst({
         where,
@@ -189,113 +149,64 @@ export class KYCDatabaseService {
           documents: true,
           auditLogs: {
             orderBy: { performedAt: "desc" },
+            take: 10,
           },
         },
+        orderBy: { createdAt: "desc" },
       });
 
-      return record;
+      if (!record) {
+        return null;
+      }
+
+      return this.formatKYCRecord(record);
     } catch (error) {
-      console.error("❌ Failed to search KYC record:", error);
+      console.error("Error fetching KYC record by identifier:", error);
       throw error;
     }
   }
 
-  // Update KYC status (admin action)
-  async updateKYCStatus(
-    kycId: string,
-    status: string,
-    remarks: string,
-    verifiedBy: string,
-    blockchainTxHash?: string,
-  ) {
-    try {
-      console.log(`💾 Updating KYC status in database: ${kycId} -> ${status}`);
-
-      const result = await prisma.$transaction(async (tx) => {
-        const updateData: any = {
-          status: status as KYCStatus,
-          remarks,
-          verifiedBy,
-          updatedAt: new Date(),
-          lastBlockchainTxHash: blockchainTxHash,
-        };
-
-        if (status === "VERIFIED") {
-          updateData.verifiedAt = new Date();
-          updateData.verificationLevel = VerificationLevel.L2;
-          updateData.blockchainVerificationTx = blockchainTxHash;
-        } else if (status === "REJECTED") {
-          updateData.rejectedAt = new Date();
-          updateData.blockchainRejectionTx = blockchainTxHash;
-        }
-
-        // Update KYC record
-        const kycRecord = await tx.kYCRecord.update({
-          where: { id: kycId },
-          data: updateData,
-          include: {
-            documents: true,
-            auditLogs: true,
-          },
-        });
-
-        // Create audit log entry
-        await tx.auditLog.create({
-          data: {
-            kycRecordId: kycId,
-            action:
-              status === "VERIFIED"
-                ? AuditAction.VERIFIED
-                : AuditAction.REJECTED,
-            performedBy: verifiedBy,
-            txId: blockchainTxHash,
-            details: { newStatus: status },
-            remarks,
-          },
-        });
-
-        // Update system stats
-        const oldRecord = await tx.kYCRecord.findUnique({
-          where: { id: kycId },
-        });
-        if (oldRecord?.status === "PENDING") {
-          await this.updateSystemStats(tx, "decrement", "pendingVerifications");
-        }
-
-        if (status === "VERIFIED") {
-          await this.updateSystemStats(tx, "increment", "verifiedRecords");
-        } else if (status === "REJECTED") {
-          await this.updateSystemStats(tx, "increment", "rejectedRecords");
-        }
-
-        return kycRecord;
-      });
-
-      console.log(`✅ KYC status updated successfully: ${kycId}`);
-      return { success: true, data: result };
-    } catch (error) {
-      console.error("❌ Failed to update KYC status:", error);
-      throw new Error(
-        `Database update failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    }
-  }
-
-  // Get all KYC records (admin)
-  async getAllKYCRecords(
-    filters: {
+  // Get all KYC records with filters for admin
+  static async getAllKYCRecords(
+    params: {
       status?: string;
+      page?: number;
       limit?: number;
-      offset?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+      search?: string;
     } = {},
-  ) {
+  ): Promise<{ records: any[]; total: number; pages: number }> {
     try {
-      const { status, limit = 50, offset = 0 } = filters;
+      const {
+        status = "all",
+        page = 1,
+        limit = 50,
+        sortBy = "createdAt",
+        sortOrder = "desc",
+        search = "",
+      } = params;
 
+      const skip = (page - 1) * limit;
+
+      // Build where clause
       const where: any = {};
-      if (status && status !== "all") {
+
+      if (status !== "all") {
         where.status = status as KYCStatus;
       }
+
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+          { pan: { contains: search, mode: "insensitive" } },
+        ];
+      }
+
+      // Build orderBy clause
+      const orderBy: any = {};
+      orderBy[sortBy] = sortOrder;
 
       const [records, total] = await Promise.all([
         prisma.kYCRecord.findMany({
@@ -303,117 +214,250 @@ export class KYCDatabaseService {
           include: {
             documents: true,
             auditLogs: {
-              take: 5,
               orderBy: { performedAt: "desc" },
+              take: 5,
             },
           },
-          orderBy: { createdAt: "desc" },
+          orderBy,
+          skip,
           take: limit,
-          skip: offset,
         }),
         prisma.kYCRecord.count({ where }),
       ]);
 
-      return {
-        records,
-        total,
-        offset,
-        limit,
-      };
+      const formattedRecords = records.map((record) =>
+        this.formatKYCRecord(record),
+      );
+      const pages = Math.ceil(total / limit);
+
+      return { records: formattedRecords, total, pages };
     } catch (error) {
-      console.error("❌ Failed to get all KYC records:", error);
+      console.error("Error fetching KYC records:", error);
       throw error;
     }
   }
 
-  // Get KYC history/audit logs
-  async getKYCHistory(kycId: string, action?: string) {
+  // Update KYC status
+  static async updateKYCStatus(
+    id: string,
+    updateData: UpdateKYCStatusInput,
+  ): Promise<any> {
     try {
-      const where: any = { kycRecordId: kycId };
-      if (action && action !== "all") {
-        where.action = action as AuditAction;
-      }
+      const result = await prisma.$transaction(async (tx) => {
+        // Update the KYC record
+        const updatePayload: any = {
+          status: updateData.status,
+          remarks: updateData.remarks,
+          verifiedBy: updateData.verifiedBy,
+          lastBlockchainTxHash: updateData.blockchainTxHash,
+        };
 
-      const history = await prisma.auditLog.findMany({
-        where,
-        orderBy: { performedAt: "desc" },
+        if (updateData.status === "VERIFIED") {
+          updatePayload.verifiedAt = new Date();
+          updatePayload.blockchainVerificationTx = updateData.blockchainTxHash;
+        } else if (updateData.status === "REJECTED") {
+          updatePayload.rejectedAt = new Date();
+          updatePayload.blockchainRejectionTx = updateData.blockchainTxHash;
+        }
+
+        const updatedRecord = await tx.kYCRecord.update({
+          where: { id },
+          data: updatePayload,
+          include: {
+            documents: true,
+          },
+        });
+
+        // Create audit log
+        await tx.auditLog.create({
+          data: {
+            kycRecordId: id,
+            action: updateData.status === "VERIFIED" ? "VERIFIED" : "REJECTED",
+            performedBy: updateData.verifiedBy || "admin",
+            txId: updateData.blockchainTxHash,
+            details: {
+              previousStatus: "PENDING",
+              newStatus: updateData.status,
+              blockchainTx: updateData.blockchainTxHash,
+            },
+            remarks: updateData.remarks,
+          },
+        });
+
+        return updatedRecord;
       });
 
-      return history;
+      // Update system statistics
+      await updateSystemStats();
+
+      return this.formatKYCRecord(result);
     } catch (error) {
-      console.error("❌ Failed to get KYC history:", error);
+      console.error("Error updating KYC status:", error);
+      throw error;
+    }
+  }
+
+  // Bulk update KYC records
+  static async bulkUpdateKYCStatus(
+    recordIds: string[],
+    action: "VERIFIED" | "REJECTED",
+    remarks?: string,
+  ): Promise<number> {
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const updateData: any = {
+          status: action,
+          remarks: remarks || `Bulk ${action.toLowerCase()} by admin`,
+          verifiedBy: "admin@system",
+        };
+
+        if (action === "VERIFIED") {
+          updateData.verifiedAt = new Date();
+        } else {
+          updateData.rejectedAt = new Date();
+        }
+
+        // Update all records
+        const updateResult = await tx.kYCRecord.updateMany({
+          where: { id: { in: recordIds } },
+          data: updateData,
+        });
+
+        // Create audit logs for each record
+        await Promise.all(
+          recordIds.map((recordId) =>
+            tx.auditLog.create({
+              data: {
+                kycRecordId: recordId,
+                action: action === "VERIFIED" ? "VERIFIED" : "REJECTED",
+                performedBy: "admin@system",
+                details: {
+                  bulkAction: true,
+                  recordCount: recordIds.length,
+                },
+                remarks: remarks,
+              },
+            }),
+          ),
+        );
+
+        return updateResult.count;
+      });
+
+      // Update system statistics
+      await updateSystemStats();
+
+      return result;
+    } catch (error) {
+      console.error("Error bulk updating KYC records:", error);
       throw error;
     }
   }
 
   // Get system statistics
-  async getSystemStats() {
+  static async getSystemStats(): Promise<any> {
     try {
-      // For now, return mock data since we're using a mock Prisma client
-      // This will be replaced with real database queries when the real database is connected
-      console.log(
-        "📊 Returning mock stats data until real database is connected",
-      );
+      // First update the stats to ensure they're current
+      await updateSystemStats();
+
+      const stats = await prisma.systemStats.findUnique({
+        where: { id: "system_stats" },
+      });
+
+      if (!stats) {
+        throw new Error("System statistics not found");
+      }
 
       return {
-        id: "system_stats",
-        totalSubmissions: 0,
-        pendingVerifications: 0,
-        verifiedRecords: 0,
-        rejectedRecords: 0,
-        averageProcessingTimeHours: 0,
-        lastUpdated: new Date(),
+        totalSubmissions: stats.totalSubmissions,
+        pendingVerifications: stats.pendingVerifications,
+        verifiedRecords: stats.verifiedRecords,
+        rejectedRecords: stats.rejectedRecords,
+        averageProcessingTime: stats.averageProcessingTimeHours,
       };
     } catch (error) {
-      console.error("❌ Failed to get system stats:", error);
-      // Return default stats on error
-      return {
-        id: "system_stats",
-        totalSubmissions: 0,
-        pendingVerifications: 0,
-        verifiedRecords: 0,
-        rejectedRecords: 0,
-        averageProcessingTimeHours: 0,
-        lastUpdated: new Date(),
-      };
+      console.error("Error fetching system stats:", error);
+      throw error;
     }
   }
 
-  // Helper method to update system stats
-  private async updateSystemStats(
-    tx: any,
-    operation: "increment" | "decrement",
-    field: string,
-  ) {
+  // Get recent activity for admin dashboard
+  static async getRecentActivity(limit: number = 20): Promise<any[]> {
     try {
-      const increment = operation === "increment" ? 1 : -1;
-      await tx.systemStats.update({
-        where: { id: "system_stats" },
-        data: {
-          [field]: {
-            increment,
+      const activities = await prisma.auditLog.findMany({
+        take: limit,
+        orderBy: { performedAt: "desc" },
+        include: {
+          kycRecord: {
+            select: {
+              name: true,
+              email: true,
+            },
           },
         },
       });
+
+      return activities.map((activity) => ({
+        id: activity.id,
+        action: activity.action,
+        user: activity.performedBy,
+        timestamp: activity.performedAt.toISOString(),
+        status: "SUCCESS", // Assume success if it's logged
+        details:
+          activity.remarks ||
+          `${activity.action} for ${activity.kycRecord?.name || "user"}`,
+      }));
     } catch (error) {
-      console.warn(`⚠️  Could not update system stats ${field}:`, error);
+      console.error("Error fetching recent activity:", error);
+      throw error;
     }
   }
 
-  // Helper method to map document types
-  private mapDocumentType(type: string): DocumentType {
-    const typeMap: { [key: string]: DocumentType } = {
-      PAN: DocumentType.PAN,
-      AADHAAR: DocumentType.AADHAAR,
-      PASSPORT: DocumentType.PASSPORT,
-      BANK_STATEMENT: DocumentType.BANK_STATEMENT,
-      UTILITY_BILL: DocumentType.UTILITY_BILL,
-      DRIVING_LICENSE: DocumentType.DRIVING_LICENSE,
-      VOTER_ID: DocumentType.VOTER_ID,
+  // Format database record to match shared API interface
+  private static formatKYCRecord(record: any): SharedKYCRecord {
+    return {
+      id: record.id,
+      userId: record.userId || "",
+      name: record.name,
+      email: record.email,
+      phone: record.phone,
+      pan: record.pan,
+      dateOfBirth: record.dateOfBirth,
+      address: record.address as any,
+      documents:
+        record.documents?.map((doc: any) => ({
+          id: doc.id,
+          type: doc.type,
+          documentHash: doc.documentHash,
+          ipfsHash: doc.ipfsHash,
+          ipfsUrl: doc.ipfsUrl,
+          fileName: doc.fileName,
+          fileSize: doc.fileSize,
+          uploadedAt: doc.uploadedAt.toISOString(),
+        })) || [],
+      status: record.status,
+      verificationLevel: record.verificationLevel,
+      blockchainTxHash: record.blockchainTxHash,
+      blockchainBlockNumber: undefined, // Would need separate tracking
+      submissionHash: record.blockchainTxHash,
+      adminBlockchainTxHash:
+        record.blockchainVerificationTx || record.blockchainRejectionTx,
+      ipfsHashes: record.documents?.map((doc: any) => doc.ipfsHash) || [],
+      documentHashes:
+        record.documents?.map((doc: any) => doc.documentHash) || [],
+      permanentStorage: record.status === "VERIFIED",
+      temporaryRecord: record.status === "PENDING",
+      approvalRequired: record.status === "PENDING",
+      createdAt: record.createdAt.toISOString(),
+      updatedAt: record.updatedAt.toISOString(),
+      submittedAt: record.createdAt.toISOString(),
+      verifiedAt: record.verifiedAt?.toISOString(),
+      rejectedAt: record.rejectedAt?.toISOString(),
+      adminApprovalTimestamp: record.verifiedAt?.toISOString(),
+      verifiedBy: record.verifiedBy,
+      remarks: record.remarks,
     };
-
-    return typeMap[type.toUpperCase()] || DocumentType.OTHER;
   }
 }
 
-export const kycService = new KYCDatabaseService();
+export default KYCService;

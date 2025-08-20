@@ -13,6 +13,8 @@ import KYCVerification from "./pages/KYCVerification";
 import KYCHistory from "./pages/KYCHistory";
 import Auth from "./pages/Auth";
 import AdminKYC from "./pages/AdminKYC";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminProtectedRoute from "./components/AdminProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +30,22 @@ const App = () => (
           <Route path="/verify" element={<KYCVerification />} />
           <Route path="/history" element={<KYCHistory />} />
           <Route path="/auth/:mode" element={<Auth />} />
-          <Route path="/admin" element={<AdminKYC />} />
+          <Route
+            path="/admin"
+            element={
+              <AdminProtectedRoute>
+                <AdminKYC />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

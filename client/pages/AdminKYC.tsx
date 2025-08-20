@@ -6,6 +6,23 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Shield,
   CheckCircle,
@@ -21,8 +38,25 @@ import {
   Download,
   RefreshCw,
   Filter,
+  Hash,
+  Search,
+  Settings,
+  BarChart3,
+  Users,
+  CheckSquare,
+  Trash2,
+  Calendar,
+  Globe,
+  Database,
+  Lock,
+  Zap,
+  Activity,
+  TrendingUp,
+  PieChart,
+  FileCheck,
+  AlertCircle,
 } from "lucide-react";
-import { KYCRecord, ApiResponse } from "@shared/api";
+import { KYCRecord, ApiResponse, KYCStats } from "@shared/api";
 
 export default function AdminKYC() {
   const [records, setRecords] = useState<KYCRecord[]>([]);
@@ -32,10 +66,39 @@ export default function AdminKYC() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [remarks, setRemarks] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
+  const [stats, setStats] = useState<KYCStats | null>(null);
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recordsPerPage] = useState(10);
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
 
   useEffect(() => {
     fetchKYCRecords();
-  }, [filterStatus]);
+    fetchDashboardStats();
+  }, [filterStatus, currentPage, sortBy, sortOrder]);
+
+  const fetchDashboardStats = async () => {
+    try {
+      const response = await fetch("/api/admin/stats");
+      const result: ApiResponse<KYCStats> = await response.json();
+      if (result.success && result.data) {
+        setStats(result.data);
+      }
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+      // Mock stats for development
+      setStats({
+        totalSubmissions: 1543,
+        pendingVerifications: 89,
+        verifiedRecords: 1332,
+        rejectedRecords: 122,
+        averageProcessingTime: 2.5,
+      });
+    }
+  };
 
   const fetchKYCRecords = async () => {
     setIsLoading(true);
@@ -44,8 +107,11 @@ export default function AdminKYC() {
     try {
       const params = new URLSearchParams({
         status: filterStatus,
-        limit: "50",
-        offset: "0",
+        page: currentPage.toString(),
+        limit: recordsPerPage.toString(),
+        sortBy,
+        sortOrder,
+        search: searchQuery,
       });
 
       const response = await fetch(`/api/admin/kyc/all?${params}`);
@@ -58,6 +124,7 @@ export default function AdminKYC() {
       }
     } catch (error) {
       setError("Network error. Please try again.");
+      console.error("Failed to fetch KYC records:", error);
     } finally {
       setIsLoading(false);
     }
@@ -126,6 +193,7 @@ export default function AdminKYC() {
         // Auto-refresh to show live updates
         setTimeout(() => {
           fetchKYCRecords();
+          fetchDashboardStats();
         }, 1000);
       } else {
         console.error("❌ UPDATE FAILED:", result.message);
@@ -136,6 +204,63 @@ export default function AdminKYC() {
       alert("❌ Network error. Please check connection and try again.");
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleBulkAction = async (action: string) => {
+    if (selectedRecords.length === 0) {
+      alert("Please select records to perform bulk action");
+      return;
+    }
+
+    const confirmMessage = `${action.toUpperCase()} ${selectedRecords.length} selected records?`;
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const response = await fetch("/api/admin/kyc/bulk", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          recordIds: selectedRecords,
+          action,
+          remarks: `Bulk ${action} by admin`,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert(`✅ Bulk ${action} completed successfully`);
+        setSelectedRecords([]);
+        fetchKYCRecords();
+        fetchDashboardStats();
+      } else {
+        alert(`❌ Bulk action failed: ${result.message}`);
+      }
+    } catch (error) {
+      alert("❌ Network error during bulk action");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const toggleRecordSelection = (recordId: string) => {
+    setSelectedRecords((prev) =>
+      prev.includes(recordId)
+        ? prev.filter((id) => id !== recordId)
+        : [...prev, recordId],
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedRecords.length === records.length) {
+      setSelectedRecords([]);
+    } else {
+      setSelectedRecords(records.map((r) => r.id));
     }
   };
 
@@ -165,10 +290,43 @@ export default function AdminKYC() {
     }
   };
 
+  const exportRecords = () => {
+    const csvData = records
+      .map((record) => [
+        record.id,
+        record.name,
+        record.email,
+        record.status,
+        record.createdAt,
+        record.verifiedAt || "",
+      ])
+      .join("\\n");
+
+    const blob = new Blob(
+      [`ID,Name,Email,Status,Created,Verified\\n${csvData}`],
+      {
+        type: "text/csv",
+      },
+    );
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "kyc-records.csv";
+    a.click();
+  };
+
+  const filteredRecords = records.filter(
+    (record) =>
+      searchQuery === "" ||
+      record.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      record.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      record.pan.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/50">
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/50 sticky top-0 z-40">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -180,29 +338,120 @@ export default function AdminKYC() {
                   Authen Ledger - Admin Panel
                 </h1>
                 <p className="text-xs text-slate-500">
-                  KYC Verification Dashboard
+                  KYC Verification Dashboard & Management
                 </p>
               </div>
             </div>
-            <Link to="/">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
+            <div className="flex items-center space-x-4">
+              <Button
+                onClick={exportRecords}
+                variant="outline"
+                size="sm"
+                className="hidden md:flex"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
               </Button>
-            </Link>
+              <Link to="/">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Home
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-6 py-8">
         <div className="max-w-7xl mx-auto">
+          {/* Dashboard Stats */}
+          {stats && (
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+              <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <Users className="h-5 w-5 text-blue-600 mr-2" />
+                    <span className="text-sm font-medium text-blue-700">
+                      Total
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-blue-800">
+                    {stats.totalSubmissions.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-blue-600">Submissions</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <Clock className="h-5 w-5 text-yellow-600 mr-2" />
+                    <span className="text-sm font-medium text-yellow-700">
+                      Pending
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-yellow-800">
+                    {stats.pendingVerifications.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-yellow-600">Reviews</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                    <span className="text-sm font-medium text-green-700">
+                      Verified
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-green-800">
+                    {stats.verifiedRecords.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-green-600">Records</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-r from-red-50 to-pink-50 border-red-200">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <XCircle className="h-5 w-5 text-red-600 mr-2" />
+                    <span className="text-sm font-medium text-red-700">
+                      Rejected
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-red-800">
+                    {stats.rejectedRecords.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-red-600">Records</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <Zap className="h-5 w-5 text-purple-600 mr-2" />
+                    <span className="text-sm font-medium text-purple-700">
+                      Avg Time
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-purple-800">
+                    {stats.averageProcessingTime.toFixed(1)}h
+                  </div>
+                  <p className="text-xs text-purple-600">Processing</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Blockchain Summary Statistics */}
           <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Hash className="h-5 w-5 text-blue-600" />
-                Blockchain Summary
+                Blockchain & Storage Summary
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -211,32 +460,44 @@ export default function AdminKYC() {
                   <div className="text-2xl font-bold text-blue-600">
                     {records.filter((r) => r.blockchainTxHash).length}
                   </div>
-                  <p className="text-sm text-slate-600">Blockchain Recorded</p>
+                  <p className="text-sm text-slate-600 flex items-center justify-center gap-1">
+                    <Database className="h-3 w-3" />
+                    Blockchain Recorded
+                  </p>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
                     {records.filter((r) => r.permanentStorage).length}
                   </div>
-                  <p className="text-sm text-slate-600">Permanent Storage</p>
+                  <p className="text-sm text-slate-600 flex items-center justify-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    Permanent Storage
+                  </p>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-600">
                     {records.filter((r) => r.temporaryRecord).length}
                   </div>
-                  <p className="text-sm text-slate-600">Temporary Storage</p>
+                  <p className="text-sm text-slate-600 flex items-center justify-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Temporary Storage
+                  </p>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
                     {records.filter((r) => r.ipfsHashes?.length > 0).length}
                   </div>
-                  <p className="text-sm text-slate-600">IPFS Documents</p>
+                  <p className="text-sm text-slate-600 flex items-center justify-center gap-1">
+                    <Globe className="h-3 w-3" />
+                    IPFS Documents
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Controls */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg mb-8">
+          {/* Controls & Filters */}
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg mb-6">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
@@ -247,35 +508,114 @@ export default function AdminKYC() {
                     LIVE UPDATES
                   </span>
                 </span>
-                <Button
-                  onClick={fetchKYCRecords}
-                  disabled={isLoading}
-                  size="sm"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-                  />
-                  Refresh
-                </Button>
+                <div className="flex items-center gap-2">
+                  {selectedRecords.length > 0 && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <CheckSquare className="h-4 w-4 mr-2" />
+                          Bulk Actions ({selectedRecords.length})
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Bulk Actions</DialogTitle>
+                          <DialogDescription>
+                            Perform actions on {selectedRecords.length} selected
+                            records
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <Button
+                            onClick={() => handleBulkAction("VERIFIED")}
+                            className="w-full bg-green-600 hover:bg-green-700"
+                            disabled={isUpdating}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Approve All Selected
+                          </Button>
+                          <Button
+                            onClick={() => handleBulkAction("REJECTED")}
+                            variant="destructive"
+                            className="w-full"
+                            disabled={isUpdating}
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Reject All Selected
+                          </Button>
+                          <Button
+                            onClick={() => setSelectedRecords([])}
+                            variant="outline"
+                            className="w-full"
+                          >
+                            Clear Selection
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                  <Button
+                    onClick={fetchKYCRecords}
+                    disabled={isLoading}
+                    size="sm"
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+                    />
+                    Refresh
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-slate-500" />
-                  <Label htmlFor="status-filter">Filter by Status:</Label>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder="Search by name, email, or PAN..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
-                <select
-                  id="status-filter"
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"
-                >
-                  <option value="all">All Status</option>
-                  <option value="PENDING">Pending</option>
-                  <option value="VERIFIED">Verified</option>
-                  <option value="REJECTED">Rejected</option>
-                </select>
+
+                {/* Status Filter */}
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="VERIFIED">Verified</SelectItem>
+                    <SelectItem value="REJECTED">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Sort By */}
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort By" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="createdAt">Created Date</SelectItem>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="status">Status</SelectItem>
+                    <SelectItem value="verifiedAt">Verified Date</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Sort Order */}
+                <Select value={sortOrder} onValueChange={setSortOrder}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Order" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="desc">Newest First</SelectItem>
+                    <SelectItem value="asc">Oldest First</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -297,7 +637,7 @@ export default function AdminKYC() {
                 <p className="text-slate-600">Loading KYC records...</p>
               </CardContent>
             </Card>
-          ) : records.length === 0 ? (
+          ) : filteredRecords.length === 0 ? (
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
               <CardContent className="py-12 text-center">
                 <FileText className="h-12 w-12 text-slate-400 mx-auto mb-4" />
@@ -311,97 +651,155 @@ export default function AdminKYC() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {records.map((record) => (
+              {/* Select All Header */}
+              <Card className="bg-slate-100/50 border-slate-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={
+                          selectedRecords.length === filteredRecords.length &&
+                          filteredRecords.length > 0
+                        }
+                        onCheckedChange={toggleSelectAll}
+                      />
+                      <span className="text-sm font-medium text-slate-700">
+                        {selectedRecords.length > 0
+                          ? `${selectedRecords.length} of ${filteredRecords.length} selected`
+                          : `Select all ${filteredRecords.length} records`}
+                      </span>
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      Showing {filteredRecords.length} records
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {filteredRecords.map((record) => (
                 <Card
                   key={record.id}
-                  className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all"
+                  className={`bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all ${
+                    selectedRecords.includes(record.id)
+                      ? "ring-2 ring-blue-500"
+                      : ""
+                  }`}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
-                      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {/* Basic Info */}
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <User className="h-4 w-4 text-slate-500" />
-                            <span className="font-medium text-slate-700">
-                              {record.name}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Mail className="h-3 w-3 text-slate-400" />
-                            <span className="text-xs text-slate-500">
-                              {record.email}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-3 w-3 text-slate-400" />
-                            <span className="text-xs text-slate-500">
-                              {record.phone}
-                            </span>
-                          </div>
-                        </div>
+                      <div className="flex items-start gap-4 flex-1">
+                        {/* Selection Checkbox */}
+                        <Checkbox
+                          checked={selectedRecords.includes(record.id)}
+                          onCheckedChange={() =>
+                            toggleRecordSelection(record.id)
+                          }
+                          className="mt-1"
+                        />
 
-                        {/* KYC Details */}
-                        <div>
-                          <p className="text-xs text-slate-500 mb-1">KYC ID</p>
-                          <p className="font-mono text-xs font-medium text-slate-700 break-all">
-                            {record.id}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-2 mb-1">
-                            PAN
-                          </p>
-                          <p className="font-mono text-xs font-medium text-slate-700">
-                            {record.pan}
-                          </p>
-                        </div>
-
-                        {/* Status & Timing */}
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            {getStatusIcon(record.status)}
-                            <Badge className={getStatusColor(record.status)}>
-                              {record.status}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-slate-500">Submitted</p>
-                          <p className="text-xs text-slate-600">
-                            {new Date(record.createdAt).toLocaleDateString()}
-                          </p>
-                          {record.verifiedAt && (
-                            <>
-                              <p className="text-xs text-slate-500 mt-1">
-                                Verified
-                              </p>
-                              <p className="text-xs text-slate-600">
-                                {new Date(
-                                  record.verifiedAt,
-                                ).toLocaleDateString()}
-                              </p>
-                            </>
-                          )}
-                        </div>
-
-                        {/* Documents */}
-                        <div>
-                          <p className="text-xs text-slate-500 mb-1">
-                            Documents ({record.documents?.length || 0})
-                          </p>
-                          <div className="space-y-1">
-                            {record.documents?.slice(0, 2).map((doc, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-1"
-                              >
-                                <FileText className="h-3 w-3 text-blue-600" />
-                                <span className="text-xs text-slate-600">
-                                  {doc.type}
-                                </span>
-                              </div>
-                            )) || []}
-                            {(record.documents?.length || 0) > 2 && (
-                              <span className="text-xs text-slate-500">
-                                +{(record.documents?.length || 0) - 2} more
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
+                          {/* Basic Info */}
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <User className="h-4 w-4 text-slate-500" />
+                              <span className="font-medium text-slate-700">
+                                {record.name}
                               </span>
+                            </div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <Mail className="h-3 w-3 text-slate-400" />
+                              <span className="text-xs text-slate-500">
+                                {record.email}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-3 w-3 text-slate-400" />
+                              <span className="text-xs text-slate-500">
+                                {record.phone}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* KYC Details */}
+                          <div>
+                            <p className="text-xs text-slate-500 mb-1">
+                              KYC ID
+                            </p>
+                            <p className="font-mono text-xs font-medium text-slate-700 break-all">
+                              {record.id}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-2 mb-1">
+                              PAN
+                            </p>
+                            <p className="font-mono text-xs font-medium text-slate-700">
+                              {record.pan}
+                            </p>
+                          </div>
+
+                          {/* Status & Timing */}
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              {getStatusIcon(record.status)}
+                              <Badge className={getStatusColor(record.status)}>
+                                {record.status}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-slate-500">Submitted</p>
+                            <p className="text-xs text-slate-600">
+                              {new Date(record.createdAt).toLocaleDateString()}
+                            </p>
+                            {record.verifiedAt && (
+                              <>
+                                <p className="text-xs text-slate-500 mt-1">
+                                  Verified
+                                </p>
+                                <p className="text-xs text-slate-600">
+                                  {new Date(
+                                    record.verifiedAt,
+                                  ).toLocaleDateString()}
+                                </p>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Blockchain & Documents */}
+                          <div>
+                            <p className="text-xs text-slate-500 mb-1">
+                              Documents ({record.documents?.length || 0})
+                            </p>
+                            <div className="space-y-1">
+                              {record.documents
+                                ?.slice(0, 2)
+                                .map((doc, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <FileText className="h-3 w-3 text-blue-600" />
+                                    <span className="text-xs text-slate-600">
+                                      {doc.type}
+                                    </span>
+                                  </div>
+                                )) || []}
+                              {(record.documents?.length || 0) > 2 && (
+                                <span className="text-xs text-slate-500">
+                                  +{(record.documents?.length || 0) - 2} more
+                                </span>
+                              )}
+                            </div>
+
+                            {record.blockchainTxHash && (
+                              <div className="mt-2">
+                                <p className="text-xs text-slate-500">
+                                  Blockchain
+                                </p>
+                                <div className="flex items-center gap-1">
+                                  <Hash className="h-3 w-3 text-blue-600" />
+                                  <span className="text-xs text-blue-600">
+                                    ✓ Recorded
+                                  </span>
+                                </div>
+                              </div>
                             )}
                           </div>
                         </div>
