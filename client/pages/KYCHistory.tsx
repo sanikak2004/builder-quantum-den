@@ -345,6 +345,18 @@ export default function KYCHistory() {
                                 >
                                   {record.status}
                                 </Badge>
+                                {record.permanentStorage && (
+                                  <Badge className="bg-blue-100 text-blue-800">
+                                    <Hash className="h-3 w-3 mr-1" />
+                                    Permanent
+                                  </Badge>
+                                )}
+                                {record.temporaryRecord && (
+                                  <Badge className="bg-orange-100 text-orange-800">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    Temporary
+                                  </Badge>
+                                )}
                               </div>
                               <p className="text-xs text-slate-500">
                                 Submitted:{" "}
@@ -355,6 +367,11 @@ export default function KYCHistory() {
                               <p className="text-xs text-slate-500">
                                 Documents: {record.documents?.length || 0}
                               </p>
+                              {record.blockchainTxHash && (
+                                <p className="text-xs text-slate-500">
+                                  Blockchain: {record.blockchainTxHash.substring(0, 12)}...
+                                </p>
+                              )}
                             </div>
                           </div>
                           <div className="flex gap-2 ml-4">
