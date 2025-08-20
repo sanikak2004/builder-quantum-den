@@ -48,6 +48,7 @@ const KYCSubmissionSchema = z.object({
 // Real database storage using Prisma PostgreSQL
 import { initializeDatabase, prisma } from "./database/prisma";
 import KYCService from "./database/kyc-service";
+import { permanentStorageService } from "./database/permanent-storage-service";
 
 // Use simplified blockchain services for development (switch to real services when network is ready)
 import { fabricService } from "./blockchain/simple-fabric-service";
@@ -462,7 +463,7 @@ export const createServer = () => {
           console.log(`⛓️  Status update submitted to blockchain: ${blockchainTxHash}`);
         }
       } catch (error) {
-        console.warn("���️  Blockchain status update failed:", error);
+        console.warn("⚠️  Blockchain status update failed:", error);
       }
 
       // Update in database
