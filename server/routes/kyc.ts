@@ -132,9 +132,32 @@ export const submitKYC: RequestHandler[] = [
         };
       });
 
-      // Mock blockchain transaction
-      const blockchainTxHash = `0x${crypto.randomBytes(32).toString("hex")}`;
-      console.log(`⛓️  Blockchain Transaction: ${blockchainTxHash.substring(0, 20)}...`);
+      // REAL blockchain transaction using configured services
+      const fabricService = require("../blockchain/real-fabric-service").fabricService;
+      const ipfsService = require("../blockchain/real-ipfs-service").ipfsService;
+
+      // Upload documents to REAL IPFS
+      const ipfsUploads = await Promise.all(
+        files.map(async (file, index) => {
+          console.log(`📡 Uploading to REAL IPFS: ${file.originalname}`);
+          const uploadResult = await ipfsService.uploadFile(
+            file.buffer,
+            file.originalname,
+            { kycId, userEmail: validatedData.email }
+          );
+          return uploadResult;
+        })
+      );
+
+      // Submit to REAL Hyperledger Fabric
+      console.log("⛓️  Submitting to REAL Hyperledger Fabric...");
+      const blockchainResult = await fabricService.submitKYC(
+        { id: kycId, ...validatedData },
+        processedDocuments.map(doc => doc.documentHash)
+      );
+
+      const blockchainTxHash = blockchainResult.txHash;
+      console.log(`⛓️  REAL Blockchain Transaction: ${blockchainTxHash.substring(0, 20)}...`);
 
       // Create KYC record in database
       console.log("💾 Storing KYC record in database...");
