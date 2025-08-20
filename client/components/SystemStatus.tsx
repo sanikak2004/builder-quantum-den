@@ -41,7 +41,8 @@ interface BlockchainStatus {
 
 export default function SystemStatus() {
   const [stats, setStats] = useState<SystemStats | null>(null);
-  const [blockchainStatus, setBlockchainStatus] = useState<BlockchainStatus | null>(null);
+  const [blockchainStatus, setBlockchainStatus] =
+    useState<BlockchainStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [showLiveOutput, setShowLiveOutput] = useState(false);
@@ -51,7 +52,7 @@ export default function SystemStatus() {
   useEffect(() => {
     fetchSystemStatus();
     startLiveOutputSimulation();
-    
+
     // Auto-refresh every 30 seconds
     const interval = setInterval(fetchSystemStatus, 30000);
     return () => clearInterval(interval);
@@ -97,7 +98,9 @@ export default function SystemStatus() {
       "🔐 Processing documents and generating hashes...",
       "📄 Document 1: PAN Card (PDF)",
       "📄 Document 2: Aadhaar Card (JPG)",
-      "⛓️  Blockchain Transaction: 0x" + Math.random().toString(16).substring(2, 18) + "...",
+      "⛓️  Blockchain Transaction: 0x" +
+        Math.random().toString(16).substring(2, 18) +
+        "...",
       "💾 Storing KYC record in database...",
       "✅ KYC record created successfully!",
       "📊 Record stored permanently in PostgreSQL",
@@ -111,14 +114,18 @@ export default function SystemStatus() {
       "👑 === ADMIN: UPDATE COMPLETED ===",
     ];
 
-    setInterval(() => {
-      const randomMessage = logMessages[Math.floor(Math.random() * logMessages.length)];
-      const timestamp = new Date().toLocaleTimeString();
-      setLiveOutput(prev => [
-        `[${timestamp}] ${randomMessage}`,
-        ...prev.slice(0, 19) // Keep last 20 messages
-      ]);
-    }, 2000 + Math.random() * 3000); // Random interval between 2-5 seconds
+    setInterval(
+      () => {
+        const randomMessage =
+          logMessages[Math.floor(Math.random() * logMessages.length)];
+        const timestamp = new Date().toLocaleTimeString();
+        setLiveOutput((prev) => [
+          `[${timestamp}] ${randomMessage}`,
+          ...prev.slice(0, 19), // Keep last 20 messages
+        ]);
+      },
+      2000 + Math.random() * 3000,
+    ); // Random interval between 2-5 seconds
   };
 
   const getStatusIcon = (connected: boolean) => {
@@ -159,7 +166,9 @@ export default function SystemStatus() {
                 onClick={fetchSystemStatus}
                 disabled={isLoading}
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+                />
                 Refresh
               </Button>
             </div>
@@ -206,14 +215,24 @@ export default function SystemStatus() {
                 {blockchainStatus ? (
                   <>
                     <div className="flex items-center gap-2">
-                      {getStatusIcon(blockchainStatus.hyperledgerFabric.connected)}
-                      <Badge className={getStatusColor(blockchainStatus.hyperledgerFabric.connected)}>
+                      {getStatusIcon(
+                        blockchainStatus.hyperledgerFabric.connected,
+                      )}
+                      <Badge
+                        className={getStatusColor(
+                          blockchainStatus.hyperledgerFabric.connected,
+                        )}
+                      >
                         Hyperledger Fabric
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(blockchainStatus.ipfs.connected)}
-                      <Badge className={getStatusColor(blockchainStatus.ipfs.connected)}>
+                      <Badge
+                        className={getStatusColor(
+                          blockchainStatus.ipfs.connected,
+                        )}
+                      >
                         IPFS Network
                       </Badge>
                     </div>
@@ -296,24 +315,36 @@ export default function SystemStatus() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">{stats.totalSubmissions}</div>
+                <div className="text-3xl font-bold text-blue-600">
+                  {stats.totalSubmissions}
+                </div>
                 <div className="text-sm text-slate-600">Total Submissions</div>
                 <div className="text-xs text-slate-500">Permanently Stored</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-yellow-600">{stats.pendingVerifications}</div>
+                <div className="text-3xl font-bold text-yellow-600">
+                  {stats.pendingVerifications}
+                </div>
                 <div className="text-sm text-slate-600">Pending Review</div>
                 <div className="text-xs text-slate-500">Awaiting Admin</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">{stats.verifiedRecords}</div>
+                <div className="text-3xl font-bold text-green-600">
+                  {stats.verifiedRecords}
+                </div>
                 <div className="text-sm text-slate-600">Verified Records</div>
-                <div className="text-xs text-slate-500">Blockchain Confirmed</div>
+                <div className="text-xs text-slate-500">
+                  Blockchain Confirmed
+                </div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-red-600">{stats.rejectedRecords}</div>
+                <div className="text-3xl font-bold text-red-600">
+                  {stats.rejectedRecords}
+                </div>
                 <div className="text-sm text-slate-600">Rejected Records</div>
-                <div className="text-xs text-slate-500">Require Resubmission</div>
+                <div className="text-xs text-slate-500">
+                  Require Resubmission
+                </div>
               </div>
             </div>
           </CardContent>
@@ -356,7 +387,9 @@ export default function SystemStatus() {
             <div className="bg-black rounded-lg p-4 max-h-80 overflow-y-auto">
               <div className="space-y-1 font-mono text-sm">
                 {liveOutput.length === 0 ? (
-                  <div className="text-gray-400">Waiting for backend activity...</div>
+                  <div className="text-gray-400">
+                    Waiting for backend activity...
+                  </div>
                 ) : (
                   liveOutput.map((line, index) => (
                     <div
@@ -365,14 +398,15 @@ export default function SystemStatus() {
                         line.includes("✅") || line.includes("SUCCESS")
                           ? "text-green-400"
                           : line.includes("❌") || line.includes("FAILED")
-                          ? "text-red-400"
-                          : line.includes("🔄") || line.includes("UPDATE")
-                          ? "text-yellow-400"
-                          : line.includes("📊") || line.includes("DATABASE")
-                          ? "text-blue-400"
-                          : line.includes("⛓️") || line.includes("BLOCKCHAIN")
-                          ? "text-purple-400"
-                          : "text-gray-300"
+                            ? "text-red-400"
+                            : line.includes("🔄") || line.includes("UPDATE")
+                              ? "text-yellow-400"
+                              : line.includes("📊") || line.includes("DATABASE")
+                                ? "text-blue-400"
+                                : line.includes("⛓️") ||
+                                    line.includes("BLOCKCHAIN")
+                                  ? "text-purple-400"
+                                  : "text-gray-300"
                       }`}
                     >
                       {line}
@@ -382,7 +416,8 @@ export default function SystemStatus() {
               </div>
             </div>
             <div className="mt-2 text-xs text-slate-500">
-              💡 This shows real-time backend operations including database writes, blockchain transactions, and admin actions.
+              💡 This shows real-time backend operations including database
+              writes, blockchain transactions, and admin actions.
             </div>
           </CardContent>
         )}

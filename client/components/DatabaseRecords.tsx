@@ -37,7 +37,7 @@ export default function DatabaseRecords() {
     total: 0,
     pending: 0,
     verified: 0,
-    rejected: 0
+    rejected: 0,
   });
 
   useEffect(() => {
@@ -52,11 +52,11 @@ export default function DatabaseRecords() {
 
     try {
       console.log("📊 FRONTEND: Fetching all PostgreSQL records...");
-      
+
       const params = new URLSearchParams({
         status: statusFilter,
         limit: "100",
-        offset: "0"
+        offset: "0",
       });
 
       const response = await fetch(`/api/admin/kyc/all?${params}`);
@@ -65,17 +65,25 @@ export default function DatabaseRecords() {
       if (result.success && result.data) {
         const fetchedRecords = result.data.records || [];
         setRecords(fetchedRecords);
-        
+
         // Calculate stats
         const total = fetchedRecords.length;
-        const pending = fetchedRecords.filter(r => r.status === 'PENDING').length;
-        const verified = fetchedRecords.filter(r => r.status === 'VERIFIED').length;
-        const rejected = fetchedRecords.filter(r => r.status === 'REJECTED').length;
-        
+        const pending = fetchedRecords.filter(
+          (r) => r.status === "PENDING",
+        ).length;
+        const verified = fetchedRecords.filter(
+          (r) => r.status === "VERIFIED",
+        ).length;
+        const rejected = fetchedRecords.filter(
+          (r) => r.status === "REJECTED",
+        ).length;
+
         setStats({ total, pending, verified, rejected });
-        
+
         console.log(`✅ FRONTEND: Loaded ${total} real PostgreSQL records`);
-        console.log(`📊 Stats - Pending: ${pending}, Verified: ${verified}, Rejected: ${rejected}`);
+        console.log(
+          `📊 Stats - Pending: ${pending}, Verified: ${verified}, Rejected: ${rejected}`,
+        );
       } else {
         setError(result.message || "Failed to fetch records from database");
       }
@@ -87,13 +95,14 @@ export default function DatabaseRecords() {
     }
   };
 
-  const filteredRecords = records.filter(record => {
-    const matchesSearch = searchTerm === "" || 
+  const filteredRecords = records.filter((record) => {
+    const matchesSearch =
+      searchTerm === "" ||
       record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.pan.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     return matchesSearch;
   });
 
@@ -141,12 +150,10 @@ export default function DatabaseRecords() {
                 LIVE DATA
               </span>
             </CardTitle>
-            <Button
-              onClick={fetchAllRecords}
-              disabled={isLoading}
-              size="sm"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+            <Button onClick={fetchAllRecords} disabled={isLoading} size="sm">
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
           </div>
@@ -155,22 +162,30 @@ export default function DatabaseRecords() {
           {/* Stats Dashboard */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-              <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {stats.total}
+              </div>
               <div className="text-sm text-blue-800">Total Records</div>
               <div className="text-xs text-blue-600">In PostgreSQL DB</div>
             </div>
             <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200">
-              <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+              <div className="text-2xl font-bold text-yellow-600">
+                {stats.pending}
+              </div>
               <div className="text-sm text-yellow-800">Pending Review</div>
               <div className="text-xs text-yellow-600">Awaiting Admin</div>
             </div>
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
-              <div className="text-2xl font-bold text-green-600">{stats.verified}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.verified}
+              </div>
               <div className="text-sm text-green-800">Verified</div>
               <div className="text-xs text-green-600">Blockchain Confirmed</div>
             </div>
             <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-lg p-4 border border-red-200">
-              <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
+              <div className="text-2xl font-bold text-red-600">
+                {stats.rejected}
+              </div>
               <div className="text-sm text-red-800">Rejected</div>
               <div className="text-xs text-red-600">Need Resubmission</div>
             </div>
@@ -240,13 +255,14 @@ export default function DatabaseRecords() {
           <CardContent className="py-12 text-center">
             <Database className="h-12 w-12 text-slate-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-700 mb-2">
-              {searchTerm || statusFilter !== "all" ? "No Matching Records" : "No Records Found"}
+              {searchTerm || statusFilter !== "all"
+                ? "No Matching Records"
+                : "No Records Found"}
             </h3>
             <p className="text-slate-500 mb-6">
-              {searchTerm || statusFilter !== "all" 
+              {searchTerm || statusFilter !== "all"
                 ? "No records match your search criteria."
-                : "No KYC records found in the PostgreSQL database."
-              }
+                : "No KYC records found in the PostgreSQL database."}
             </p>
             <Button onClick={fetchAllRecords} variant="outline">
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -259,9 +275,12 @@ export default function DatabaseRecords() {
           <div className="text-sm text-slate-600 mb-4">
             📊 Displaying {filteredRecords.length} real PostgreSQL records
           </div>
-          
+
           {filteredRecords.map((record) => (
-            <Card key={record.id} className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all">
+            <Card
+              key={record.id}
+              className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all"
+            >
               <CardContent className="p-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Personal Information */}
@@ -273,23 +292,33 @@ export default function DatabaseRecords() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <User className="h-3 w-3 text-slate-400" />
-                        <span className="text-sm font-medium">{record.name}</span>
+                        <span className="text-sm font-medium">
+                          {record.name}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Mail className="h-3 w-3 text-slate-400" />
-                        <span className="text-xs text-slate-600">{record.email}</span>
+                        <span className="text-xs text-slate-600">
+                          {record.email}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Phone className="h-3 w-3 text-slate-400" />
-                        <span className="text-xs text-slate-600">{record.phone}</span>
+                        <span className="text-xs text-slate-600">
+                          {record.phone}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <CreditCard className="h-3 w-3 text-slate-400" />
-                        <span className="text-xs font-mono text-slate-700">{record.pan}</span>
+                        <span className="text-xs font-mono text-slate-700">
+                          {record.pan}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3 text-slate-400" />
-                        <span className="text-xs text-slate-600">{record.dateOfBirth}</span>
+                        <span className="text-xs text-slate-600">
+                          {record.dateOfBirth}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -303,7 +332,9 @@ export default function DatabaseRecords() {
                     <div className="space-y-2">
                       <div>
                         <span className="text-xs text-slate-500">KYC ID</span>
-                        <div className="font-mono text-xs text-slate-700 break-all">{record.id}</div>
+                        <div className="font-mono text-xs text-slate-700 break-all">
+                          {record.id}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(record.status)}
@@ -312,17 +343,29 @@ export default function DatabaseRecords() {
                         </Badge>
                       </div>
                       <div>
-                        <span className="text-xs text-slate-500">Verification Level</span>
-                        <div className="text-xs font-medium text-slate-700">{record.verificationLevel}</div>
+                        <span className="text-xs text-slate-500">
+                          Verification Level
+                        </span>
+                        <div className="text-xs font-medium text-slate-700">
+                          {record.verificationLevel}
+                        </div>
                       </div>
                       <div>
-                        <span className="text-xs text-slate-500">Submitted</span>
-                        <div className="text-xs text-slate-600">{formatDate(record.createdAt)}</div>
+                        <span className="text-xs text-slate-500">
+                          Submitted
+                        </span>
+                        <div className="text-xs text-slate-600">
+                          {formatDate(record.createdAt)}
+                        </div>
                       </div>
                       {record.verifiedAt && (
                         <div>
-                          <span className="text-xs text-slate-500">Verified</span>
-                          <div className="text-xs text-slate-600">{formatDate(record.verifiedAt)}</div>
+                          <span className="text-xs text-slate-500">
+                            Verified
+                          </span>
+                          <div className="text-xs text-slate-600">
+                            {formatDate(record.verifiedAt)}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -337,14 +380,18 @@ export default function DatabaseRecords() {
                     <div className="space-y-2">
                       {record.blockchainTxHash && (
                         <div>
-                          <span className="text-xs text-slate-500">Blockchain TX</span>
+                          <span className="text-xs text-slate-500">
+                            Blockchain TX
+                          </span>
                           <div className="font-mono text-xs text-slate-700 break-all">
                             {record.blockchainTxHash.substring(0, 20)}...
                           </div>
                         </div>
                       )}
                       <div>
-                        <span className="text-xs text-slate-500">Documents</span>
+                        <span className="text-xs text-slate-500">
+                          Documents
+                        </span>
                         <div className="text-xs text-slate-700">
                           {record.documents?.length || 0} files uploaded
                         </div>
@@ -352,7 +399,9 @@ export default function DatabaseRecords() {
                       {record.documents?.slice(0, 3).map((doc, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <FileText className="h-3 w-3 text-blue-600" />
-                          <span className="text-xs text-slate-600">{doc.type}</span>
+                          <span className="text-xs text-slate-600">
+                            {doc.type}
+                          </span>
                         </div>
                       ))}
                       {(record.documents?.length || 0) > 3 && (
@@ -371,14 +420,18 @@ export default function DatabaseRecords() {
                     Address Information
                   </h4>
                   <div className="text-xs text-slate-600">
-                    {record.address.street}, {record.address.city}, {record.address.state} - {record.address.pincode}, {record.address.country}
+                    {record.address.street}, {record.address.city},{" "}
+                    {record.address.state} - {record.address.pincode},{" "}
+                    {record.address.country}
                   </div>
                 </div>
 
                 {/* Admin Remarks */}
                 {record.remarks && (
                   <div className="mt-4 pt-4 border-t border-slate-200">
-                    <h4 className="font-semibold text-slate-800 mb-2">Admin Remarks</h4>
+                    <h4 className="font-semibold text-slate-800 mb-2">
+                      Admin Remarks
+                    </h4>
                     <div className="text-sm text-slate-700 bg-slate-50 rounded p-3">
                       {record.remarks}
                     </div>

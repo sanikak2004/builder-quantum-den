@@ -353,7 +353,7 @@ export class KYCDatabaseService {
 
       // Get real statistics from PostgreSQL database
       const stats = await prisma.systemStats.findUnique({
-        where: { id: "system_stats" }
+        where: { id: "system_stats" },
       });
 
       if (stats) {
@@ -382,15 +382,18 @@ export class KYCDatabaseService {
             pendingVerifications: 0,
             verifiedRecords: 0,
             rejectedRecords: 0,
-            averageProcessingTimeHours: 0
-          }
+            averageProcessingTimeHours: 0,
+          },
         });
 
         console.log("📊 REAL DATABASE: New stats record created");
         return newStats;
       }
     } catch (error) {
-      console.error("❌ REAL DATABASE ERROR - Failed to get system stats:", error);
+      console.error(
+        "❌ REAL DATABASE ERROR - Failed to get system stats:",
+        error,
+      );
 
       // Only return zero stats if database is completely unavailable
       return {

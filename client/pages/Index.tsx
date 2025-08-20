@@ -409,8 +409,8 @@ export default function Index() {
               Real-Time System Status
             </h2>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              Monitor live system health, database status, and blockchain integration
-              with permanent data persistence.
+              Monitor live system health, database status, and blockchain
+              integration with permanent data persistence.
             </p>
           </div>
           <SystemStatus />
@@ -425,8 +425,9 @@ export default function Index() {
               Live PostgreSQL Database Records
             </h2>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              All KYC submissions are permanently stored in PostgreSQL and displayed here in real-time.
-              No mock data - everything you see is live from the database.
+              All KYC submissions are permanently stored in PostgreSQL and
+              displayed here in real-time. No mock data - everything you see is
+              live from the database.
             </p>
           </div>
           <DatabaseRecords />

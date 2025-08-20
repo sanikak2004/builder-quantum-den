@@ -139,7 +139,10 @@ export default function KYCSubmission() {
         if (errorMessage.includes("PAN format")) {
           errorMessage =
             "PAN Number format is invalid. Please use format: ABCDE1234F (5 letters + 4 digits + 1 letter)";
-        } else if (errorMessage.includes("DUPLICATE_PAN") || errorMessage.includes("already exists")) {
+        } else if (
+          errorMessage.includes("DUPLICATE_PAN") ||
+          errorMessage.includes("already exists")
+        ) {
           errorMessage =
             "⚠️ This PAN number is already registered. Each PAN can only be used once for KYC verification.";
         } else if (errorMessage.includes("email")) {

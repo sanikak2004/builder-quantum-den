@@ -33,9 +33,7 @@ const KYCSubmissionSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  pan: z
-    .string()
-    .regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN format"),
+  pan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN format"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   address: z.object({
     street: z.string().min(1, "Street address is required"),
@@ -60,9 +58,9 @@ export const submitKYC: RequestHandler[] = [
   upload.array("documents", 10),
   async (req, res) => {
     // Set CORS headers
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
     console.log("\n🚀 === KYC SUBMISSION STARTED ===");
     console.log(`📅 Timestamp: ${new Date().toISOString()}`);
 
@@ -131,7 +129,11 @@ export const submitKYC: RequestHandler[] = [
             const ipfsResult = await ipfsService.uploadFile(
               file.buffer,
               file.originalname,
-              { kycId, userEmail: validatedData.email, timestamp: new Date().toISOString() }
+              {
+                kycId,
+                userEmail: validatedData.email,
+                timestamp: new Date().toISOString(),
+              },
             );
 
             console.log(`✅ IPFS Upload Success: ${ipfsResult.hash}`);
@@ -145,7 +147,10 @@ export const submitKYC: RequestHandler[] = [
               ipfsUrl: ipfsResult.url,
             };
           } catch (error) {
-            console.error(`❌ IPFS Upload Failed for ${file.originalname}:`, error);
+            console.error(
+              `❌ IPFS Upload Failed for ${file.originalname}:`,
+              error,
+            );
 
             // Generate fallback IPFS data
             const fallbackHash = `bafybei${documentHash.substring(0, 52)}`;
@@ -160,14 +165,14 @@ export const submitKYC: RequestHandler[] = [
               ipfsUrl: fallbackUrl,
             };
           }
-        })
+        }),
       );
 
       // Submit to REAL Hyperledger Fabric blockchain
       console.log("⛓️  Submitting to REAL Hyperledger Fabric blockchain...");
       const blockchainResult = await fabricService.submitKYC(
         { id: kycId, ...validatedData },
-        processedDocuments.map(doc => doc.documentHash)
+        processedDocuments.map((doc) => doc.documentHash),
       );
 
       const blockchainTxHash = blockchainResult.txHash;
@@ -384,7 +389,9 @@ export const updateKYCStatus: RequestHandler = async (req, res) => {
 
     // Generate blockchain transaction hash
     const blockchainTxHash = `0x${crypto.randomBytes(32).toString("hex")}`;
-    console.log(`⛓️  Blockchain Transaction: ${blockchainTxHash.substring(0, 20)}...`);
+    console.log(
+      `⛓️  Blockchain Transaction: ${blockchainTxHash.substring(0, 20)}...`,
+    );
 
     // Update status in database
     const result = await kycService.updateKYCStatus(
@@ -510,9 +517,12 @@ function detectDocumentType(filename: string): string {
   if (lower.includes("pan")) return "PAN";
   if (lower.includes("aadhaar") || lower.includes("aadhar")) return "AADHAAR";
   if (lower.includes("passport")) return "PASSPORT";
-  if (lower.includes("driving") || lower.includes("license")) return "DRIVING_LICENSE";
+  if (lower.includes("driving") || lower.includes("license"))
+    return "DRIVING_LICENSE";
   if (lower.includes("voter")) return "VOTER_ID";
-  if (lower.includes("bank") || lower.includes("statement")) return "BANK_STATEMENT";
-  if (lower.includes("utility") || lower.includes("bill")) return "UTILITY_BILL";
+  if (lower.includes("bank") || lower.includes("statement"))
+    return "BANK_STATEMENT";
+  if (lower.includes("utility") || lower.includes("bill"))
+    return "UTILITY_BILL";
   return "OTHER";
 }
