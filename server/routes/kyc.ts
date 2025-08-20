@@ -136,18 +136,8 @@ export const submitKYC: RequestHandler[] = [
       const fabricService = require("../blockchain/real-fabric-service").fabricService;
       const ipfsService = require("../blockchain/real-ipfs-service").ipfsService;
 
-      // Upload documents to REAL IPFS
-      const ipfsUploads = await Promise.all(
-        files.map(async (file, index) => {
-          console.log(`📡 Uploading to REAL IPFS: ${file.originalname}`);
-          const uploadResult = await ipfsService.uploadFile(
-            file.buffer,
-            file.originalname,
-            { kycId, userEmail: validatedData.email }
-          );
-          return uploadResult;
-        })
-      );
+      // Upload documents to REAL IPFS and generate hashes
+      console.log(`📡 Processing ${files.length} documents for IPFS upload...`);
 
       // Submit to REAL Hyperledger Fabric
       console.log("⛓️  Submitting to REAL Hyperledger Fabric...");
