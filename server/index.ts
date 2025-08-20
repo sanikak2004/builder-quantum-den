@@ -155,6 +155,22 @@ export const createServer = () => {
     res.json({ message: "Hello from Express server" });
   });
 
+  // === NEW KYC ENDPOINTS ===
+
+  // KYC submission endpoint
+  app.post("/api/kyc/submit", ...submitKYC);
+
+  // KYC verification endpoint
+  app.get("/api/kyc/verify", verifyKYC);
+
+  // KYC history endpoint
+  app.get("/api/kyc/:id/history", getKYCHistory);
+
+  // Admin endpoints
+  app.get("/api/admin/kyc/all", getAllKYCRecords);
+  app.put("/api/admin/kyc/:id/status", updateKYCStatus);
+  app.get("/api/admin/stats", getSystemStats);
+
   // KYC Stats endpoint with REAL database data
   app.get("/api/kyc/stats", async (req, res) => {
     try {
