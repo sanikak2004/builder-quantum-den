@@ -140,10 +140,36 @@ export const createServer = () => {
     }
   });
 
+  // Import KYC routes
+  import {
+    submitKYC,
+    verifyKYC,
+    getAllKYCRecords,
+    updateKYCStatus,
+    getKYCHistory,
+    getSystemStats,
+  } from "./routes/kyc";
+
   // Demo endpoint (simplified)
   app.get("/api/demo", (req, res) => {
     res.json({ message: "Hello from Express server" });
   });
+
+  // === NEW KYC ENDPOINTS ===
+
+  // KYC submission endpoint
+  app.post("/api/kyc/submit", ...submitKYC);
+
+  // KYC verification endpoint
+  app.get("/api/kyc/verify", verifyKYC);
+
+  // KYC history endpoint
+  app.get("/api/kyc/:id/history", getKYCHistory);
+
+  // Admin endpoints
+  app.get("/api/admin/kyc/all", getAllKYCRecords);
+  app.put("/api/admin/kyc/:id/status", updateKYCStatus);
+  app.get("/api/admin/stats", getSystemStats);
 
   // KYC Stats endpoint with REAL database data
   app.get("/api/kyc/stats", async (req, res) => {
