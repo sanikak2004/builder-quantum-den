@@ -543,6 +543,62 @@ export default function AdminKYC() {
                     </div>
                   </div>
 
+                  {/* 📊 Blockchain Information */}
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-slate-700 mb-3 flex items-center gap-2">
+                      <Hash className="h-4 w-4 text-blue-600" />
+                      Blockchain Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-slate-500">Transaction Hash:</span>
+                        <p className="font-mono text-xs bg-white p-2 rounded mt-1 break-all">
+                          {selectedRecord.blockchainTxHash?.substring(0, 32) || "N/A"}...
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Block Number:</span>
+                        <p className="font-mono text-sm bg-white p-2 rounded mt-1">
+                          {selectedRecord.blockchainBlockNumber || "Pending"}
+                        </p>
+                      </div>
+                      {selectedRecord.submissionHash && (
+                        <div>
+                          <span className="text-slate-500">Submission Hash:</span>
+                          <p className="font-mono text-xs bg-white p-2 rounded mt-1 break-all">
+                            {selectedRecord.submissionHash.substring(0, 32)}...
+                          </p>
+                        </div>
+                      )}
+                      {selectedRecord.adminBlockchainTxHash && (
+                        <div>
+                          <span className="text-slate-500">Admin TX Hash:</span>
+                          <p className="font-mono text-xs bg-white p-2 rounded mt-1 break-all">
+                            {selectedRecord.adminBlockchainTxHash.substring(0, 32)}...
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedRecord.ipfsHashes && selectedRecord.ipfsHashes.length > 0 && (
+                      <div className="mt-4">
+                        <span className="text-slate-500">IPFS Document Hashes:</span>
+                        <div className="space-y-2 mt-2">
+                          {selectedRecord.ipfsHashes.map((hash, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <p className="font-mono text-xs bg-white p-2 rounded flex-1 break-all">
+                                {hash}
+                              </p>
+                              <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(hash)}>
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Documents */}
                   <div>
                     <h4 className="font-medium text-slate-700 mb-3">
