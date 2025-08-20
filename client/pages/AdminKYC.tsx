@@ -124,43 +124,7 @@ export default function AdminKYC() {
       }
     } catch (error) {
       setError("Network error. Please try again.");
-      // Mock data for development
-      setRecords([
-        {
-          id: "kyc_001",
-          userId: "user_001",
-          name: "John Doe",
-          email: "john@example.com",
-          phone: "+91-9876543210",
-          pan: "ABCPD1234E",
-          dateOfBirth: "1990-01-15",
-          address: {
-            street: "123 Main St",
-            city: "Mumbai",
-            state: "Maharashtra",
-            pincode: "400001",
-            country: "India",
-          },
-          documents: [
-            {
-              id: "doc_001",
-              type: "PAN",
-              documentHash: "abc123def456",
-              fileName: "pan-card.pdf",
-              fileSize: 204800,
-              uploadedAt: "2024-01-15T10:30:00Z",
-            },
-          ],
-          status: "PENDING",
-          verificationLevel: "L1",
-          blockchainTxHash: "0x1234567890abcdef",
-          permanentStorage: false,
-          temporaryRecord: true,
-          approvalRequired: true,
-          createdAt: "2024-01-15T10:30:00Z",
-          updatedAt: "2024-01-15T10:30:00Z",
-        },
-      ]);
+      console.error("Failed to fetch KYC records:", error);
     } finally {
       setIsLoading(false);
     }
