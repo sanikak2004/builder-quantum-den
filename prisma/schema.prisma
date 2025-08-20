@@ -27,13 +27,19 @@ model User {
 model KYCRecord {
   id               String   @id @default(cuid())
   userId           String?  // Optional for anonymous submissions
-  
+
   // Personal Information
   name             String
   email            String
   phone            String
-  pan              String   @unique
+  pan              String   @unique // Unique constraint - no duplicate PAN numbers
   dateOfBirth      String
+
+  // Unique constraints to prevent duplicate entries
+  @@unique([email, pan], name: "unique_email_pan")
+  @@index([status], name: "idx_status")
+  @@index([createdAt], name: "idx_created_at")
+  @@index([pan], name: "idx_pan")
   
   // Address Information (stored as JSON)
   address          Json
