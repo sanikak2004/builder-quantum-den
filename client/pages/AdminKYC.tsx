@@ -206,7 +206,7 @@ export default function AdminKYC() {
                   KYC Records Management
                   <span className="inline-flex items-center bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
                     <span className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>
-                    LIVE UPDATES
+                    REAL-TIME DATABASE
                   </span>
                 </span>
                 <Button
