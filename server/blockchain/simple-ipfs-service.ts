@@ -32,8 +32,7 @@ export class SimpleIPFSService {
 
   async uploadFile(
     file: Buffer,
-    filename: string,
-    metadata?: any,
+    options: { filename: string; contentType?: string },
   ): Promise<IPFSUploadResult> {
     try {
       console.log(
