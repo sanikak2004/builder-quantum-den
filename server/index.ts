@@ -60,8 +60,8 @@ import { initializeDatabase, prisma } from "./database/prisma";
 import { kycService } from "./database/kyc-service";
 
 // Use REAL blockchain services - NO MOCK DATA
-import { fabricService } from "./blockchain/fabric-service";
-import { ipfsService } from "./blockchain/ipfs-service";
+import { fabricService } from "./blockchain/real-fabric-service";
+import { ipfsService } from "./blockchain/real-ipfs-service";
 
 // REAL BLOCKCHAIN INTEGRATION - NO MOCK DATA
 console.log("🚀 === AUTHEN LEDGER: REAL BLOCKCHAIN MODE ===");
