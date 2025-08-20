@@ -101,16 +101,7 @@ export default function AdminDashboard() {
           setSystemMetrics(metricsResult.data);
         }
       } else {
-        // Mock system metrics for development
-        setSystemMetrics({
-          uptime: "15 days, 6 hours",
-          blockchainConnected: true,
-          ipfsConnected: true,
-          databaseConnected: true,
-          lastBlockchainSync: new Date(Date.now() - 300000).toISOString(),
-          totalTransactions: 15789,
-          systemLoad: 68,
-        });
+        console.warn("System metrics API not available");
       }
 
       // Process recent activity
