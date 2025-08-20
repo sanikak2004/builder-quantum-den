@@ -36,7 +36,7 @@ export class SimpleIPFSService {
   ): Promise<IPFSUploadResult> {
     try {
       console.log(
-        `📤 Processing file upload: ${filename} (${file.length} bytes)`,
+        `📤 Processing file upload: ${options.filename} (${file.length} bytes)`,
       );
 
       // Generate a real content hash (this would be the actual IPFS hash)
