@@ -18,9 +18,12 @@ export interface DemoResponse {
 // KYC Document Types
 export interface KYCDocument {
   id: string;
-  type: "PAN" | "AADHAAR" | "PASSPORT" | "DRIVING_LICENSE" | "VOTER_ID";
+  type: "PAN" | "AADHAAR" | "PASSPORT" | "DRIVING_LICENSE" | "VOTER_ID" | "BANK_STATEMENT" | "OTHER";
   documentHash: string;
   ipfsHash?: string;
+  ipfsUrl?: string;
+  fileName?: string;
+  fileSize?: number;
   uploadedAt: string;
 }
 
