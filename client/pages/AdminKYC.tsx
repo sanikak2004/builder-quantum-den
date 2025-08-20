@@ -451,6 +451,40 @@ export default function AdminKYC() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* 🔒 Security & Storage Status */}
+                  <div className="bg-slate-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-slate-700 mb-3 flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Security & Storage Status
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="text-slate-500">Storage Type:</span>
+                        <p className="font-medium">
+                          {selectedRecord.permanentStorage ? (
+                            <span className="text-green-600">✅ Permanent</span>
+                          ) : (
+                            <span className="text-orange-600">⏳ Temporary</span>
+                          )}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Approval Required:</span>
+                        <p className="font-medium">
+                          {selectedRecord.approvalRequired ? (
+                            <span className="text-orange-600">⏳ Yes</span>
+                          ) : (
+                            <span className="text-green-600">✅ No</span>
+                          )}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Verification Level:</span>
+                        <p className="font-medium">{selectedRecord.verificationLevel}</p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Complete record details */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
