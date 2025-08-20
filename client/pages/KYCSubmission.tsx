@@ -341,11 +341,26 @@ export default function KYCSubmission() {
               <CardContent className="space-y-4">
                 <Alert className="bg-blue-50 border-blue-200">
                   <Server className="h-4 w-4 text-blue-600" />
-                  <AlertTitle className="text-blue-800">Blockchain Confirmed</AlertTitle>
+                  <AlertTitle className="text-blue-800">🔒 Blockchain Security Confirmed</AlertTitle>
                   <AlertDescription className="text-blue-700">
-                    Your KYC data has been securely stored on the Hyperledger Fabric blockchain and IPFS.
+                    Your KYC data has been securely stored on Hyperledger Fabric blockchain and IPFS.
+                    {submissionDetails.temporaryStorage && (
+                      <span className="block mt-1 text-orange-700 font-medium">
+                        ⏳ Currently in temporary storage - awaiting admin verification for permanent storage.
+                      </span>
+                    )}
                   </AlertDescription>
                 </Alert>
+
+                {submissionDetails.approvalRequired && (
+                  <Alert className="bg-orange-50 border-orange-200">
+                    <Clock className="h-4 w-4 text-orange-600" />
+                    <AlertTitle className="text-orange-800">⏳ Approval Required</AlertTitle>
+                    <AlertDescription className="text-orange-700">
+                      Your KYC is pending admin verification. You will be redirected to the verification page in 5 seconds to track status.
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
