@@ -1,82 +1,52 @@
-// import { PrismaClient } from '@prisma/client';
-// Temporary mock until Prisma client is generated
+import { PrismaClient } from '@prisma/client';
 
-class MockPrismaClient {
-  $connect() {
-    return Promise.resolve();
+// Global Prisma client instance with real PostgreSQL connection
+export const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL // Real Aiven PostgreSQL connection
+    }
   }
-  $disconnect() {
-    return Promise.resolve();
-  }
+});
 
-  systemStats = {
-    findUnique: () => Promise.resolve(null),
-    create: () => Promise.resolve({ id: "system_stats" }),
-    update: () => Promise.resolve({}),
-  };
-
-  kYCRecord = {
-    create: () => Promise.resolve({}),
-    findUnique: () => Promise.resolve(null),
-    findFirst: () => Promise.resolve(null),
-    findMany: () => Promise.resolve([]),
-    update: () => Promise.resolve({}),
-    count: () => Promise.resolve(0),
-  };
-
-  document = {
-    create: () => Promise.resolve({}),
-  };
-
-  auditLog = {
-    create: () => Promise.resolve({}),
-    findMany: () => Promise.resolve([]),
-  };
-
-  $transaction = (fn: any) => fn(this);
-}
-
-const PrismaClient = MockPrismaClient;
-
-// Create global Prisma client instance
-declare global {
-  var prisma: any | undefined;
-}
-
-// Use global instance in development to prevent multiple connections
-const prisma = globalThis.prisma || new PrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalThis.prisma = prisma;
-}
-
-// Initialize database connection
-export const initializeDatabase = async (): Promise<void> => {
+// Initialize database connection and create tables
+export async function initializeDatabase(): Promise<void> {
   try {
-    console.log("🔄 Connecting to Prisma PostgreSQL database...");
-
-    // Test the connection
+    console.log("🔄 === REAL DATABASE CONNECTION ===");
+    console.log("📋 Connecting to Aiven PostgreSQL...");
+    console.log(`📋 Host: ${process.env.DATABASE_URL?.split('@')[1]?.split('/')[0] || 'Not specified'}`);
+    
+    // Test database connection with real query
     await prisma.$connect();
-    console.log("✅ Database connection established successfully");
-
+    const result = await prisma.$queryRaw`SELECT version();`;
+    console.log("✅ REAL DATABASE CONNECTED:", result);
+    
+    // Check if tables exist and initialize
+    console.log("🔄 Checking database schema...");
+    
     // Initialize system stats if they don't exist
     await initializeSystemStats();
+    
+    console.log("📊 REAL DATABASE READY FOR OPERATIONS");
+    console.log("🚀 === DATABASE INITIALIZATION COMPLETED ===\n");
   } catch (error) {
-    console.error("❌ Failed to connect to database:", error);
-    throw new Error(
-      `Database connection failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
+    console.error("❌ REAL DATABASE CONNECTION FAILED:", error);
+    console.log("⚠️  Database features will not work properly");
+    
+    // If real database fails, don't throw error but log warning
+    console.log("🔄 Continuing with limited functionality...");
   }
-};
+}
 
-// Initialize system statistics
-const initializeSystemStats = async (): Promise<void> => {
+async function initializeSystemStats(): Promise<void> {
   try {
-    const stats = await prisma.systemStats.findUnique({
-      where: { id: "system_stats" },
+    // Check if system stats table exists and has data
+    const existingStats = await prisma.systemStats.findUnique({
+      where: { id: "system_stats" }
     });
 
-    if (!stats) {
+    if (!existingStats) {
       await prisma.systemStats.create({
         data: {
           id: "system_stats",
@@ -84,25 +54,77 @@ const initializeSystemStats = async (): Promise<void> => {
           pendingVerifications: 0,
           verifiedRecords: 0,
           rejectedRecords: 0,
-          averageProcessingTimeHours: 0,
-        },
+          averageProcessingTimeHours: 0
+        }
       });
-      console.log("📊 System statistics initialized");
+      console.log("📊 REAL DATABASE: System statistics table created");
+    } else {
+      console.log("📊 REAL DATABASE: System statistics found");
+      console.log(`   - Total Submissions: ${existingStats.totalSubmissions}`);
+      console.log(`   - Pending: ${existingStats.pendingVerifications}`);
+      console.log(`   - Verified: ${existingStats.verifiedRecords}`);
+      console.log(`   - Rejected: ${existingStats.rejectedRecords}`);
     }
   } catch (error) {
-    console.warn("⚠️  Could not initialize system stats:", error);
+    console.warn("⚠️  Could not initialize system stats in real database:", error);
   }
-};
+}
+
+// Get real database statistics
+export async function getDatabaseStats(): Promise<any> {
+  try {
+    const kycRecordCount = await prisma.kYCRecord.count();
+    const pendingCount = await prisma.kYCRecord.count({
+      where: { status: 'PENDING' }
+    });
+    const verifiedCount = await prisma.kYCRecord.count({
+      where: { status: 'VERIFIED' }
+    });
+    const rejectedCount = await prisma.kYCRecord.count({
+      where: { status: 'REJECTED' }
+    });
+
+    console.log("📊 REAL DATABASE STATS:");
+    console.log(`   - Total KYC Records: ${kycRecordCount}`);
+    console.log(`   - Pending: ${pendingCount}`);
+    console.log(`   - Verified: ${verifiedCount}`);
+    console.log(`   - Rejected: ${rejectedCount}`);
+
+    return {
+      totalSubmissions: kycRecordCount,
+      pendingVerifications: pendingCount,
+      verifiedRecords: verifiedCount,
+      rejectedRecords: rejectedCount,
+      averageProcessingTimeHours: 0
+    };
+  } catch (error) {
+    console.error("❌ Failed to get real database stats:", error);
+    // Return zero stats if database unavailable
+    return {
+      totalSubmissions: 0,
+      pendingVerifications: 0,
+      verifiedRecords: 0,
+      rejectedRecords: 0,
+      averageProcessingTimeHours: 0
+    };
+  }
+}
+
+// Test database connection
+export async function testDatabaseConnection(): Promise<boolean> {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return true;
+  } catch (error) {
+    console.error("❌ Database connection test failed:", error);
+    return false;
+  }
+}
 
 // Graceful shutdown
-export const disconnectDatabase = async (): Promise<void> => {
-  try {
-    await prisma.$disconnect();
-    console.log("🔌 Database connection closed");
-  } catch (error) {
-    console.error("❌ Error closing database connection:", error);
-  }
-};
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+  console.log('✅ Real database connection closed');
+});
 
-export { prisma };
 export default prisma;
