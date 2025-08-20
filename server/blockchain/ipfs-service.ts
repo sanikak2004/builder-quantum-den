@@ -1,6 +1,9 @@
-import { create, IPFSHTTPClient } from 'ipfs-http-client';
+import IPFSHTTPClientPkg from 'ipfs-http-client';
 import { Buffer } from 'buffer';
 import fetch from 'node-fetch';
+
+const { create } = IPFSHTTPClientPkg;
+type IPFSHTTPClient = any;
 
 interface IPFSConfig {
   apiUrl: string;
