@@ -45,11 +45,30 @@ export interface KYCRecord {
   };
   documents: KYCDocument[];
   status: "PENDING" | "VERIFIED" | "REJECTED" | "EXPIRED";
-  verificationLevel: "L1" | "L2" | "L3";
+  verificationLevel: "L0" | "L1" | "L2" | "L3";
+
+  // 📊 Enhanced Blockchain Information
   blockchainTxHash?: string;
+  blockchainBlockNumber?: number;
+  submissionHash?: string;
+  adminBlockchainTxHash?: string;
+  ipfsHashes?: string[];
+  documentHashes?: string[];
+
+  // 🔒 Security & Storage Information
+  permanentStorage?: boolean;
+  temporaryRecord?: boolean;
+  approvalRequired?: boolean;
+
+  // 🕐 Timestamp Information
   createdAt: string;
   updatedAt: string;
+  submittedAt?: string;
   verifiedAt?: string;
+  rejectedAt?: string;
+  adminApprovalTimestamp?: string;
+
+  // 👤 User Information
   verifiedBy?: string;
   remarks?: string;
 }
