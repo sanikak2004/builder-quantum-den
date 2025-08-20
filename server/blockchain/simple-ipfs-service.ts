@@ -80,6 +80,24 @@ export class SimpleIPFSService {
     }
   }
 
+  async pinDocument(hash: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      console.log(`📌 Pinning document for permanent storage: ${hash}`);
+      // In real implementation, this would pin the file in IPFS for permanent storage
+      console.log("✅ Document pinned successfully (simulated)");
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error("❌ Failed to pin document:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
   async getStatus(): Promise<any> {
     return {
       connected: true,
