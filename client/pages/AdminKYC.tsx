@@ -197,6 +197,44 @@ export default function AdminKYC() {
       {/* Main Content */}
       <div className="container mx-auto px-6 py-12">
         <div className="max-w-7xl mx-auto">
+          {/* Blockchain Summary Statistics */}
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Hash className="h-5 w-5 text-blue-600" />
+                Blockchain Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {records.filter(r => r.blockchainTxHash).length}
+                  </div>
+                  <p className="text-sm text-slate-600">Blockchain Recorded</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {records.filter(r => r.permanentStorage).length}
+                  </div>
+                  <p className="text-sm text-slate-600">Permanent Storage</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {records.filter(r => r.temporaryRecord).length}
+                  </div>
+                  <p className="text-sm text-slate-600">Temporary Storage</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {records.filter(r => r.ipfsHashes?.length > 0).length}
+                  </div>
+                  <p className="text-sm text-slate-600">IPFS Documents</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Controls */}
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg mb-8">
             <CardHeader>
