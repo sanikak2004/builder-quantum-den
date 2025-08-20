@@ -244,8 +244,9 @@ export const createServer = () => {
       const existingRecords = Array.from(kycRecords.values());
 
       // Check for duplicate PAN
-      const existingPAN = existingRecords.find(record =>
-        record.pan === validatedData.pan && record.status !== 'REJECTED'
+      const existingPAN = existingRecords.find(
+        (record) =>
+          record.pan === validatedData.pan && record.status !== "REJECTED",
       );
       if (existingPAN) {
         return res.status(400).json({
@@ -258,8 +259,9 @@ export const createServer = () => {
       }
 
       // Check for duplicate Email (additional security)
-      const existingEmail = existingRecords.find(record =>
-        record.email === validatedData.email && record.status !== 'REJECTED'
+      const existingEmail = existingRecords.find(
+        (record) =>
+          record.email === validatedData.email && record.status !== "REJECTED",
       );
       if (existingEmail) {
         return res.status(400).json({
