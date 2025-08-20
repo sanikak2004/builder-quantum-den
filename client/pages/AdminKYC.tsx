@@ -608,27 +608,51 @@ export default function AdminKYC() {
                       {selectedRecord.documents?.map((doc, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between bg-slate-50 p-3 rounded-lg"
+                          className="bg-slate-50 p-4 rounded-lg border"
                         >
-                          <div className="flex items-center space-x-3">
-                            <FileText className="h-4 w-4 text-blue-600" />
-                            <div>
-                              <p className="text-sm font-medium text-slate-700">
-                                {doc.type}
-                              </p>
-                              <p className="text-xs text-slate-500">
-                                Hash:{" "}
-                                {doc.documentHash?.substring(0, 16) || "N/A"}...
-                              </p>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-3">
+                              <FileText className="h-4 w-4 text-blue-600" />
+                              <div>
+                                <p className="text-sm font-medium text-slate-700">
+                                  {doc.type}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  {doc.fileName} ({doc.fileSize ? `${Math.round(doc.fileSize / 1024)}KB` : 'Size unknown'})
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Button variant="ghost" size="sm">
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                              <Button variant="ghost" size="sm">
+                                <Download className="h-3 w-3" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-3 w-3" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Download className="h-3 w-3" />
-                            </Button>
+
+                          <div className="space-y-2 text-xs">
+                            <div>
+                              <span className="text-slate-500">Document Hash:</span>
+                              <p className="font-mono bg-white p-2 rounded mt-1 break-all">
+                                {doc.documentHash || "N/A"}
+                              </p>
+                            </div>
+                            {doc.ipfsHash && (
+                              <div>
+                                <span className="text-slate-500">IPFS Hash:</span>
+                                <p className="font-mono bg-white p-2 rounded mt-1 break-all">
+                                  {doc.ipfsHash}
+                                </p>
+                              </div>
+                            )}
+                            <div>
+                              <span className="text-slate-500">Uploaded:</span>
+                              <p className="text-slate-600 mt-1">
+                                {new Date(doc.uploadedAt).toLocaleString()}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       )) || []}
