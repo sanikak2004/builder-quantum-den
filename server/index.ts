@@ -517,19 +517,32 @@ export const createServer = () => {
       const { id } = req.params;
       const { status, remarks, verifiedBy } = req.body;
 
-      // Check if record exists in database
-      const existingRecord = await kycService.getKYCRecord(id);
-      if (!existingRecord) {
+      // 🔒 Check temporary storage first (submitted records awaiting approval)
+      const tempRecord = kycRecords.get(id);
+      if (!tempRecord) {
         return res.status(404).json({
           success: false,
-          message: "KYC record not found in database",
+          message: "KYC record not found in temporary storage",
           timestamp: new Date().toISOString(),
         });
       }
 
       console.log(
-        `🔄 DATABASE & BLOCKCHAIN UPDATE: Processing ${status} for KYC ID: ${id}`,
+        `🔄 ADMIN APPROVAL: Processing ${status} for KYC ID: ${id}`,
       );
+      console.log(`📊 Current Record Status: ${tempRecord.status} (Temporary: ${tempRecord.temporaryRecord})`);
+
+      // 📋 Enhanced admin approval with blockchain verification
+      if (status === "VERIFIED") {
+        console.log("✅ ADMIN APPROVED - Moving to PERMANENT STORAGE");
+        tempRecord.permanentStorage = true;
+        tempRecord.temporaryRecord = false;
+        tempRecord.approvalRequired = false;
+      } else if (status === "REJECTED") {
+        console.log("❌ ADMIN REJECTED - Record will remain temporary");
+        tempRecord.permanentStorage = false;
+        tempRecord.temporaryRecord = true;
+      }
 
       // Submit status update to REAL HYPERLEDGER FABRIC BLOCKCHAIN
       console.log(
