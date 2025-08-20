@@ -181,13 +181,25 @@ export default function KYCSubmission() {
         setSubmitSuccess(true);
         setSubmittedRecord(completeRecord);
         
-        // Store the actual blockchain details from backend response
+        // Store enhanced blockchain details from backend response
         setSubmissionDetails({
-          txHash: successResult.txHash,
-          blockNumber: successResult.blockNumber,
-          ipfsHashes: successResult.ipfsHashes || [],
-          kycId: successResult.kycId
+          txHash: result.data?.blockchainInfo?.transactionHash || successResult.txHash,
+          blockNumber: result.data?.blockchainInfo?.blockNumber || successResult.blockNumber,
+          submissionHash: result.data?.blockchainInfo?.submissionHash,
+          ipfsHashes: result.data?.blockchainInfo?.ipfsHashes || [],
+          documentHashes: result.data?.blockchainInfo?.documentHashes || [],
+          documentCount: result.data?.blockchainInfo?.documentCount || 0,
+          kycId: result.data?.id || successResult.kycId,
+          temporaryStorage: result.data?.temporaryRecord || false,
+          approvalRequired: result.data?.approvalRequired || false
         });
+
+        // 🔄 Auto-redirect to verification page after 5 seconds
+        if (result.redirectTo) {
+          setTimeout(() => {
+            window.location.href = result.redirectTo;
+          }, 5000);
+        }
       } else {
         const errorResult = result as ApiResponse;
         let errorMessage = errorResult.message || "Submission failed";
