@@ -365,15 +365,15 @@ export default function KYCSubmission() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-slate-500 mb-1 flex items-center gap-1">
-                      <Hash className="h-4 w-4" /> Transaction Hash
+                      <Hash className="h-4 w-4" /> Blockchain Transaction Hash
                     </p>
                     <div className="flex items-center gap-2">
                       <p className="font-mono text-xs break-all bg-slate-100 p-2 rounded">
                         {submissionDetails.txHash}
                       </p>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="shrink-0"
                         onClick={() => copyToClipboard(submissionDetails.txHash)}
                       >
@@ -386,7 +386,37 @@ export default function KYCSubmission() {
                       <Database className="h-4 w-4" /> Block Number
                     </p>
                     <p className="font-mono text-sm bg-slate-100 p-2 rounded">
-                      {submissionDetails.blockNumber}
+                      {submissionDetails.blockNumber || "Pending"}
+                    </p>
+                  </div>
+
+                  {submissionDetails.submissionHash && (
+                    <div>
+                      <p className="text-sm text-slate-500 mb-1 flex items-center gap-1">
+                        <Hash className="h-4 w-4" /> Submission Hash
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono text-xs break-all bg-green-100 p-2 rounded">
+                          {submissionDetails.submissionHash}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shrink-0"
+                          onClick={() => copyToClipboard(submissionDetails.submissionHash)}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1 flex items-center gap-1">
+                      <FileCheck className="h-4 w-4" /> Documents Processed
+                    </p>
+                    <p className="font-mono text-sm bg-slate-100 p-2 rounded">
+                      {submissionDetails.documentCount || submissionDetails.ipfsHashes.length} documents
                     </p>
                   </div>
                 </div>
