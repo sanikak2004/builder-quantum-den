@@ -117,7 +117,7 @@ export const createServer = () => {
   // Blockchain status endpoint
   app.get("/api/blockchain/status", async (req, res) => {
     try {
-      const fabricConnected = fabricService.isConnected();
+      const fabricConnected = fabricService.getConnectionStatus();
       const ipfsStatus = await ipfsService.getStatus();
 
       res.json({
