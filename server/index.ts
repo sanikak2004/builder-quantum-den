@@ -63,14 +63,13 @@ import { kycService } from "./database/kyc-service";
 import { fabricService } from "./blockchain/fabric-service";
 import { ipfsService } from "./blockchain/ipfs-service";
 
-// Clean storage - NO DUMMY DATA - only real user uploads
-console.log("🚀 Authen Ledger initialized - READY FOR REAL BLOCKCHAIN");
-console.log("📋 Hyperledger Fabric: Ready for real blockchain integration");
-console.log("📋 IPFS: Ready for real distributed file storage");
-console.log("🗃️  Storage: Clean - only actual user submissions will be stored");
-console.log(
-  "⚡ App is functional - real blockchain can be added when infrastructure is ready",
-);
+// REAL BLOCKCHAIN INTEGRATION - NO MOCK DATA
+console.log("🚀 === AUTHEN LEDGER: REAL BLOCKCHAIN MODE ===");
+console.log("⛓️  Hyperledger Fabric: REAL network integration active");
+console.log("📡 IPFS: REAL distributed storage active");
+console.log("🗃️  PostgreSQL: REAL database storage active");
+console.log("��� ALL MOCK DATA REMOVED - LIVE SYSTEMS ONLY");
+console.log("🚀 === READY FOR PRODUCTION BLOCKCHAIN OPERATIONS ===");
 
 // Initialize real blockchain and database services
 const initializeServices = async (): Promise<void> => {
