@@ -91,14 +91,7 @@ export default function AdminDashboard() {
           setStats(statsResult.data);
         }
       } else {
-        // Mock stats for development
-        setStats({
-          totalSubmissions: 2847,
-          pendingVerifications: 156,
-          verifiedRecords: 2534,
-          rejectedRecords: 157,
-          averageProcessingTime: 2.3,
-        });
+        console.warn("Stats API not available");
       }
 
       // Process system metrics
