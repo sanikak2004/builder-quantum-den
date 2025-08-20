@@ -174,11 +174,15 @@ export const createServer = () => {
   app.put("/api/admin/kyc/:id/status", updateKYCStatus);
   app.get("/api/admin/stats", getSystemStats);
 
-  // KYC Stats endpoint with REAL database data
+  // KYC Stats endpoint with REAL database data ONLY
   app.get("/api/kyc/stats", async (req, res) => {
     try {
-      // Get real stats from PostgreSQL database
+      console.log("📊 === REAL API CALL: GET STATS ===");
+
+      // Get REAL stats from PostgreSQL database - NO MOCK DATA
       const stats = await kycService.getSystemStats();
+
+      console.log("✅ REAL DATABASE STATS SERVED TO FRONTEND");
 
       res.json({
         success: true,
@@ -189,17 +193,17 @@ export const createServer = () => {
           rejectedRecords: stats.rejectedRecords,
           averageProcessingTime: stats.averageProcessingTimeHours,
         },
-        message: "Real KYC stats retrieved from database",
+        message: "✅ REAL database stats - NO MOCK DATA",
         blockchainConnected: fabricService.isConnected(),
         ipfsConnected: ipfsService.isConnected(),
         databaseConnected: true,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("Database stats error:", error);
+      console.error("❌ REAL DATABASE STATS ERROR:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to fetch stats from database",
+        message: "❌ Failed to fetch REAL stats from database",
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
