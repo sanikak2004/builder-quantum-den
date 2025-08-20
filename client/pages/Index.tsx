@@ -153,6 +153,26 @@ export default function Index() {
                 <FileCheck className="ml-2 h-5 w-5" />
               </Button>
             </Link>
+            <Link to="/history">
+              <Button
+                variant="outline"
+                size="lg"
+                className="px-8 py-3 rounded-lg font-semibold border-2 hover:bg-slate-50"
+              >
+                View History
+                <History className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link to="/admin">
+              <Button
+                variant="outline"
+                size="lg"
+                className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 border-purple-300 hover:from-purple-200 hover:to-pink-200 px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+              >
+                Admin Panel
+                <Settings className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
