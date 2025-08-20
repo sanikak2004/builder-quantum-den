@@ -59,6 +59,10 @@ const KYCStatusUpdateSchema = z.object({
 export const submitKYC: RequestHandler[] = [
   upload.array("documents", 10),
   async (req, res) => {
+    // Set CORS headers
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
     console.log("\n🚀 === KYC SUBMISSION STARTED ===");
     console.log(`📅 Timestamp: ${new Date().toISOString()}`);
 
