@@ -373,30 +373,56 @@ export const createServer = () => {
       );
       console.log("✅ Enhanced blockchain submission result:", blockchainResult);
 
-      // Save to PostgreSQL database
-      const kycRecord = await kycService.createKYCRecord(
-        {
-          id: kycId,
-          userId: crypto.randomUUID(), // In real implementation, get from authenticated user
-          name: validatedData.name,
-          email: validatedData.email,
-          phone: validatedData.phone,
-          pan: validatedData.pan,
-          dateOfBirth: validatedData.dateOfBirth,
-          address: validatedData.address,
-        },
+      // 🔒 TEMPORARY STORAGE: Record stays temporary until admin approval
+      const temporaryKYCRecord = {
+        id: kycId,
+        userId: crypto.randomUUID(), // In real implementation, get from authenticated user
+        ...validatedData,
         documents,
-        blockchainResult.txHash,
-      );
+        status: "PENDING", // Temporary status until admin approves
+        verificationLevel: "L0", // Unverified level until approval
 
-      console.log(`✅ KYC record permanently saved to database: ${kycId}`);
+        // 📋 Enhanced Blockchain Information
+        blockchainTxHash: blockchainResult.txHash,
+        blockchainBlockNumber: blockchainResult.blockNumber,
+        submissionHash: blockchainData.submissionHash,
+        ipfsHashes: blockchainData.ipfsHashes,
+        documentHashes: documentHashes,
 
-      // Return success response
+        // 🕐 Timestamp Information
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        submittedAt: new Date().toISOString(),
+
+        // 🔐 Security Information
+        approvalRequired: true,
+        permanentStorage: false, // Will become true after admin approval
+        temporaryRecord: true
+      };
+
+      // Store in temporary storage (in-memory until admin approval)
+      kycRecords.set(kycId, temporaryKYCRecord);
+      console.log(`🔒 KYC record stored TEMPORARILY until admin approval: ${kycId}`);
+      console.log(`📊 Blockchain Hash: ${blockchainResult.txHash}`);
+      console.log(`📊 Submission Hash: ${blockchainData.submissionHash}`);
+      console.log(`📊 IPFS Documents: ${blockchainData.ipfsHashes.length} files`);
+
+      // Return success response with enhanced blockchain data
       res.json({
         success: true,
-        data: kycRecord.data,
-        message:
-          "✅ KYC submission successful! Your application is permanently stored in database and blockchain.",
+        data: {
+          ...temporaryKYCRecord,
+          blockchainInfo: {
+            transactionHash: blockchainResult.txHash,
+            blockNumber: blockchainResult.blockNumber,
+            submissionHash: blockchainData.submissionHash,
+            ipfsHashes: blockchainData.ipfsHashes,
+            documentHashes: documentHashes,
+            documentCount: documents.length
+          }
+        },
+        message: "🔒 KYC submitted successfully! Your application is stored temporarily. It will be permanently saved after admin verification.",
+        redirectTo: `/verify?id=${kycId}`,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
