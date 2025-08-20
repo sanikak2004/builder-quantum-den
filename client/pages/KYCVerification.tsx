@@ -301,6 +301,76 @@ export default function KYCVerification() {
                 </CardContent>
               </Card>
 
+              {/* Blockchain Information */}
+              {verificationResult.record && (
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Hash className="h-5 w-5 text-blue-600" />
+                      Blockchain Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-slate-500 mb-2">Blockchain Transaction Hash</p>
+                        <div className="bg-white p-3 rounded-lg">
+                          <p className="font-mono text-xs break-all">
+                            {verificationResult.record.blockchainTxHash || "N/A"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {verificationResult.record.submissionHash && (
+                        <div>
+                          <p className="text-sm text-slate-500 mb-2">Submission Hash</p>
+                          <div className="bg-white p-3 rounded-lg">
+                            <p className="font-mono text-xs break-all">
+                              {verificationResult.record.submissionHash}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {verificationResult.record.blockchainBlockNumber && (
+                        <div>
+                          <p className="text-sm text-slate-500 mb-2">Block Number</p>
+                          <div className="bg-white p-3 rounded-lg">
+                            <p className="font-mono text-sm">
+                              {verificationResult.record.blockchainBlockNumber}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {verificationResult.record.adminBlockchainTxHash && (
+                        <div>
+                          <p className="text-sm text-slate-500 mb-2">Admin Verification Hash</p>
+                          <div className="bg-white p-3 rounded-lg">
+                            <p className="font-mono text-xs break-all">
+                              {verificationResult.record.adminBlockchainTxHash}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {verificationResult.record.ipfsHashes && verificationResult.record.ipfsHashes.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-sm text-slate-500 mb-2">IPFS Document Hashes ({verificationResult.record.ipfsHashes.length})</p>
+                        <div className="space-y-2 max-h-32 overflow-y-auto">
+                          {verificationResult.record.ipfsHashes.map((hash, index) => (
+                            <div key={index} className="bg-white p-2 rounded text-xs font-mono break-all">
+                              {hash}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Detailed Information */}
               {verificationResult.record && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
