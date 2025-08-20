@@ -359,19 +359,23 @@ export const createServer = () => {
         id: kycId,
         documentHashes,
         submissionTimestamp: new Date().toISOString(),
-        submissionHash: crypto.createHash('sha256')
+        submissionHash: crypto
+          .createHash("sha256")
           .update(JSON.stringify({ ...validatedData, kycId, documentHashes }))
-          .digest('hex'),
+          .digest("hex"),
         documentCount: documents.length,
-        ipfsHashes: documents.map(doc => doc.ipfsHash),
-        fileTypes: documents.map(doc => doc.type)
+        ipfsHashes: documents.map((doc) => doc.ipfsHash),
+        fileTypes: documents.map((doc) => doc.type),
       };
 
       const blockchainResult = await fabricService.submitKYC(
         blockchainData,
         documentHashes,
       );
-      console.log("✅ Enhanced blockchain submission result:", blockchainResult);
+      console.log(
+        "✅ Enhanced blockchain submission result:",
+        blockchainResult,
+      );
 
       // 🔒 TEMPORARY STORAGE: Record stays temporary until admin approval
       const temporaryKYCRecord = {
@@ -397,15 +401,19 @@ export const createServer = () => {
         // 🔐 Security Information
         approvalRequired: true,
         permanentStorage: false, // Will become true after admin approval
-        temporaryRecord: true
+        temporaryRecord: true,
       };
 
       // Store in temporary storage (in-memory until admin approval)
       kycRecords.set(kycId, temporaryKYCRecord);
-      console.log(`🔒 KYC record stored TEMPORARILY until admin approval: ${kycId}`);
+      console.log(
+        `🔒 KYC record stored TEMPORARILY until admin approval: ${kycId}`,
+      );
       console.log(`📊 Blockchain Hash: ${blockchainResult.txHash}`);
       console.log(`📊 Submission Hash: ${blockchainData.submissionHash}`);
-      console.log(`📊 IPFS Documents: ${blockchainData.ipfsHashes.length} files`);
+      console.log(
+        `📊 IPFS Documents: ${blockchainData.ipfsHashes.length} files`,
+      );
 
       // Return success response with enhanced blockchain data
       res.json({
@@ -418,10 +426,11 @@ export const createServer = () => {
             submissionHash: blockchainData.submissionHash,
             ipfsHashes: blockchainData.ipfsHashes,
             documentHashes: documentHashes,
-            documentCount: documents.length
-          }
+            documentCount: documents.length,
+          },
         },
-        message: "🔒 KYC submitted successfully! Your application is stored temporarily. It will be permanently saved after admin verification.",
+        message:
+          "🔒 KYC submitted successfully! Your application is stored temporarily. It will be permanently saved after admin verification.",
         redirectTo: `/verify?id=${kycId}`,
         timestamp: new Date().toISOString(),
       });
@@ -527,10 +536,10 @@ export const createServer = () => {
         });
       }
 
+      console.log(`🔄 ADMIN APPROVAL: Processing ${status} for KYC ID: ${id}`);
       console.log(
-        `🔄 ADMIN APPROVAL: Processing ${status} for KYC ID: ${id}`,
+        `📊 Current Record Status: ${tempRecord.status} (Temporary: ${tempRecord.temporaryRecord})`,
       );
-      console.log(`📊 Current Record Status: ${tempRecord.status} (Temporary: ${tempRecord.temporaryRecord})`);
 
       // 📋 Enhanced admin approval with blockchain verification
       if (status === "VERIFIED") {
@@ -580,7 +589,9 @@ export const createServer = () => {
       // Update the record in temporary storage
       kycRecords.set(id, tempRecord);
 
-      console.log(`💾 Admin action recorded with blockchain hash: ${blockchainTx.txHash}`);
+      console.log(
+        `💾 Admin action recorded with blockchain hash: ${blockchainTx.txHash}`,
+      );
 
       // 📊 Enhanced response with all blockchain data
       res.json({
@@ -594,12 +605,13 @@ export const createServer = () => {
             ipfsHashes: tempRecord.ipfsHashes,
             documentHashes: tempRecord.documentHashes,
             blockNumber: tempRecord.blockchainBlockNumber,
-            totalTransactions: 2 // Original submission + Admin action
-          }
+            totalTransactions: 2, // Original submission + Admin action
+          },
         },
-        message: status === "VERIFIED"
-          ? `✅ KYC APPROVED: Record permanently stored on blockchain with TX: ${blockchainTx.txHash}`
-          : `❌ KYC REJECTED: Admin decision recorded on blockchain with TX: ${blockchainTx.txHash}`,
+        message:
+          status === "VERIFIED"
+            ? `✅ KYC APPROVED: Record permanently stored on blockchain with TX: ${blockchainTx.txHash}`
+            : `❌ KYC REJECTED: Admin decision recorded on blockchain with TX: ${blockchainTx.txHash}`,
         blockchainTxHash: blockchainTx.txHash,
         permanentStorage: tempRecord.permanentStorage,
         timestamp: new Date().toISOString(),

@@ -35,7 +35,7 @@ import {
   FileCheck,
   Hash,
   Database,
-  Server
+  Server,
 } from "lucide-react";
 import { KYCSubmissionRequest, ApiResponse, KYCRecord } from "@shared/api";
 
@@ -56,7 +56,9 @@ export default function KYCSubmission() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [submittedRecord, setSubmittedRecord] = useState<KYCRecord | null>(null);
+  const [submittedRecord, setSubmittedRecord] = useState<KYCRecord | null>(
+    null,
+  );
   const [submissionDetails, setSubmissionDetails] = useState<{
     txHash: string;
     blockNumber?: number;
@@ -154,11 +156,12 @@ export default function KYCSubmission() {
         body: formDataToSend,
       });
 
-      const result: BackendKYCSuccessResponse | ApiResponse = await response.json();
+      const result: BackendKYCSuccessResponse | ApiResponse =
+        await response.json();
 
       if (result.success) {
         const successResult = result as BackendKYCSuccessResponse;
-        
+
         // Create record with the actual data from backend
         const completeRecord: KYCRecord = {
           id: successResult.kycId,
@@ -176,27 +179,32 @@ export default function KYCSubmission() {
             type: file.type,
             size: file.size,
             // Use actual IPFS hash from backend if available
-            documentHash: successResult.ipfsHashes?.[index] || `IPFS_HASH_${index}`,
-            ipfsUrl: successResult.ipfsHashes?.[index] 
+            documentHash:
+              successResult.ipfsHashes?.[index] || `IPFS_HASH_${index}`,
+            ipfsUrl: successResult.ipfsHashes?.[index]
               ? `https://ipfs.io/ipfs/${successResult.ipfsHashes[index]}`
-              : "#"
-          }))
+              : "#",
+          })),
         };
 
         setSubmitSuccess(true);
         setSubmittedRecord(completeRecord);
-        
+
         // Store enhanced blockchain details from backend response
         setSubmissionDetails({
-          txHash: result.data?.blockchainInfo?.transactionHash || successResult.txHash,
-          blockNumber: result.data?.blockchainInfo?.blockNumber || successResult.blockNumber,
+          txHash:
+            result.data?.blockchainInfo?.transactionHash ||
+            successResult.txHash,
+          blockNumber:
+            result.data?.blockchainInfo?.blockNumber ||
+            successResult.blockNumber,
           submissionHash: result.data?.blockchainInfo?.submissionHash,
           ipfsHashes: result.data?.blockchainInfo?.ipfsHashes || [],
           documentHashes: result.data?.blockchainInfo?.documentHashes || [],
           documentCount: result.data?.blockchainInfo?.documentCount || 0,
           kycId: result.data?.id || successResult.kycId,
           temporaryStorage: result.data?.temporaryRecord || false,
-          approvalRequired: result.data?.approvalRequired || false
+          approvalRequired: result.data?.approvalRequired || false,
         });
 
         // 🔄 Auto-redirect to verification page after 5 seconds
@@ -277,7 +285,8 @@ export default function KYCSubmission() {
                 KYC Submitted Successfully!
               </h1>
               <p className="text-xl text-slate-600 mb-8">
-                Your KYC application has been processed and recorded on the blockchain.
+                Your KYC application has been processed and recorded on the
+                blockchain.
               </p>
             </div>
 
@@ -300,7 +309,9 @@ export default function KYCSubmission() {
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">PAN Number</p>
-                    <p className="font-mono font-medium">{submittedRecord.pan}</p>
+                    <p className="font-mono font-medium">
+                      {submittedRecord.pan}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -346,12 +357,16 @@ export default function KYCSubmission() {
               <CardContent className="space-y-4">
                 <Alert className="bg-blue-50 border-blue-200">
                   <Server className="h-4 w-4 text-blue-600" />
-                  <AlertTitle className="text-blue-800">🔒 Blockchain Security Confirmed</AlertTitle>
+                  <AlertTitle className="text-blue-800">
+                    🔒 Blockchain Security Confirmed
+                  </AlertTitle>
                   <AlertDescription className="text-blue-700">
-                    Your KYC data has been securely stored on Hyperledger Fabric blockchain and IPFS.
+                    Your KYC data has been securely stored on Hyperledger Fabric
+                    blockchain and IPFS.
                     {submissionDetails.temporaryStorage && (
                       <span className="block mt-1 text-orange-700 font-medium">
-                        ⏳ Currently in temporary storage - awaiting admin verification for permanent storage.
+                        ⏳ Currently in temporary storage - awaiting admin
+                        verification for permanent storage.
                       </span>
                     )}
                   </AlertDescription>
@@ -360,9 +375,13 @@ export default function KYCSubmission() {
                 {submissionDetails.approvalRequired && (
                   <Alert className="bg-orange-50 border-orange-200">
                     <Clock className="h-4 w-4 text-orange-600" />
-                    <AlertTitle className="text-orange-800">⏳ Approval Required</AlertTitle>
+                    <AlertTitle className="text-orange-800">
+                      ⏳ Approval Required
+                    </AlertTitle>
                     <AlertDescription className="text-orange-700">
-                      Your KYC is pending admin verification. You will be redirected to the verification page in 5 seconds to track status.
+                      Your KYC is pending admin verification. You will be
+                      redirected to the verification page in 5 seconds to track
+                      status.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -380,7 +399,9 @@ export default function KYCSubmission() {
                         variant="ghost"
                         size="sm"
                         className="shrink-0"
-                        onClick={() => copyToClipboard(submissionDetails.txHash)}
+                        onClick={() =>
+                          copyToClipboard(submissionDetails.txHash)
+                        }
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
@@ -408,7 +429,9 @@ export default function KYCSubmission() {
                           variant="ghost"
                           size="sm"
                           className="shrink-0"
-                          onClick={() => copyToClipboard(submissionDetails.submissionHash)}
+                          onClick={() =>
+                            copyToClipboard(submissionDetails.submissionHash)
+                          }
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
@@ -421,7 +444,9 @@ export default function KYCSubmission() {
                       <FileCheck className="h-4 w-4" /> Documents Processed
                     </p>
                     <p className="font-mono text-sm bg-slate-100 p-2 rounded">
-                      {submissionDetails.documentCount || submissionDetails.ipfsHashes.length} documents
+                      {submissionDetails.documentCount ||
+                        submissionDetails.ipfsHashes.length}{" "}
+                      documents
                     </p>
                   </div>
                 </div>
@@ -437,20 +462,24 @@ export default function KYCSubmission() {
                           <p className="font-mono text-xs break-all bg-slate-100 p-2 rounded flex-1">
                             {hash}
                           </p>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="shrink-0"
                             onClick={() => copyToClipboard(hash)}
                           >
                             <Copy className="h-3 w-3" />
                           </Button>
-                          <a 
-                            href={`https://ipfs.io/ipfs/${hash}`} 
-                            target="_blank" 
+                          <a
+                            href={`https://ipfs.io/ipfs/${hash}`}
+                            target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <Button variant="ghost" size="sm" className="shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="shrink-0"
+                            >
                               <ExternalLink className="h-3 w-3" />
                             </Button>
                           </a>

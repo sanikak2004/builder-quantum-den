@@ -246,7 +246,9 @@ export default function KYCVerification() {
                     <Alert className="mb-4 bg-orange-50 border-orange-200">
                       <Clock className="h-4 w-4 text-orange-600" />
                       <AlertDescription className="text-orange-800">
-                        <strong>⏳ Temporary Storage:</strong> Your KYC is awaiting admin verification for permanent blockchain storage.
+                        <strong>⏳ Temporary Storage:</strong> Your KYC is
+                        awaiting admin verification for permanent blockchain
+                        storage.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -255,7 +257,8 @@ export default function KYCVerification() {
                     <Alert className="mb-4 bg-green-50 border-green-200">
                       <CheckCircle className="h-4 w-4 text-green-600" />
                       <AlertDescription className="text-green-800">
-                        <strong>✅ Permanent Storage:</strong> Your KYC is permanently stored on the blockchain.
+                        <strong>✅ Permanent Storage:</strong> Your KYC is
+                        permanently stored on the blockchain.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -313,17 +316,22 @@ export default function KYCVerification() {
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-slate-500 mb-2">Blockchain Transaction Hash</p>
+                        <p className="text-sm text-slate-500 mb-2">
+                          Blockchain Transaction Hash
+                        </p>
                         <div className="bg-white p-3 rounded-lg">
                           <p className="font-mono text-xs break-all">
-                            {verificationResult.record.blockchainTxHash || "N/A"}
+                            {verificationResult.record.blockchainTxHash ||
+                              "N/A"}
                           </p>
                         </div>
                       </div>
 
                       {verificationResult.record.submissionHash && (
                         <div>
-                          <p className="text-sm text-slate-500 mb-2">Submission Hash</p>
+                          <p className="text-sm text-slate-500 mb-2">
+                            Submission Hash
+                          </p>
                           <div className="bg-white p-3 rounded-lg">
                             <p className="font-mono text-xs break-all">
                               {verificationResult.record.submissionHash}
@@ -334,7 +342,9 @@ export default function KYCVerification() {
 
                       {verificationResult.record.blockchainBlockNumber && (
                         <div>
-                          <p className="text-sm text-slate-500 mb-2">Block Number</p>
+                          <p className="text-sm text-slate-500 mb-2">
+                            Block Number
+                          </p>
                           <div className="bg-white p-3 rounded-lg">
                             <p className="font-mono text-sm">
                               {verificationResult.record.blockchainBlockNumber}
@@ -345,7 +355,9 @@ export default function KYCVerification() {
 
                       {verificationResult.record.adminBlockchainTxHash && (
                         <div>
-                          <p className="text-sm text-slate-500 mb-2">Admin Verification Hash</p>
+                          <p className="text-sm text-slate-500 mb-2">
+                            Admin Verification Hash
+                          </p>
                           <div className="bg-white p-3 rounded-lg">
                             <p className="font-mono text-xs break-all">
                               {verificationResult.record.adminBlockchainTxHash}
@@ -355,18 +367,27 @@ export default function KYCVerification() {
                       )}
                     </div>
 
-                    {verificationResult.record.ipfsHashes && verificationResult.record.ipfsHashes.length > 0 && (
-                      <div className="mt-4">
-                        <p className="text-sm text-slate-500 mb-2">IPFS Document Hashes ({verificationResult.record.ipfsHashes.length})</p>
-                        <div className="space-y-2 max-h-32 overflow-y-auto">
-                          {verificationResult.record.ipfsHashes.map((hash, index) => (
-                            <div key={index} className="bg-white p-2 rounded text-xs font-mono break-all">
-                              {hash}
-                            </div>
-                          ))}
+                    {verificationResult.record.ipfsHashes &&
+                      verificationResult.record.ipfsHashes.length > 0 && (
+                        <div className="mt-4">
+                          <p className="text-sm text-slate-500 mb-2">
+                            IPFS Document Hashes (
+                            {verificationResult.record.ipfsHashes.length})
+                          </p>
+                          <div className="space-y-2 max-h-32 overflow-y-auto">
+                            {verificationResult.record.ipfsHashes.map(
+                              (hash, index) => (
+                                <div
+                                  key={index}
+                                  className="bg-white p-2 rounded text-xs font-mono break-all"
+                                >
+                                  {hash}
+                                </div>
+                              ),
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </CardContent>
                 </Card>
               )}

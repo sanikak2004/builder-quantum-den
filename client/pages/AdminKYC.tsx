@@ -209,25 +209,25 @@ export default function AdminKYC() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {records.filter(r => r.blockchainTxHash).length}
+                    {records.filter((r) => r.blockchainTxHash).length}
                   </div>
                   <p className="text-sm text-slate-600">Blockchain Recorded</p>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {records.filter(r => r.permanentStorage).length}
+                    {records.filter((r) => r.permanentStorage).length}
                   </div>
                   <p className="text-sm text-slate-600">Permanent Storage</p>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-600">
-                    {records.filter(r => r.temporaryRecord).length}
+                    {records.filter((r) => r.temporaryRecord).length}
                   </div>
                   <p className="text-sm text-slate-600">Temporary Storage</p>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {records.filter(r => r.ipfsHashes?.length > 0).length}
+                    {records.filter((r) => r.ipfsHashes?.length > 0).length}
                   </div>
                   <p className="text-sm text-slate-600">IPFS Documents</p>
                 </div>
@@ -502,12 +502,16 @@ export default function AdminKYC() {
                           {selectedRecord.permanentStorage ? (
                             <span className="text-green-600">✅ Permanent</span>
                           ) : (
-                            <span className="text-orange-600">⏳ Temporary</span>
+                            <span className="text-orange-600">
+                              ⏳ Temporary
+                            </span>
                           )}
                         </p>
                       </div>
                       <div>
-                        <span className="text-slate-500">Approval Required:</span>
+                        <span className="text-slate-500">
+                          Approval Required:
+                        </span>
                         <p className="font-medium">
                           {selectedRecord.approvalRequired ? (
                             <span className="text-orange-600">⏳ Yes</span>
@@ -517,8 +521,12 @@ export default function AdminKYC() {
                         </p>
                       </div>
                       <div>
-                        <span className="text-slate-500">Verification Level:</span>
-                        <p className="font-medium">{selectedRecord.verificationLevel}</p>
+                        <span className="text-slate-500">
+                          Verification Level:
+                        </span>
+                        <p className="font-medium">
+                          {selectedRecord.verificationLevel}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -589,9 +597,13 @@ export default function AdminKYC() {
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-slate-500">Transaction Hash:</span>
+                        <span className="text-slate-500">
+                          Transaction Hash:
+                        </span>
                         <p className="font-mono text-xs bg-white p-2 rounded mt-1 break-all">
-                          {selectedRecord.blockchainTxHash?.substring(0, 32) || "N/A"}...
+                          {selectedRecord.blockchainTxHash?.substring(0, 32) ||
+                            "N/A"}
+                          ...
                         </p>
                       </div>
                       <div>
@@ -602,7 +614,9 @@ export default function AdminKYC() {
                       </div>
                       {selectedRecord.submissionHash && (
                         <div>
-                          <span className="text-slate-500">Submission Hash:</span>
+                          <span className="text-slate-500">
+                            Submission Hash:
+                          </span>
                           <p className="font-mono text-xs bg-white p-2 rounded mt-1 break-all">
                             {selectedRecord.submissionHash.substring(0, 32)}...
                           </p>
@@ -612,29 +626,45 @@ export default function AdminKYC() {
                         <div>
                           <span className="text-slate-500">Admin TX Hash:</span>
                           <p className="font-mono text-xs bg-white p-2 rounded mt-1 break-all">
-                            {selectedRecord.adminBlockchainTxHash.substring(0, 32)}...
+                            {selectedRecord.adminBlockchainTxHash.substring(
+                              0,
+                              32,
+                            )}
+                            ...
                           </p>
                         </div>
                       )}
                     </div>
 
-                    {selectedRecord.ipfsHashes && selectedRecord.ipfsHashes.length > 0 && (
-                      <div className="mt-4">
-                        <span className="text-slate-500">IPFS Document Hashes:</span>
-                        <div className="space-y-2 mt-2">
-                          {selectedRecord.ipfsHashes.map((hash, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                              <p className="font-mono text-xs bg-white p-2 rounded flex-1 break-all">
-                                {hash}
-                              </p>
-                              <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(hash)}>
-                                <Eye className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))}
+                    {selectedRecord.ipfsHashes &&
+                      selectedRecord.ipfsHashes.length > 0 && (
+                        <div className="mt-4">
+                          <span className="text-slate-500">
+                            IPFS Document Hashes:
+                          </span>
+                          <div className="space-y-2 mt-2">
+                            {selectedRecord.ipfsHashes.map((hash, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-2"
+                              >
+                                <p className="font-mono text-xs bg-white p-2 rounded flex-1 break-all">
+                                  {hash}
+                                </p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    navigator.clipboard.writeText(hash)
+                                  }
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </div>
 
                   {/* Documents */}
@@ -656,7 +686,11 @@ export default function AdminKYC() {
                                   {doc.type}
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                  {doc.fileName} ({doc.fileSize ? `${Math.round(doc.fileSize / 1024)}KB` : 'Size unknown'})
+                                  {doc.fileName} (
+                                  {doc.fileSize
+                                    ? `${Math.round(doc.fileSize / 1024)}KB`
+                                    : "Size unknown"}
+                                  )
                                 </p>
                               </div>
                             </div>
@@ -672,14 +706,18 @@ export default function AdminKYC() {
 
                           <div className="space-y-2 text-xs">
                             <div>
-                              <span className="text-slate-500">Document Hash:</span>
+                              <span className="text-slate-500">
+                                Document Hash:
+                              </span>
                               <p className="font-mono bg-white p-2 rounded mt-1 break-all">
                                 {doc.documentHash || "N/A"}
                               </p>
                             </div>
                             {doc.ipfsHash && (
                               <div>
-                                <span className="text-slate-500">IPFS Hash:</span>
+                                <span className="text-slate-500">
+                                  IPFS Hash:
+                                </span>
                                 <p className="font-mono bg-white p-2 rounded mt-1 break-all">
                                   {doc.ipfsHash}
                                 </p>

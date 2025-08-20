@@ -369,7 +369,8 @@ export default function KYCHistory() {
                               </p>
                               {record.blockchainTxHash && (
                                 <p className="text-xs text-slate-500">
-                                  Blockchain: {record.blockchainTxHash.substring(0, 12)}...
+                                  Blockchain:{" "}
+                                  {record.blockchainTxHash.substring(0, 12)}...
                                 </p>
                               )}
                             </div>
