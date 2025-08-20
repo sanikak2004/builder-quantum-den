@@ -621,5 +621,49 @@ export const createServer = () => {
     }
   });
 
+  // Permanent storage stats endpoint
+  app.get("/api/admin/permanent-storage", async (req, res) => {
+    try {
+      const storageStats = await permanentStorageService.getStorageStats();
+
+      res.json({
+        success: true,
+        data: storageStats,
+        message: "Permanent storage statistics retrieved",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error fetching permanent storage stats:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch permanent storage statistics",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
+  // Manual permanent storage processing endpoint
+  app.post("/api/admin/permanent-storage/process", async (req, res) => {
+    try {
+      const result = await permanentStorageService.processPermanentStorageNow();
+
+      res.json({
+        success: true,
+        data: result,
+        message: "Permanent storage processing completed",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error processing permanent storage:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to process permanent storage",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
   return app;
 };
