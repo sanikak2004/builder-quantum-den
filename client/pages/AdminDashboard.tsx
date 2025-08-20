@@ -111,49 +111,7 @@ export default function AdminDashboard() {
           setRecentActivity(activityResult.data);
         }
       } else {
-        // Mock recent activity for development
-        setRecentActivity([
-          {
-            id: "1",
-            action: "KYC_APPROVED",
-            user: "admin@ekyc.com",
-            timestamp: new Date(Date.now() - 180000).toISOString(),
-            status: "SUCCESS",
-            details: "KYC for John Doe approved",
-          },
-          {
-            id: "2",
-            action: "KYC_REJECTED",
-            user: "admin@ekyc.com",
-            timestamp: new Date(Date.now() - 360000).toISOString(),
-            status: "SUCCESS",
-            details: "KYC for Jane Smith rejected - invalid documents",
-          },
-          {
-            id: "3",
-            action: "BULK_APPROVAL",
-            user: "admin@ekyc.com",
-            timestamp: new Date(Date.now() - 540000).toISOString(),
-            status: "SUCCESS",
-            details: "Bulk approved 25 KYC records",
-          },
-          {
-            id: "4",
-            action: "SYSTEM_BACKUP",
-            user: "system",
-            timestamp: new Date(Date.now() - 3600000).toISOString(),
-            status: "SUCCESS",
-            details: "Daily backup completed",
-          },
-          {
-            id: "5",
-            action: "BLOCKCHAIN_SYNC",
-            user: "system",
-            timestamp: new Date(Date.now() - 7200000).toISOString(),
-            status: "FAILED",
-            details: "Blockchain sync timeout",
-          },
-        ]);
+        console.warn("Recent activity API not available");
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
