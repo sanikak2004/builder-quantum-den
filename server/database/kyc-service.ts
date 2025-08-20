@@ -346,27 +346,53 @@ export class KYCDatabaseService {
     }
   }
 
-  // Get system statistics
+  // Get system statistics from REAL DATABASE
   async getSystemStats() {
     try {
-      // For now, return mock data since we're using a mock Prisma client
-      // This will be replaced with real database queries when the real database is connected
-      console.log(
-        "📊 Returning mock stats data until real database is connected",
-      );
+      console.log("📊 === REAL DATABASE QUERY: SYSTEM STATS ===");
 
-      return {
-        id: "system_stats",
-        totalSubmissions: 0,
-        pendingVerifications: 0,
-        verifiedRecords: 0,
-        rejectedRecords: 0,
-        averageProcessingTimeHours: 0,
-        lastUpdated: new Date(),
-      };
+      // Get real statistics from PostgreSQL database
+      const stats = await prisma.systemStats.findUnique({
+        where: { id: "system_stats" }
+      });
+
+      if (stats) {
+        console.log("✅ REAL DATABASE STATS RETRIEVED:");
+        console.log(`   - Total Submissions: ${stats.totalSubmissions}`);
+        console.log(`   - Pending: ${stats.pendingVerifications}`);
+        console.log(`   - Verified: ${stats.verifiedRecords}`);
+        console.log(`   - Rejected: ${stats.rejectedRecords}`);
+        console.log("📊 === REAL DATABASE QUERY COMPLETED ===\n");
+
+        return {
+          id: stats.id,
+          totalSubmissions: stats.totalSubmissions,
+          pendingVerifications: stats.pendingVerifications,
+          verifiedRecords: stats.verifiedRecords,
+          rejectedRecords: stats.rejectedRecords,
+          averageProcessingTimeHours: stats.averageProcessingTimeHours,
+          lastUpdated: stats.lastUpdated,
+        };
+      } else {
+        // Initialize stats if they don't exist
+        const newStats = await prisma.systemStats.create({
+          data: {
+            id: "system_stats",
+            totalSubmissions: 0,
+            pendingVerifications: 0,
+            verifiedRecords: 0,
+            rejectedRecords: 0,
+            averageProcessingTimeHours: 0
+          }
+        });
+
+        console.log("📊 REAL DATABASE: New stats record created");
+        return newStats;
+      }
     } catch (error) {
-      console.error("❌ Failed to get system stats:", error);
-      // Return default stats on error
+      console.error("❌ REAL DATABASE ERROR - Failed to get system stats:", error);
+
+      // Only return zero stats if database is completely unavailable
       return {
         id: "system_stats",
         totalSubmissions: 0,
