@@ -1,7 +1,10 @@
-import { Gateway, Network, Contract, Wallet, Wallets } from 'fabric-network';
-import { FabricCAServices } from 'fabric-ca-client';
+import FabricNetworkPkg from 'fabric-network';
+import FabricCAPkg from 'fabric-ca-client';
 import * as fs from 'fs';
 import * as path from 'path';
+
+const { Gateway, Network, Contract, Wallet, Wallets } = FabricNetworkPkg;
+const { FabricCAServices } = FabricCAPkg;
 
 interface FabricConfig {
   channelName: string;
