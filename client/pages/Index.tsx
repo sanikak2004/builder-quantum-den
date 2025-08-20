@@ -98,6 +98,12 @@ export default function Index() {
               >
                 History
               </Link>
+              <Link
+                to="/admin"
+                className="text-slate-600 hover:text-purple-600 transition-colors font-medium"
+              >
+                Admin Panel
+              </Link>
               <Link to="/auth/login">
                 <Button variant="outline" size="sm">
                   Sign In
