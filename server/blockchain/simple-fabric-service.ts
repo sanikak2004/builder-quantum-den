@@ -31,14 +31,13 @@ export class SimpleFabricService {
     }
   }
 
-  async submitKYC(kycData: any, documentHashes: string[]): Promise<any> {
+  async submitKYC(kycData: any): Promise<any> {
     try {
       console.log("📝 Processing KYC submission for blockchain...");
 
       // Generate a realistic transaction hash
       const txData = JSON.stringify({
         ...kycData,
-        documentHashes,
         timestamp: Date.now(),
       });
       const txHash = crypto.createHash("sha256").update(txData).digest("hex");
@@ -47,7 +46,7 @@ export class SimpleFabricService {
 
       return {
         success: true,
-        txHash: txHash,
+        txId: txHash,
         blockNumber: Math.floor(Math.random() * 1000000) + 100000,
         message: "KYC record prepared for Hyperledger Fabric blockchain",
         kycId: kycData.id,
