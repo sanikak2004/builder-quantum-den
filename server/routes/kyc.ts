@@ -119,7 +119,7 @@ export const submitKYC: RequestHandler[] = [
         console.log(`   - IPFS: ${ipfsHash.substring(0, 16)}...`);
 
         return {
-          type: this.detectDocumentType(file.originalname),
+          type: detectDocumentType(file.originalname),
           fileName: file.originalname,
           fileSize: file.size,
           documentHash,
