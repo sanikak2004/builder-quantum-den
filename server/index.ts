@@ -59,9 +59,9 @@ const KYCSubmissionSchema = z.object({
 import { initializeDatabase, prisma } from "./database/prisma";
 import { kycService } from "./database/kyc-service";
 
-// Use simplified blockchain services for development (switch to real services when network is ready)
-import { fabricService } from "./blockchain/simple-fabric-service";
-import { ipfsService } from "./blockchain/simple-ipfs-service";
+// Use REAL blockchain services - NO MOCK DATA
+import { fabricService } from "./blockchain/fabric-service";
+import { ipfsService } from "./blockchain/ipfs-service";
 
 // Clean storage - NO DUMMY DATA - only real user uploads
 console.log("🚀 Authen Ledger initialized - READY FOR REAL BLOCKCHAIN");
