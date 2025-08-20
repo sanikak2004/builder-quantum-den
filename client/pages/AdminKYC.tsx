@@ -21,6 +21,7 @@ import {
   Download,
   RefreshCw,
   Filter,
+  Hash,
 } from "lucide-react";
 import { KYCRecord, ApiResponse } from "@shared/api";
 
