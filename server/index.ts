@@ -4,6 +4,16 @@ import multer from "multer";
 import crypto from "crypto";
 import { z } from "zod";
 
+// Import KYC routes
+import {
+  submitKYC,
+  verifyKYC,
+  getAllKYCRecords,
+  updateKYCStatus,
+  getKYCHistory,
+  getSystemStats,
+} from "./routes/kyc";
+
 // Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
