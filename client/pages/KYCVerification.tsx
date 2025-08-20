@@ -241,6 +241,25 @@ export default function KYCVerification() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {/* 🔒 Security Status */}
+                  {verificationResult.record?.temporaryRecord && (
+                    <Alert className="mb-4 bg-orange-50 border-orange-200">
+                      <Clock className="h-4 w-4 text-orange-600" />
+                      <AlertDescription className="text-orange-800">
+                        <strong>⏳ Temporary Storage:</strong> Your KYC is awaiting admin verification for permanent blockchain storage.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {verificationResult.record?.permanentStorage && (
+                    <Alert className="mb-4 bg-green-50 border-green-200">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <AlertDescription className="text-green-800">
+                        <strong>✅ Permanent Storage:</strong> Your KYC is permanently stored on the blockchain.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <p className="text-sm text-slate-500 mb-1">
