@@ -319,13 +319,13 @@ export const createServer = () => {
         const documentType = file.originalname.toLowerCase().includes("pan")
           ? "PAN"
           : file.originalname.toLowerCase().includes("aadhaar") ||
-            file.originalname.toLowerCase().includes("aadhar")
-          ? "AADHAAR"
-          : file.originalname.toLowerCase().includes("passport")
-          ? "PASSPORT"
-          : file.originalname.toLowerCase().includes("bank")
-          ? "BANK_STATEMENT"
-          : "OTHER";
+              file.originalname.toLowerCase().includes("aadhar")
+            ? "AADHAAR"
+            : file.originalname.toLowerCase().includes("passport")
+              ? "PASSPORT"
+              : file.originalname.toLowerCase().includes("bank")
+                ? "BANK_STATEMENT"
+                : "OTHER";
 
         return {
           type: documentType,
@@ -350,11 +350,12 @@ export const createServer = () => {
       let blockchainTxHash = null;
       if (blockchainResult.success) {
         blockchainTxHash = blockchainResult.txId;
-        console.log(
-          `⛓️  KYC submitted to blockchain: ${blockchainTxHash}`,
-        );
+        console.log(`⛓️  KYC submitted to blockchain: ${blockchainTxHash}`);
       } else {
-        console.warn("⚠️  Blockchain submission failed:", blockchainResult.error);
+        console.warn(
+          "⚠️  Blockchain submission failed:",
+          blockchainResult.error,
+        );
       }
 
       // Save to database
@@ -365,7 +366,9 @@ export const createServer = () => {
         blockchainTxHash,
       });
 
-      console.log(`✅ KYC record saved to database with ID: ${kycRecord.kycRecord.id}`);
+      console.log(
+        `✅ KYC record saved to database with ID: ${kycRecord.kycRecord.id}`,
+      );
 
       const response = {
         success: true,
@@ -380,7 +383,8 @@ export const createServer = () => {
           submissionHash: blockchainTxHash,
           submissionTime: new Date().toISOString(),
         },
-        message: "✅ KYC submission completed - stored in database and blockchain",
+        message:
+          "✅ KYC submission completed - stored in database and blockchain",
         redirectTo: `/verify?id=${kycRecord.kycRecord.id}`,
         timestamp: new Date().toISOString(),
       };
@@ -398,17 +402,17 @@ export const createServer = () => {
   });
 
   // Admin endpoints - Real database operations
-  
+
   // Get all KYC records for admin
   app.get("/api/admin/kyc/all", async (req, res) => {
     try {
       const {
-        status = 'all',
-        page = '1',
-        limit = '50',
-        sortBy = 'createdAt',
-        sortOrder = 'desc',
-        search = '',
+        status = "all",
+        page = "1",
+        limit = "50",
+        sortBy = "createdAt",
+        sortOrder = "desc",
+        search = "",
       } = req.query;
 
       const result = await KYCService.getAllKYCRecords({
@@ -416,7 +420,7 @@ export const createServer = () => {
         page: parseInt(page as string),
         limit: parseInt(limit as string),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc',
+        sortOrder: sortOrder as "asc" | "desc",
         search: search as string,
       });
 
@@ -457,13 +461,15 @@ export const createServer = () => {
         const blockchainResult = await fabricService.updateKYCStatus({
           kycId: id,
           status,
-          verifiedBy: verifiedBy || 'admin',
+          verifiedBy: verifiedBy || "admin",
           remarks,
         });
 
         if (blockchainResult.success) {
           blockchainTxHash = blockchainResult.txId;
-          console.log(`⛓️  Status update submitted to blockchain: ${blockchainTxHash}`);
+          console.log(
+            `⛓️  Status update submitted to blockchain: ${blockchainTxHash}`,
+          );
         }
       } catch (error) {
         console.warn("⚠️  Blockchain status update failed:", error);
@@ -473,7 +479,7 @@ export const createServer = () => {
       const updatedRecord = await KYCService.updateKYCStatus(id, {
         status: status as any,
         remarks,
-        verifiedBy: verifiedBy || 'admin',
+        verifiedBy: verifiedBy || "admin",
         blockchainTxHash,
       });
 
@@ -519,7 +525,7 @@ export const createServer = () => {
       const updatedCount = await KYCService.bulkUpdateKYCStatus(
         recordIds,
         action as any,
-        remarks
+        remarks,
       );
 
       res.json({
@@ -570,7 +576,9 @@ export const createServer = () => {
       // Calculate uptime (mock for now)
       const uptimeMs = process.uptime() * 1000;
       const days = Math.floor(uptimeMs / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((uptimeMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const hours = Math.floor(
+        (uptimeMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+      );
 
       const metrics = {
         uptime: `${days} days, ${hours} hours`,

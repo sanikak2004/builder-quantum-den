@@ -54,15 +54,19 @@ interface RecentActivity {
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<KYCStats | null>(null);
-  const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null);
+  const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(
+    null,
+  );
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
+  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(
+    null,
+  );
 
   useEffect(() => {
     fetchDashboardData();
-    
+
     // Set up auto-refresh every 30 seconds
     const interval = setInterval(fetchDashboardData, 30000);
     setRefreshInterval(interval);
@@ -78,11 +82,12 @@ export default function AdminDashboard() {
 
     try {
       // Fetch all dashboard data in parallel
-      const [statsResponse, metricsResponse, activityResponse] = await Promise.all([
-        fetch("/api/admin/stats"),
-        fetch("/api/admin/system-metrics"),
-        fetch("/api/admin/recent-activity")
-      ]);
+      const [statsResponse, metricsResponse, activityResponse] =
+        await Promise.all([
+          fetch("/api/admin/stats"),
+          fetch("/api/admin/system-metrics"),
+          fetch("/api/admin/recent-activity"),
+        ]);
 
       // Process stats
       if (statsResponse.ok) {
@@ -96,7 +101,8 @@ export default function AdminDashboard() {
 
       // Process system metrics
       if (metricsResponse.ok) {
-        const metricsResult: ApiResponse<SystemMetrics> = await metricsResponse.json();
+        const metricsResult: ApiResponse<SystemMetrics> =
+          await metricsResponse.json();
         if (metricsResult.success && metricsResult.data) {
           setSystemMetrics(metricsResult.data);
         }
@@ -106,7 +112,8 @@ export default function AdminDashboard() {
 
       // Process recent activity
       if (activityResponse.ok) {
-        const activityResult: ApiResponse<RecentActivity[]> = await activityResponse.json();
+        const activityResult: ApiResponse<RecentActivity[]> =
+          await activityResponse.json();
         if (activityResult.success && activityResult.data) {
           setRecentActivity(activityResult.data);
         }
@@ -160,7 +167,9 @@ export default function AdminDashboard() {
   const calculateCompletionRate = () => {
     if (!stats) return 0;
     const completed = stats.verifiedRecords + stats.rejectedRecords;
-    return stats.totalSubmissions > 0 ? Math.round((completed / stats.totalSubmissions) * 100) : 0;
+    return stats.totalSubmissions > 0
+      ? Math.round((completed / stats.totalSubmissions) * 100)
+      : 0;
   };
 
   return (
@@ -224,7 +233,9 @@ export default function AdminDashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-blue-100 text-sm font-medium">Total Submissions</p>
+                      <p className="text-blue-100 text-sm font-medium">
+                        Total Submissions
+                      </p>
                       <p className="text-3xl font-bold">
                         {stats.totalSubmissions.toLocaleString()}
                       </p>
@@ -244,7 +255,9 @@ export default function AdminDashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-yellow-100 text-sm font-medium">Pending Review</p>
+                      <p className="text-yellow-100 text-sm font-medium">
+                        Pending Review
+                      </p>
                       <p className="text-3xl font-bold">
                         {stats.pendingVerifications.toLocaleString()}
                       </p>
@@ -264,7 +277,9 @@ export default function AdminDashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-green-100 text-sm font-medium">Verified</p>
+                      <p className="text-green-100 text-sm font-medium">
+                        Verified
+                      </p>
                       <p className="text-3xl font-bold">
                         {stats.verifiedRecords.toLocaleString()}
                       </p>
@@ -275,7 +290,9 @@ export default function AdminDashboard() {
                   </div>
                   <div className="mt-4 flex items-center">
                     <Star className="h-4 w-4 mr-1" />
-                    <span className="text-sm">{calculateVerificationRate()}% success rate</span>
+                    <span className="text-sm">
+                      {calculateVerificationRate()}% success rate
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -284,7 +301,9 @@ export default function AdminDashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-red-100 text-sm font-medium">Rejected</p>
+                      <p className="text-red-100 text-sm font-medium">
+                        Rejected
+                      </p>
                       <p className="text-3xl font-bold">
                         {stats.rejectedRecords.toLocaleString()}
                       </p>
@@ -304,7 +323,9 @@ export default function AdminDashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-purple-100 text-sm font-medium">Avg Processing</p>
+                      <p className="text-purple-100 text-sm font-medium">
+                        Avg Processing
+                      </p>
                       <p className="text-3xl font-bold">
                         {stats.averageProcessingTime.toFixed(1)}h
                       </p>
@@ -346,9 +367,16 @@ export default function AdminDashboard() {
                         <Hash className="h-4 w-4" />
                         Blockchain Network
                       </span>
-                      <Badge className={systemMetrics.blockchainConnected ? 
-                        "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                        {systemMetrics.blockchainConnected ? "Connected" : "Disconnected"}
+                      <Badge
+                        className={
+                          systemMetrics.blockchainConnected
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }
+                      >
+                        {systemMetrics.blockchainConnected
+                          ? "Connected"
+                          : "Disconnected"}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between">
@@ -356,9 +384,16 @@ export default function AdminDashboard() {
                         <Globe className="h-4 w-4" />
                         IPFS Storage
                       </span>
-                      <Badge className={systemMetrics.ipfsConnected ? 
-                        "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                        {systemMetrics.ipfsConnected ? "Connected" : "Disconnected"}
+                      <Badge
+                        className={
+                          systemMetrics.ipfsConnected
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }
+                      >
+                        {systemMetrics.ipfsConnected
+                          ? "Connected"
+                          : "Disconnected"}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between">
@@ -366,18 +401,25 @@ export default function AdminDashboard() {
                         <Database className="h-4 w-4" />
                         Database
                       </span>
-                      <Badge className={systemMetrics.databaseConnected ? 
-                        "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                      <Badge
+                        className={
+                          systemMetrics.databaseConnected
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }
+                      >
                         {systemMetrics.databaseConnected ? "Healthy" : "Error"}
                       </Badge>
                     </div>
                     <div className="pt-4 border-t">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-slate-600">System Load</span>
-                        <span className="text-slate-800 font-medium">{systemMetrics.systemLoad}%</span>
+                        <span className="text-slate-800 font-medium">
+                          {systemMetrics.systemLoad}%
+                        </span>
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${systemMetrics.systemLoad}%` }}
                         ></div>
@@ -402,24 +444,32 @@ export default function AdminDashboard() {
                     <div className="space-y-3">
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-slate-600">Completion Rate</span>
-                          <span className="text-slate-800 font-medium">{calculateCompletionRate()}%</span>
+                          <span className="text-slate-600">
+                            Completion Rate
+                          </span>
+                          <span className="text-slate-800 font-medium">
+                            {calculateCompletionRate()}%
+                          </span>
                         </div>
                         <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div 
+                          <div
                             className="bg-green-600 h-2 rounded-full"
                             style={{ width: `${calculateCompletionRate()}%` }}
                           ></div>
                         </div>
                       </div>
-                      
+
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-slate-600">Verification Success</span>
-                          <span className="text-slate-800 font-medium">{calculateVerificationRate()}%</span>
+                          <span className="text-slate-600">
+                            Verification Success
+                          </span>
+                          <span className="text-slate-800 font-medium">
+                            {calculateVerificationRate()}%
+                          </span>
                         </div>
                         <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div 
+                          <div
                             className="bg-blue-600 h-2 rounded-full"
                             style={{ width: `${calculateVerificationRate()}%` }}
                           ></div>
@@ -430,13 +480,20 @@ export default function AdminDashboard() {
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-slate-600">Pending Review</span>
                           <span className="text-slate-800 font-medium">
-                            {Math.round((stats.pendingVerifications / stats.totalSubmissions) * 100)}%
+                            {Math.round(
+                              (stats.pendingVerifications /
+                                stats.totalSubmissions) *
+                                100,
+                            )}
+                            %
                           </span>
                         </div>
                         <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div 
+                          <div
                             className="bg-yellow-600 h-2 rounded-full"
-                            style={{ width: `${Math.round((stats.pendingVerifications / stats.totalSubmissions) * 100)}%` }}
+                            style={{
+                              width: `${Math.round((stats.pendingVerifications / stats.totalSubmissions) * 100)}%`,
+                            }}
                           ></div>
                         </div>
                       </div>
@@ -449,13 +506,19 @@ export default function AdminDashboard() {
                             <p className="text-2xl font-bold text-blue-600">
                               {systemMetrics.totalTransactions.toLocaleString()}
                             </p>
-                            <p className="text-xs text-slate-500">Blockchain TXs</p>
+                            <p className="text-xs text-slate-500">
+                              Blockchain TXs
+                            </p>
                           </div>
                           <div>
                             <p className="text-2xl font-bold text-purple-600">
-                              {Math.round(stats.averageProcessingTime * 10) / 10}h
+                              {Math.round(stats.averageProcessingTime * 10) /
+                                10}
+                              h
                             </p>
-                            <p className="text-xs text-slate-500">Avg Process Time</p>
+                            <p className="text-xs text-slate-500">
+                              Avg Process Time
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -485,7 +548,10 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="space-y-4">
                 {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
+                  <div
+                    key={activity.id}
+                    className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg"
+                  >
                     <div className="flex-shrink-0">
                       {getActivityIcon(activity.action)}
                     </div>
@@ -499,7 +565,8 @@ export default function AdminDashboard() {
                         </Badge>
                       </div>
                       <p className="text-xs text-slate-500">
-                        {activity.user} • {new Date(activity.timestamp).toLocaleString()}
+                        {activity.user} •{" "}
+                        {new Date(activity.timestamp).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -519,20 +586,32 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Link to="/admin">
-                  <Button className="w-full h-20 flex flex-col gap-2" variant="outline">
+                  <Button
+                    className="w-full h-20 flex flex-col gap-2"
+                    variant="outline"
+                  >
                     <Users className="h-6 w-6" />
                     <span>Manage KYC</span>
                   </Button>
                 </Link>
-                <Button className="w-full h-20 flex flex-col gap-2" variant="outline">
+                <Button
+                  className="w-full h-20 flex flex-col gap-2"
+                  variant="outline"
+                >
                   <Download className="h-6 w-6" />
                   <span>Export Data</span>
                 </Button>
-                <Button className="w-full h-20 flex flex-col gap-2" variant="outline">
+                <Button
+                  className="w-full h-20 flex flex-col gap-2"
+                  variant="outline"
+                >
                   <Database className="h-6 w-6" />
                   <span>System Backup</span>
                 </Button>
-                <Button className="w-full h-20 flex flex-col gap-2" variant="outline">
+                <Button
+                  className="w-full h-20 flex flex-col gap-2"
+                  variant="outline"
+                >
                   <Settings className="h-6 w-6" />
                   <span>Settings</span>
                 </Button>

@@ -30,16 +30,22 @@ const App = () => (
           <Route path="/verify" element={<KYCVerification />} />
           <Route path="/history" element={<KYCHistory />} />
           <Route path="/auth/:mode" element={<Auth />} />
-          <Route path="/admin" element={
-            <AdminProtectedRoute>
-              <AdminKYC />
-            </AdminProtectedRoute>
-          } />
-          <Route path="/admin/dashboard" element={
-            <AdminProtectedRoute>
-              <AdminDashboard />
-            </AdminProtectedRoute>
-          } />
+          <Route
+            path="/admin"
+            element={
+              <AdminProtectedRoute>
+                <AdminKYC />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

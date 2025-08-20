@@ -66,17 +66,16 @@ export class SimpleFabricService {
     remarks?: string;
   }): Promise<any> {
     try {
-      console.log(`🔄 Processing KYC status update: ${updateData.kycId} -> ${updateData.status}`);
+      console.log(
+        `🔄 Processing KYC status update: ${updateData.kycId} -> ${updateData.status}`,
+      );
 
       const txData = JSON.stringify({
         ...updateData,
         timestamp: Date.now(),
       });
 
-      const txHash = crypto
-        .createHash("sha256")
-        .update(txData)
-        .digest("hex");
+      const txHash = crypto.createHash("sha256").update(txData).digest("hex");
 
       console.log(
         `✅ Status update processed with transaction hash: ${txHash}`,
@@ -105,18 +104,17 @@ export class SimpleFabricService {
     permanentStorage: boolean;
   }): Promise<any> {
     try {
-      console.log(`🔐 Creating permanent blockchain record for KYC: ${permanentData.kycId}`);
+      console.log(
+        `🔐 Creating permanent blockchain record for KYC: ${permanentData.kycId}`,
+      );
 
       const txData = JSON.stringify({
         ...permanentData,
         timestamp: Date.now(),
-        type: 'PERMANENT_RECORD',
+        type: "PERMANENT_RECORD",
       });
 
-      const txHash = crypto
-        .createHash("sha256")
-        .update(txData)
-        .digest("hex");
+      const txHash = crypto.createHash("sha256").update(txData).digest("hex");
 
       console.log(
         `✅ Permanent record created with transaction hash: ${txHash}`,

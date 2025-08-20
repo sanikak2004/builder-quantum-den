@@ -1,6 +1,14 @@
-import { prisma, updateSystemStats } from './prisma';
-import { KYCStatus, VerificationLevel, DocumentType, AuditAction } from '@prisma/client';
-import { KYCRecord as SharedKYCRecord, KYCDocument as SharedKYCDocument } from '@shared/api';
+import { prisma, updateSystemStats } from "./prisma";
+import {
+  KYCStatus,
+  VerificationLevel,
+  DocumentType,
+  AuditAction,
+} from "@prisma/client";
+import {
+  KYCRecord as SharedKYCRecord,
+  KYCDocument as SharedKYCDocument,
+} from "@shared/api";
 
 export interface CreateKYCRecordInput {
   name: string;
@@ -49,15 +57,15 @@ export class KYCService {
             pan: data.pan,
             dateOfBirth: data.dateOfBirth,
             address: data.address,
-            status: 'PENDING',
-            verificationLevel: 'L1',
+            status: "PENDING",
+            verificationLevel: "L1",
             blockchainTxHash: data.blockchainTxHash,
           },
         });
 
         // Create documents
         const documents = await Promise.all(
-          data.documents.map(doc =>
+          data.documents.map((doc) =>
             tx.document.create({
               data: {
                 kycRecordId: kycRecord.id,
@@ -68,8 +76,8 @@ export class KYCService {
                 ipfsHash: doc.ipfsHash,
                 ipfsUrl: doc.ipfsUrl,
               },
-            })
-          )
+            }),
+          ),
         );
 
         // Create audit log
@@ -77,14 +85,14 @@ export class KYCService {
           data: {
             kycRecordId: kycRecord.id,
             userId: data.userId,
-            action: 'CREATED',
+            action: "CREATED",
             performedBy: data.email,
             txId: data.blockchainTxHash,
             details: {
               documentCount: data.documents.length,
-              submissionSource: 'web',
+              submissionSource: "web",
             },
-            remarks: 'KYC record created and submitted for verification',
+            remarks: "KYC record created and submitted for verification",
           },
         });
 
@@ -96,7 +104,7 @@ export class KYCService {
 
       return result;
     } catch (error) {
-      console.error('Error creating KYC record:', error);
+      console.error("Error creating KYC record:", error);
       throw error;
     }
   }
@@ -109,26 +117,29 @@ export class KYCService {
         include: {
           documents: true,
           auditLogs: {
-            orderBy: { performedAt: 'desc' },
+            orderBy: { performedAt: "desc" },
           },
         },
       });
 
       if (!record) {
-        throw new Error('KYC record not found');
+        throw new Error("KYC record not found");
       }
 
       return this.formatKYCRecord(record);
     } catch (error) {
-      console.error('Error fetching KYC record:', error);
+      console.error("Error fetching KYC record:", error);
       throw error;
     }
   }
 
   // Get KYC record by PAN or email
-  static async getKYCRecordByIdentifier(identifier: { pan?: string; email?: string }): Promise<any> {
+  static async getKYCRecordByIdentifier(identifier: {
+    pan?: string;
+    email?: string;
+  }): Promise<any> {
     try {
-      const where = identifier.pan 
+      const where = identifier.pan
         ? { pan: identifier.pan }
         : { email: identifier.email };
 
@@ -137,11 +148,11 @@ export class KYCService {
         include: {
           documents: true,
           auditLogs: {
-            orderBy: { performedAt: 'desc' },
+            orderBy: { performedAt: "desc" },
             take: 10,
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       });
 
       if (!record) {
@@ -150,44 +161,46 @@ export class KYCService {
 
       return this.formatKYCRecord(record);
     } catch (error) {
-      console.error('Error fetching KYC record by identifier:', error);
+      console.error("Error fetching KYC record by identifier:", error);
       throw error;
     }
   }
 
   // Get all KYC records with filters for admin
-  static async getAllKYCRecords(params: {
-    status?: string;
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-    search?: string;
-  } = {}): Promise<{ records: any[]; total: number; pages: number }> {
+  static async getAllKYCRecords(
+    params: {
+      status?: string;
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+      search?: string;
+    } = {},
+  ): Promise<{ records: any[]; total: number; pages: number }> {
     try {
       const {
-        status = 'all',
+        status = "all",
         page = 1,
         limit = 50,
-        sortBy = 'createdAt',
-        sortOrder = 'desc',
-        search = '',
+        sortBy = "createdAt",
+        sortOrder = "desc",
+        search = "",
       } = params;
 
       const skip = (page - 1) * limit;
-      
+
       // Build where clause
       const where: any = {};
-      
-      if (status !== 'all') {
+
+      if (status !== "all") {
         where.status = status as KYCStatus;
       }
 
       if (search) {
         where.OR = [
-          { name: { contains: search, mode: 'insensitive' } },
-          { email: { contains: search, mode: 'insensitive' } },
-          { pan: { contains: search, mode: 'insensitive' } },
+          { name: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+          { pan: { contains: search, mode: "insensitive" } },
         ];
       }
 
@@ -201,7 +214,7 @@ export class KYCService {
           include: {
             documents: true,
             auditLogs: {
-              orderBy: { performedAt: 'desc' },
+              orderBy: { performedAt: "desc" },
               take: 5,
             },
           },
@@ -212,18 +225,23 @@ export class KYCService {
         prisma.kYCRecord.count({ where }),
       ]);
 
-      const formattedRecords = records.map(record => this.formatKYCRecord(record));
+      const formattedRecords = records.map((record) =>
+        this.formatKYCRecord(record),
+      );
       const pages = Math.ceil(total / limit);
 
       return { records: formattedRecords, total, pages };
     } catch (error) {
-      console.error('Error fetching KYC records:', error);
+      console.error("Error fetching KYC records:", error);
       throw error;
     }
   }
 
   // Update KYC status
-  static async updateKYCStatus(id: string, updateData: UpdateKYCStatusInput): Promise<any> {
+  static async updateKYCStatus(
+    id: string,
+    updateData: UpdateKYCStatusInput,
+  ): Promise<any> {
     try {
       const result = await prisma.$transaction(async (tx) => {
         // Update the KYC record
@@ -234,10 +252,10 @@ export class KYCService {
           lastBlockchainTxHash: updateData.blockchainTxHash,
         };
 
-        if (updateData.status === 'VERIFIED') {
+        if (updateData.status === "VERIFIED") {
           updatePayload.verifiedAt = new Date();
           updatePayload.blockchainVerificationTx = updateData.blockchainTxHash;
-        } else if (updateData.status === 'REJECTED') {
+        } else if (updateData.status === "REJECTED") {
           updatePayload.rejectedAt = new Date();
           updatePayload.blockchainRejectionTx = updateData.blockchainTxHash;
         }
@@ -254,11 +272,11 @@ export class KYCService {
         await tx.auditLog.create({
           data: {
             kycRecordId: id,
-            action: updateData.status === 'VERIFIED' ? 'VERIFIED' : 'REJECTED',
-            performedBy: updateData.verifiedBy || 'admin',
+            action: updateData.status === "VERIFIED" ? "VERIFIED" : "REJECTED",
+            performedBy: updateData.verifiedBy || "admin",
             txId: updateData.blockchainTxHash,
             details: {
-              previousStatus: 'PENDING',
+              previousStatus: "PENDING",
               newStatus: updateData.status,
               blockchainTx: updateData.blockchainTxHash,
             },
@@ -274,22 +292,26 @@ export class KYCService {
 
       return this.formatKYCRecord(result);
     } catch (error) {
-      console.error('Error updating KYC status:', error);
+      console.error("Error updating KYC status:", error);
       throw error;
     }
   }
 
   // Bulk update KYC records
-  static async bulkUpdateKYCStatus(recordIds: string[], action: 'VERIFIED' | 'REJECTED', remarks?: string): Promise<number> {
+  static async bulkUpdateKYCStatus(
+    recordIds: string[],
+    action: "VERIFIED" | "REJECTED",
+    remarks?: string,
+  ): Promise<number> {
     try {
       const result = await prisma.$transaction(async (tx) => {
         const updateData: any = {
           status: action,
           remarks: remarks || `Bulk ${action.toLowerCase()} by admin`,
-          verifiedBy: 'admin@system',
+          verifiedBy: "admin@system",
         };
 
-        if (action === 'VERIFIED') {
+        if (action === "VERIFIED") {
           updateData.verifiedAt = new Date();
         } else {
           updateData.rejectedAt = new Date();
@@ -303,20 +325,20 @@ export class KYCService {
 
         // Create audit logs for each record
         await Promise.all(
-          recordIds.map(recordId =>
+          recordIds.map((recordId) =>
             tx.auditLog.create({
               data: {
                 kycRecordId: recordId,
-                action: action === 'VERIFIED' ? 'VERIFIED' : 'REJECTED',
-                performedBy: 'admin@system',
+                action: action === "VERIFIED" ? "VERIFIED" : "REJECTED",
+                performedBy: "admin@system",
                 details: {
                   bulkAction: true,
                   recordCount: recordIds.length,
                 },
                 remarks: remarks,
               },
-            })
-          )
+            }),
+          ),
         );
 
         return updateResult.count;
@@ -327,7 +349,7 @@ export class KYCService {
 
       return result;
     } catch (error) {
-      console.error('Error bulk updating KYC records:', error);
+      console.error("Error bulk updating KYC records:", error);
       throw error;
     }
   }
@@ -343,7 +365,7 @@ export class KYCService {
       });
 
       if (!stats) {
-        throw new Error('System statistics not found');
+        throw new Error("System statistics not found");
       }
 
       return {
@@ -354,7 +376,7 @@ export class KYCService {
         averageProcessingTime: stats.averageProcessingTimeHours,
       };
     } catch (error) {
-      console.error('Error fetching system stats:', error);
+      console.error("Error fetching system stats:", error);
       throw error;
     }
   }
@@ -364,7 +386,7 @@ export class KYCService {
     try {
       const activities = await prisma.auditLog.findMany({
         take: limit,
-        orderBy: { performedAt: 'desc' },
+        orderBy: { performedAt: "desc" },
         include: {
           kycRecord: {
             select: {
@@ -375,16 +397,18 @@ export class KYCService {
         },
       });
 
-      return activities.map(activity => ({
+      return activities.map((activity) => ({
         id: activity.id,
         action: activity.action,
         user: activity.performedBy,
         timestamp: activity.performedAt.toISOString(),
-        status: 'SUCCESS', // Assume success if it's logged
-        details: activity.remarks || `${activity.action} for ${activity.kycRecord?.name || 'user'}`,
+        status: "SUCCESS", // Assume success if it's logged
+        details:
+          activity.remarks ||
+          `${activity.action} for ${activity.kycRecord?.name || "user"}`,
       }));
     } catch (error) {
-      console.error('Error fetching recent activity:', error);
+      console.error("Error fetching recent activity:", error);
       throw error;
     }
   }
@@ -393,34 +417,37 @@ export class KYCService {
   private static formatKYCRecord(record: any): SharedKYCRecord {
     return {
       id: record.id,
-      userId: record.userId || '',
+      userId: record.userId || "",
       name: record.name,
       email: record.email,
       phone: record.phone,
       pan: record.pan,
       dateOfBirth: record.dateOfBirth,
       address: record.address as any,
-      documents: record.documents?.map((doc: any) => ({
-        id: doc.id,
-        type: doc.type,
-        documentHash: doc.documentHash,
-        ipfsHash: doc.ipfsHash,
-        ipfsUrl: doc.ipfsUrl,
-        fileName: doc.fileName,
-        fileSize: doc.fileSize,
-        uploadedAt: doc.uploadedAt.toISOString(),
-      })) || [],
+      documents:
+        record.documents?.map((doc: any) => ({
+          id: doc.id,
+          type: doc.type,
+          documentHash: doc.documentHash,
+          ipfsHash: doc.ipfsHash,
+          ipfsUrl: doc.ipfsUrl,
+          fileName: doc.fileName,
+          fileSize: doc.fileSize,
+          uploadedAt: doc.uploadedAt.toISOString(),
+        })) || [],
       status: record.status,
       verificationLevel: record.verificationLevel,
       blockchainTxHash: record.blockchainTxHash,
       blockchainBlockNumber: undefined, // Would need separate tracking
       submissionHash: record.blockchainTxHash,
-      adminBlockchainTxHash: record.blockchainVerificationTx || record.blockchainRejectionTx,
+      adminBlockchainTxHash:
+        record.blockchainVerificationTx || record.blockchainRejectionTx,
       ipfsHashes: record.documents?.map((doc: any) => doc.ipfsHash) || [],
-      documentHashes: record.documents?.map((doc: any) => doc.documentHash) || [],
-      permanentStorage: record.status === 'VERIFIED',
-      temporaryRecord: record.status === 'PENDING',
-      approvalRequired: record.status === 'PENDING',
+      documentHashes:
+        record.documents?.map((doc: any) => doc.documentHash) || [],
+      permanentStorage: record.status === "VERIFIED",
+      temporaryRecord: record.status === "PENDING",
+      approvalRequired: record.status === "PENDING",
       createdAt: record.createdAt.toISOString(),
       updatedAt: record.updatedAt.toISOString(),
       submittedAt: record.createdAt.toISOString(),

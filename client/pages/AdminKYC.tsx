@@ -301,10 +301,13 @@ export default function AdminKYC() {
         record.verifiedAt || "",
       ])
       .join("\\n");
-    
-    const blob = new Blob([`ID,Name,Email,Status,Created,Verified\\n${csvData}`], {
-      type: "text/csv",
-    });
+
+    const blob = new Blob(
+      [`ID,Name,Email,Status,Created,Verified\\n${csvData}`],
+      {
+        type: "text/csv",
+      },
+    );
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -312,11 +315,12 @@ export default function AdminKYC() {
     a.click();
   };
 
-  const filteredRecords = records.filter((record) =>
-    searchQuery === "" ||
-    record.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    record.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    record.pan.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRecords = records.filter(
+    (record) =>
+      searchQuery === "" ||
+      record.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      record.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      record.pan.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -369,7 +373,9 @@ export default function AdminKYC() {
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-center mb-2">
                     <Users className="h-5 w-5 text-blue-600 mr-2" />
-                    <span className="text-sm font-medium text-blue-700">Total</span>
+                    <span className="text-sm font-medium text-blue-700">
+                      Total
+                    </span>
                   </div>
                   <div className="text-2xl font-bold text-blue-800">
                     {stats.totalSubmissions.toLocaleString()}
@@ -382,7 +388,9 @@ export default function AdminKYC() {
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-center mb-2">
                     <Clock className="h-5 w-5 text-yellow-600 mr-2" />
-                    <span className="text-sm font-medium text-yellow-700">Pending</span>
+                    <span className="text-sm font-medium text-yellow-700">
+                      Pending
+                    </span>
                   </div>
                   <div className="text-2xl font-bold text-yellow-800">
                     {stats.pendingVerifications.toLocaleString()}
@@ -395,7 +403,9 @@ export default function AdminKYC() {
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-center mb-2">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
-                    <span className="text-sm font-medium text-green-700">Verified</span>
+                    <span className="text-sm font-medium text-green-700">
+                      Verified
+                    </span>
                   </div>
                   <div className="text-2xl font-bold text-green-800">
                     {stats.verifiedRecords.toLocaleString()}
@@ -408,7 +418,9 @@ export default function AdminKYC() {
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-center mb-2">
                     <XCircle className="h-5 w-5 text-red-600 mr-2" />
-                    <span className="text-sm font-medium text-red-700">Rejected</span>
+                    <span className="text-sm font-medium text-red-700">
+                      Rejected
+                    </span>
                   </div>
                   <div className="text-2xl font-bold text-red-800">
                     {stats.rejectedRecords.toLocaleString()}
@@ -421,7 +433,9 @@ export default function AdminKYC() {
                 <CardContent className="p-4 text-center">
                   <div className="flex items-center justify-center mb-2">
                     <Zap className="h-5 w-5 text-purple-600 mr-2" />
-                    <span className="text-sm font-medium text-purple-700">Avg Time</span>
+                    <span className="text-sm font-medium text-purple-700">
+                      Avg Time
+                    </span>
                   </div>
                   <div className="text-2xl font-bold text-purple-800">
                     {stats.averageProcessingTime.toFixed(1)}h
@@ -507,7 +521,8 @@ export default function AdminKYC() {
                         <DialogHeader>
                           <DialogTitle>Bulk Actions</DialogTitle>
                           <DialogDescription>
-                            Perform actions on {selectedRecords.length} selected records
+                            Perform actions on {selectedRecords.length} selected
+                            records
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
@@ -642,14 +657,16 @@ export default function AdminKYC() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Checkbox
-                        checked={selectedRecords.length === filteredRecords.length && filteredRecords.length > 0}
+                        checked={
+                          selectedRecords.length === filteredRecords.length &&
+                          filteredRecords.length > 0
+                        }
                         onCheckedChange={toggleSelectAll}
                       />
                       <span className="text-sm font-medium text-slate-700">
-                        {selectedRecords.length > 0 
+                        {selectedRecords.length > 0
                           ? `${selectedRecords.length} of ${filteredRecords.length} selected`
-                          : `Select all ${filteredRecords.length} records`
-                        }
+                          : `Select all ${filteredRecords.length} records`}
                       </span>
                     </div>
                     <div className="text-sm text-slate-500">
@@ -663,7 +680,9 @@ export default function AdminKYC() {
                 <Card
                   key={record.id}
                   className={`bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all ${
-                    selectedRecords.includes(record.id) ? "ring-2 ring-blue-500" : ""
+                    selectedRecords.includes(record.id)
+                      ? "ring-2 ring-blue-500"
+                      : ""
                   }`}
                 >
                   <CardContent className="p-6">
@@ -672,7 +691,9 @@ export default function AdminKYC() {
                         {/* Selection Checkbox */}
                         <Checkbox
                           checked={selectedRecords.includes(record.id)}
-                          onCheckedChange={() => toggleRecordSelection(record.id)}
+                          onCheckedChange={() =>
+                            toggleRecordSelection(record.id)
+                          }
                           className="mt-1"
                         />
 
@@ -701,7 +722,9 @@ export default function AdminKYC() {
 
                           {/* KYC Details */}
                           <div>
-                            <p className="text-xs text-slate-500 mb-1">KYC ID</p>
+                            <p className="text-xs text-slate-500 mb-1">
+                              KYC ID
+                            </p>
                             <p className="font-mono text-xs font-medium text-slate-700 break-all">
                               {record.id}
                             </p>
@@ -745,30 +768,36 @@ export default function AdminKYC() {
                               Documents ({record.documents?.length || 0})
                             </p>
                             <div className="space-y-1">
-                              {record.documents?.slice(0, 2).map((doc, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-center gap-1"
-                                >
-                                  <FileText className="h-3 w-3 text-blue-600" />
-                                  <span className="text-xs text-slate-600">
-                                    {doc.type}
-                                  </span>
-                                </div>
-                              )) || []}
+                              {record.documents
+                                ?.slice(0, 2)
+                                .map((doc, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <FileText className="h-3 w-3 text-blue-600" />
+                                    <span className="text-xs text-slate-600">
+                                      {doc.type}
+                                    </span>
+                                  </div>
+                                )) || []}
                               {(record.documents?.length || 0) > 2 && (
                                 <span className="text-xs text-slate-500">
                                   +{(record.documents?.length || 0) - 2} more
                                 </span>
                               )}
                             </div>
-                            
+
                             {record.blockchainTxHash && (
                               <div className="mt-2">
-                                <p className="text-xs text-slate-500">Blockchain</p>
+                                <p className="text-xs text-slate-500">
+                                  Blockchain
+                                </p>
                                 <div className="flex items-center gap-1">
                                   <Hash className="h-3 w-3 text-blue-600" />
-                                  <span className="text-xs text-blue-600">✓ Recorded</span>
+                                  <span className="text-xs text-blue-600">
+                                    ✓ Recorded
+                                  </span>
                                 </div>
                               </div>
                             )}

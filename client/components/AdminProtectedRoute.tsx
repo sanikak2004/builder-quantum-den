@@ -10,7 +10,9 @@ interface AdminProtectedRouteProps {
   children: React.ReactNode;
 }
 
-export default function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
+export default function AdminProtectedRoute({
+  children,
+}: AdminProtectedRouteProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [adminCode, setAdminCode] = useState("");
@@ -22,7 +24,7 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
     "ADMIN2024",
     "EKYC_ADMIN",
     "BLOCKCHAIN_ADMIN",
-    "SUPER_USER"
+    "SUPER_USER",
   ];
 
   useEffect(() => {
@@ -49,7 +51,9 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
       sessionStorage.setItem("admin_authenticated", "true");
       setError("");
     } else {
-      setError("Invalid admin access code. Please contact system administrator.");
+      setError(
+        "Invalid admin access code. Please contact system administrator.",
+      );
     }
   };
 
@@ -126,8 +130,8 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
                 </Alert>
               )}
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
               >
                 <Shield className="h-4 w-4 mr-2" />
@@ -154,13 +158,14 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
                 ))}
               </div>
               <p className="text-xs text-yellow-600 mt-2">
-                ⚠️ In production, this would be replaced with proper authentication
+                ⚠️ In production, this would be replaced with proper
+                authentication
               </p>
             </div>
 
             <div className="mt-6 text-center">
-              <a 
-                href="/" 
+              <a
+                href="/"
                 className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
               >
                 ← Back to Homepage

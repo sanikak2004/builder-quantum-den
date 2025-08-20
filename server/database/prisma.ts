@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 // Create global Prisma client instance
 declare global {
@@ -6,9 +6,11 @@ declare global {
 }
 
 // Use global instance in development to prevent multiple connections
-const prisma = globalThis.prisma || new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
-});
+const prisma =
+  globalThis.prisma ||
+  new PrismaClient({
+    log: ["query", "info", "warn", "error"],
+  });
 
 if (process.env.NODE_ENV !== "production") {
   globalThis.prisma = prisma;
@@ -61,18 +63,19 @@ const initializeSystemStats = async (): Promise<void> => {
 // Update system statistics based on current records
 export const updateSystemStats = async (): Promise<void> => {
   try {
-    const [totalSubmissions, pendingRecords, verifiedRecords, rejectedRecords] = await Promise.all([
-      prisma.kYCRecord.count(),
-      prisma.kYCRecord.count({ where: { status: 'PENDING' } }),
-      prisma.kYCRecord.count({ where: { status: 'VERIFIED' } }),
-      prisma.kYCRecord.count({ where: { status: 'REJECTED' } }),
-    ]);
+    const [totalSubmissions, pendingRecords, verifiedRecords, rejectedRecords] =
+      await Promise.all([
+        prisma.kYCRecord.count(),
+        prisma.kYCRecord.count({ where: { status: "PENDING" } }),
+        prisma.kYCRecord.count({ where: { status: "VERIFIED" } }),
+        prisma.kYCRecord.count({ where: { status: "REJECTED" } }),
+      ]);
 
     // Calculate average processing time for verified records
     const verifiedWithTimes = await prisma.kYCRecord.findMany({
-      where: { 
-        status: 'VERIFIED',
-        verifiedAt: { not: null }
+      where: {
+        status: "VERIFIED",
+        verifiedAt: { not: null },
       },
       select: {
         createdAt: true,
@@ -84,8 +87,9 @@ export const updateSystemStats = async (): Promise<void> => {
     if (verifiedWithTimes.length > 0) {
       const totalHours = verifiedWithTimes.reduce((sum, record) => {
         if (record.verifiedAt) {
-          const diffMs = record.verifiedAt.getTime() - record.createdAt.getTime();
-          return sum + (diffMs / (1000 * 60 * 60)); // Convert to hours
+          const diffMs =
+            record.verifiedAt.getTime() - record.createdAt.getTime();
+          return sum + diffMs / (1000 * 60 * 60); // Convert to hours
         }
         return sum;
       }, 0);
