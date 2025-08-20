@@ -68,27 +68,31 @@ console.log("🚀 === AUTHEN LEDGER: REAL BLOCKCHAIN MODE ===");
 console.log("⛓️  Hyperledger Fabric: REAL network integration active");
 console.log("📡 IPFS: REAL distributed storage active");
 console.log("🗃️  PostgreSQL: REAL database storage active");
-console.log("��� ALL MOCK DATA REMOVED - LIVE SYSTEMS ONLY");
+console.log("🔥 ALL MOCK DATA REMOVED - LIVE SYSTEMS ONLY");
 console.log("🚀 === READY FOR PRODUCTION BLOCKCHAIN OPERATIONS ===");
 
-// Initialize real blockchain and database services
+// Initialize REAL blockchain and database services
 const initializeServices = async (): Promise<void> => {
   try {
-    console.log("🔄 Initializing real blockchain and database services...");
+    console.log("🔄 === INITIALIZING REAL SERVICES ===");
 
-    // Initialize PostgreSQL database connection
+    // Initialize REAL PostgreSQL database connection
+    console.log("🔄 Starting real database connection...");
     await initializeDatabase();
 
-    // Initialize Hyperledger Fabric connection
+    // Initialize REAL Hyperledger Fabric connection
+    console.log("🔄 Starting real Hyperledger Fabric connection...");
     await fabricService.initializeConnection();
 
-    // Initialize IPFS connection
+    // Initialize REAL IPFS connection
+    console.log("🔄 Starting real IPFS connection...");
     await ipfsService.initializeConnection();
 
-    console.log("✅ All services initialized successfully");
+    console.log("✅ === ALL REAL SERVICES INITIALIZED SUCCESSFULLY ===");
+    console.log("🚀 System ready for production blockchain operations");
   } catch (error) {
-    console.error("❌ Failed to initialize services:", error);
-    console.log("⚠️  Some features may not work until services are connected");
+    console.error("❌ === REAL SERVICES INITIALIZATION FAILED ===", error);
+    console.log("⚠️  Some services may operate in degraded mode");
   }
 };
 
