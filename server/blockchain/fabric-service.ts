@@ -346,7 +346,7 @@ export class HyperledgerFabricService {
     return `0x${Buffer.from(`${Date.now()}_${Math.random()}`).toString('hex').substring(0, 64)}`;
   }
 
-  isConnected(): boolean {
+  getConnectionStatus(): boolean {
     return this.isConnected;
   }
 
