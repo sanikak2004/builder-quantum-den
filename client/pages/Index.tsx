@@ -417,6 +417,22 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Database Records Section */}
+      <section className="py-20 px-6 bg-white">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-slate-800 mb-6">
+              Live PostgreSQL Database Records
+            </h2>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+              All KYC submissions are permanently stored in PostgreSQL and displayed here in real-time.
+              No mock data - everything you see is live from the database.
+            </p>
+          </div>
+          <DatabaseRecords />
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-6 bg-gradient-to-r from-blue-600 to-indigo-600">
         <div className="container mx-auto text-center">
