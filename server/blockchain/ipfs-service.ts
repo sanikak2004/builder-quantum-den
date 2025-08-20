@@ -285,7 +285,7 @@ export class IPFSService {
     }
   }
 
-  isConnected(): boolean {
+  getConnectionStatus(): boolean {
     return this.isConnected;
   }
 
