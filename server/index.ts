@@ -240,6 +240,39 @@ export const createServer = () => {
       // Validate data
       const validatedData = KYCSubmissionSchema.parse(formData);
 
+      // 🔒 SECURITY: Check for duplicate Aadhaar and PAN numbers
+      const existingRecords = Array.from(kycRecords.values());
+
+      // Check for duplicate PAN
+      const existingPAN = existingRecords.find(record =>
+        record.pan === validatedData.pan && record.status !== 'REJECTED'
+      );
+      if (existingPAN) {
+        return res.status(400).json({
+          success: false,
+          message: `❌ DUPLICATE PAN: This PAN number (${validatedData.pan}) is already registered with KYC ID: ${existingPAN.id}`,
+          error: "DUPLICATE_PAN",
+          existingKYCId: existingPAN.id,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Check for duplicate Email (additional security)
+      const existingEmail = existingRecords.find(record =>
+        record.email === validatedData.email && record.status !== 'REJECTED'
+      );
+      if (existingEmail) {
+        return res.status(400).json({
+          success: false,
+          message: `❌ DUPLICATE EMAIL: This email (${validatedData.email}) is already registered with KYC ID: ${existingEmail.id}`,
+          error: "DUPLICATE_EMAIL",
+          existingKYCId: existingEmail.id,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      console.log("✅ Duplicate validation passed - PAN and Email are unique");
+
       const files = (req.files as Express.Multer.File[]) || [];
 
       if (files.length === 0) {
