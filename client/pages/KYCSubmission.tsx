@@ -59,9 +59,14 @@ export default function KYCSubmission() {
   const [submittedRecord, setSubmittedRecord] = useState<KYCRecord | null>(null);
   const [submissionDetails, setSubmissionDetails] = useState<{
     txHash: string;
-    blockNumber: number;
+    blockNumber?: number;
+    submissionHash?: string;
     ipfsHashes: string[];
+    documentHashes?: string[];
+    documentCount?: number;
     kycId: string;
+    temporaryStorage?: boolean;
+    approvalRequired?: boolean;
   } | null>(null);
 
   const [formData, setFormData] = useState({
