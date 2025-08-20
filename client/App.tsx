@@ -13,6 +13,7 @@ import KYCVerification from "./pages/KYCVerification";
 import KYCHistory from "./pages/KYCHistory";
 import Auth from "./pages/Auth";
 import AdminKYC from "./pages/AdminKYC";
+import AdminProtectedRoute from "./components/AdminProtectedRoute";
 
 const queryClient = new QueryClient();
 
