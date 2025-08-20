@@ -17,8 +17,11 @@ import {
   Link2,
   Database,
   Cloud,
+  Settings,
+  Activity,
 } from "lucide-react";
 import { KYCStats } from "@shared/api";
+import SystemStatus from "@/components/SystemStatus";
 
 export default function Index() {
   const [stats, setStats] = useState<KYCStats | null>(null);
