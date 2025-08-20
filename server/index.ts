@@ -77,6 +77,9 @@ const initializeServices = async (): Promise<void> => {
     // Initialize IPFS connection
     await ipfsService.initializeConnection();
 
+    // Start permanent storage monitoring service
+    await permanentStorageService.startMonitoring();
+
     console.log("✅ All services initialized successfully");
   } catch (error) {
     console.error("❌ Failed to initialize services:", error);
