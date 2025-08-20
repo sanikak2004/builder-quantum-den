@@ -350,13 +350,28 @@ export const createServer = () => {
 
       console.log(`✅ All documents uploaded to IPFS: ${documents.length}`);
 
-      // Submit to REAL HYPERLEDGER FABRIC BLOCKCHAIN
+      // Submit to REAL HYPERLEDGER FABRIC BLOCKCHAIN with enhanced data
       console.log("📝 Submitting KYC to Hyperledger Fabric blockchain...");
+
+      // Enhanced blockchain data with detailed information
+      const blockchainData = {
+        ...validatedData,
+        id: kycId,
+        documentHashes,
+        submissionTimestamp: new Date().toISOString(),
+        submissionHash: crypto.createHash('sha256')
+          .update(JSON.stringify({ ...validatedData, kycId, documentHashes }))
+          .digest('hex'),
+        documentCount: documents.length,
+        ipfsHashes: documents.map(doc => doc.ipfsHash),
+        fileTypes: documents.map(doc => doc.type)
+      };
+
       const blockchainResult = await fabricService.submitKYC(
-        { ...validatedData, id: kycId },
+        blockchainData,
         documentHashes,
       );
-      console.log("✅ Real blockchain submission result:", blockchainResult);
+      console.log("✅ Enhanced blockchain submission result:", blockchainResult);
 
       // Save to PostgreSQL database
       const kycRecord = await kycService.createKYCRecord(
