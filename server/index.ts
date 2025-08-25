@@ -73,10 +73,16 @@ const initializeServices = async (): Promise<void> => {
     // Initialize PostgreSQL database connection
     await initializeDatabase();
 
-    // Initialize Hyperledger Fabric connection
+    // Initialize Hyperledger Fabric connection (fallback)
     await fabricService.initializeConnection();
 
-    // Initialize IPFS connection
+    // Initialize Ethereum blockchain service
+    await ethereumService.initializeConnection();
+
+    // Initialize Real IPFS connection
+    await realIPFSService.initializeConnection();
+
+    // Initialize Simple IPFS as fallback
     await ipfsService.initializeConnection();
 
     // Start permanent storage monitoring service
