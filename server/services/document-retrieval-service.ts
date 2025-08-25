@@ -420,4 +420,36 @@ export class DocumentRetrievalService {
       return [];
     }
   }
+
+  /**
+   * Verify organization access token
+   * @param token Access token
+   * @returns Token data if valid, null if invalid
+   */
+  static async verifyAccessToken(token: string): Promise<any> {
+    try {
+      const accessToken = await prisma.accessToken.findUnique({
+        where: { token },
+        include: { user: true }
+      });
+
+      if (!accessToken || !accessToken.isActive || accessToken.expiresAt < new Date()) {
+        return null;
+      }
+
+      // Update usage count
+      await prisma.accessToken.update({
+        where: { id: accessToken.id },
+        data: {
+          usageCount: { increment: 1 },
+          lastUsedAt: new Date()
+        }
+      });
+
+      return accessToken;
+    } catch (error) {
+      console.error('❌ Access token verification error:', error);
+      return null;
+    }
+  }
 }
