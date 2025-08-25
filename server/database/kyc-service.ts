@@ -70,7 +70,7 @@ export class KYCService {
           },
         });
 
-        // Create documents
+        // Create documents with encryption metadata
         const documents = await Promise.all(
           data.documents.map((doc) =>
             tx.document.create({
@@ -82,6 +82,12 @@ export class KYCService {
                 documentHash: doc.documentHash,
                 ipfsHash: doc.ipfsHash,
                 ipfsUrl: doc.ipfsUrl,
+                encrypted: doc.encrypted ?? true,
+                encryptedHash: doc.encryptedHash,
+                encryptionKey: doc.encryptionKey,
+                encryptionIV: doc.encryptionIV,
+                encryptionAlgorithm: doc.encryptionAlgorithm,
+                encryptionAuthTag: doc.encryptionAuthTag,
               },
             }),
           ),
