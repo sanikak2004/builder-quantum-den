@@ -142,10 +142,18 @@ model Document {
   fileSize    Int
   
   // Security and Verification
-  documentHash String  // SHA256 hash of file content
-  ipfsHash     String  // IPFS content hash
+  documentHash String  // SHA256 hash of original file content
+  ipfsHash     String  // IPFS content hash (of encrypted file)
   ipfsUrl      String  // IPFS gateway URL
-  
+
+  // Encryption metadata (stored securely)
+  encrypted       Boolean @default(true)
+  encryptedHash   String? // Hash of encrypted package
+  encryptionKey   String? // Encrypted with master key
+  encryptionIV    String? // Initialization vector
+  encryptionAlgorithm String? // Encryption algorithm used
+  encryptionAuthTag String? // Authentication tag for GCM
+
   // Timestamps
   uploadedAt  DateTime @default(now())
   
