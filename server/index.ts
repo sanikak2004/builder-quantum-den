@@ -318,47 +318,22 @@ app.get("/api/demo", (req, res) => {
         });
       }
 
-      // Process documents with real IPFS
+      // Process documents with encryption and real IPFS
       console.log(
-        `📤 Processing ${files.length} documents for REAL IPFS upload...`,
+        `📤 Processing ${files.length} documents with encryption for REAL IPFS upload...`,
       );
       const documentPromises = files.map(async (file, index) => {
         console.log(
           `🔄 Processing file ${index + 1}: ${file.originalname} (${file.size} bytes)`,
         );
 
-        // Calculate document hash for security
-        const documentHash = crypto
+        // Calculate original document hash for integrity
+        const originalDocumentHash = crypto
           .createHash("sha256")
           .update(file.buffer)
           .digest("hex");
         console.log(
-          `🔐 Document hash generated: ${documentHash.substring(0, 16)}...`,
-        );
-
-        // Try real IPFS first, fallback to simple IPFS
-        let ipfsResult;
-        if (realIPFSService.isConnected()) {
-          console.log(`🌐 Uploading to real IPFS network...`);
-          ipfsResult = await realIPFSService.uploadFile(file.buffer, {
-            filename: file.originalname,
-            contentType: file.mimetype,
-            pin: true // Pin for permanent storage
-          });
-        } else {
-          console.log(`🔄 Falling back to simulated IPFS...`);
-          ipfsResult = await ipfsService.uploadFile(file.buffer, {
-            filename: file.originalname,
-            contentType: file.mimetype,
-          });
-        }
-
-        if (!ipfsResult.success) {
-          throw new Error(`IPFS upload failed: ${ipfsResult.error}`);
-        }
-
-        console.log(
-          `📊 File ${index + 1} uploaded to IPFS: ${ipfsResult.hash}`,
+          `🔐 Original document hash: ${originalDocumentHash.substring(0, 16)}...`,
         );
 
         // Determine document type based on filename
@@ -373,13 +348,67 @@ app.get("/api/demo", (req, res) => {
                 ? "BANK_STATEMENT"
                 : "OTHER";
 
+        // Create secure encrypted package
+        const userKey = validatedData.email + validatedData.pan; // User-specific encryption key
+        const securePackage = await EncryptionService.createSecurePackage(
+          file.buffer,
+          {
+            filename: file.originalname,
+            contentType: file.mimetype,
+            userId: validatedData.email, // Will be updated with actual user ID later
+            kycId: crypto.randomUUID(), // Will be updated with actual KYC ID later
+            documentType
+          },
+          userKey
+        );
+
+        console.log(`🔒 Document encrypted: ${file.originalname}`);
+
+        // Upload encrypted package to IPFS
+        let ipfsResult;
+        if (realIPFSService.isConnected()) {
+          console.log(`🌐 Uploading encrypted document to real IPFS network...`);
+          ipfsResult = await realIPFSService.uploadFile(
+            securePackage.encryptedPackage.encryptedData,
+            {
+              filename: `encrypted_${file.originalname}.enc`,
+              contentType: 'application/octet-stream', // Encrypted data
+              pin: true // Pin for permanent storage
+            }
+          );
+        } else {
+          console.log(`🔄 Falling back to simulated IPFS...`);
+          ipfsResult = await ipfsService.uploadFile(
+            securePackage.encryptedPackage.encryptedData,
+            {
+              filename: `encrypted_${file.originalname}.enc`,
+              contentType: 'application/octet-stream',
+            }
+          );
+        }
+
+        if (!ipfsResult.success) {
+          throw new Error(`IPFS upload failed: ${ipfsResult.error}`);
+        }
+
+        console.log(
+          `📊 Encrypted file ${index + 1} uploaded to IPFS: ${ipfsResult.hash}`,
+        );
+
         return {
           type: documentType,
           fileName: file.originalname,
           fileSize: file.size,
-          documentHash,
+          documentHash: originalDocumentHash,
+          encryptedHash: securePackage.packageHash,
           ipfsHash: ipfsResult.hash,
           ipfsUrl: ipfsResult.url,
+          // Store encryption metadata (will be stored securely in database)
+          encryptionKey: securePackage.encryptedPackage.key,
+          encryptionIV: securePackage.encryptedPackage.iv,
+          encryptionAlgorithm: securePackage.encryptedPackage.algorithm,
+          encryptionAuthTag: securePackage.encryptedPackage.authTag,
+          encrypted: true
         };
       });
 
@@ -409,7 +438,7 @@ app.get("/api/demo", (req, res) => {
 
       // Fallback to Hyperledger Fabric
       if (!blockchainTxHash) {
-        console.log("��� Submitting KYC data to Hyperledger Fabric blockchain...");
+        console.log("🔗 Submitting KYC data to Hyperledger Fabric blockchain...");
         const fabricResult = await fabricService.submitKYC({
           personalInfo: validatedData,
           documents: processedDocuments,
