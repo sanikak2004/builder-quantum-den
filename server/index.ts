@@ -383,22 +383,42 @@ app.get("/api/demo", (req, res) => {
       const processedDocuments = await Promise.all(documentPromises);
       console.log("✅ All documents processed successfully");
 
-      // Submit to blockchain
-      console.log("🔗 Submitting KYC data to Hyperledger Fabric blockchain...");
-      const blockchainResult = await fabricService.submitKYC({
-        personalInfo: validatedData,
-        documents: processedDocuments,
-      });
-
+      // Submit to blockchain (try Ethereum first, fallback to Fabric)
       let blockchainTxHash = null;
-      if (blockchainResult.success) {
-        blockchainTxHash = blockchainResult.txId;
-        console.log(`⛓️  KYC submitted to blockchain: ${blockchainTxHash}`);
-      } else {
-        console.warn(
-          "⚠️  Blockchain submission failed:",
-          blockchainResult.error,
-        );
+      let blockchainNetwork = 'none';
+
+      if (ethereumService.isConnected()) {
+        console.log("🔗 Submitting KYC data to Ethereum blockchain...");
+        const ethereumResult = await ethereumService.submitKYC({
+          kycId: crypto.randomUUID(), // Will be set from DB record
+          personalInfo: validatedData,
+          documents: processedDocuments,
+        });
+
+        if (ethereumResult.success) {
+          blockchainTxHash = ethereumResult.txId;
+          blockchainNetwork = 'ethereum';
+          console.log(`⛓️  KYC submitted to Ethereum: ${blockchainTxHash}`);
+        } else {
+          console.warn("⚠️  Ethereum submission failed:", ethereumResult.error);
+        }
+      }
+
+      // Fallback to Hyperledger Fabric
+      if (!blockchainTxHash) {
+        console.log("🔗 Submitting KYC data to Hyperledger Fabric blockchain...");
+        const fabricResult = await fabricService.submitKYC({
+          personalInfo: validatedData,
+          documents: processedDocuments,
+        });
+
+        if (fabricResult.success) {
+          blockchainTxHash = fabricResult.txId;
+          blockchainNetwork = 'fabric';
+          console.log(`⛓️  KYC submitted to Fabric: ${blockchainTxHash}`);
+        } else {
+          console.warn("⚠️  Fabric submission failed:", fabricResult.error);
+        }
       }
 
       // Save to database
