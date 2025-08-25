@@ -144,10 +144,14 @@ export const createServer = () => {
     }
   });
 
-  // Demo endpoint (simplified)
-  app.get("/api/demo", (req, res) => {
-    res.json({ message: "Hello from Express server" });
-  });
+  // Authentication routes
+import authRoutes from "./routes/auth";
+app.use("/api/auth", authRoutes);
+
+// Demo endpoint (simplified)
+app.get("/api/demo", (req, res) => {
+  res.json({ message: "Hello from Express server" });
+});
 
   // KYC Stats endpoint with REAL database data
   app.get("/api/kyc/stats", async (req, res) => {
