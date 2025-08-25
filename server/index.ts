@@ -117,11 +117,24 @@ export const createServer = () => {
   app.get("/api/blockchain/status", async (req, res) => {
     try {
       const fabricConnected = fabricService.isConnected();
+      const ethereumConnected = ethereumService.isConnected();
       const ipfsStatus = await ipfsService.getStatus();
+      const realIPFSStatus = await realIPFSService.getStatus();
+
+      // Get Ethereum network info if connected
+      const ethereumInfo = ethereumConnected ? await ethereumService.getNetworkInfo() : null;
 
       res.json({
         success: true,
         blockchain: {
+          ethereum: {
+            connected: ethereumConnected,
+            network: ethereumInfo ? `Chain ID: ${ethereumInfo.chainId}` : "Not Connected",
+            contractAddress: ethereumInfo?.contractAddress || "Not Deployed",
+            blockNumber: ethereumInfo?.blockNumber || 0,
+            gasPrice: ethereumInfo?.gasPrice || "0 gwei",
+            type: "REAL - Ethereum Network",
+          },
           hyperledgerFabric: {
             connected: fabricConnected,
             network: fabricConnected
@@ -130,16 +143,23 @@ export const createServer = () => {
             type: "REAL - Hyperledger Fabric 2.5.4",
           },
           ipfs: {
-            connected: ipfsStatus.connected,
-            version: ipfsStatus.version || "Unknown",
-            peerId: ipfsStatus.peerId || "Unknown",
-            type: "REAL - IPFS Network",
+            real: {
+              connected: realIPFSStatus.connected,
+              version: realIPFSStatus.version || "Unknown",
+              peerId: realIPFSStatus.peerId || "Unknown",
+              type: "REAL - IPFS Network",
+            },
+            fallback: {
+              connected: ipfsStatus.connected,
+              version: ipfsStatus.version || "Unknown",
+              type: "Simulated IPFS (Development)",
+            }
           },
         },
         message:
-          fabricConnected && ipfsStatus.connected
-            ? "✅ All blockchain services connected - REAL IMPLEMENTATION"
-            : "⚠️ Some blockchain services not connected",
+          ethereumConnected && realIPFSStatus.connected
+            ? "✅ All real blockchain services connected"
+            : "⚠️ Some blockchain services using fallback mode",
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
