@@ -59,6 +59,11 @@ import { realIPFSService } from "./blockchain/real-ipfs-service";
 // Security services
 import { EncryptionService } from "./services/encryption-service";
 
+// Route imports
+import authRoutes from "./routes/auth";
+import documentRoutes from "./routes/documents";
+import permissionRoutes from "./routes/permissions";
+
 // Clean storage - NO DUMMY DATA - only real user uploads
 console.log("🚀 Authen Ledger initialized - READY FOR REAL BLOCKCHAIN");
 console.log("📋 Hyperledger Fabric: Ready for real blockchain integration");
