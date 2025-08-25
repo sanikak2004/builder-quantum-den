@@ -183,6 +183,10 @@ export const createServer = () => {
   import documentRoutes from "./routes/documents";
   app.use("/api/documents", documentRoutes);
 
+  // Permission sharing routes
+  import permissionRoutes from "./routes/permissions";
+  app.use("/api/permissions", permissionRoutes);
+
 // Demo endpoint (simplified)
 app.get("/api/demo", (req, res) => {
   res.json({ message: "Hello from Express server" });
