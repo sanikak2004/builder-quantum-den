@@ -30,6 +30,13 @@ export interface CreateKYCRecordInput {
     documentHash: string;
     ipfsHash: string;
     ipfsUrl: string;
+    // Encryption metadata
+    encrypted?: boolean;
+    encryptedHash?: string;
+    encryptionKey?: string;
+    encryptionIV?: string;
+    encryptionAlgorithm?: string;
+    encryptionAuthTag?: string;
   }>;
   blockchainTxHash?: string;
   userId?: string;
