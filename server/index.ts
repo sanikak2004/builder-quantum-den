@@ -176,8 +176,12 @@ export const createServer = () => {
   });
 
   // Authentication routes
-import authRoutes from "./routes/auth";
-app.use("/api/auth", authRoutes);
+  import authRoutes from "./routes/auth";
+  app.use("/api/auth", authRoutes);
+
+  // Document retrieval routes
+  import documentRoutes from "./routes/documents";
+  app.use("/api/documents", documentRoutes);
 
 // Demo endpoint (simplified)
 app.get("/api/demo", (req, res) => {
