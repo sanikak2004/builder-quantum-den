@@ -13,14 +13,79 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
+  phone     String?
+
+  // Authentication fields
+  passwordHash String?
+  role         UserRole @default(USER)
+  isVerified   Boolean  @default(false)
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+
+  // Web3 Integration
+  walletAddress    String? @unique
+  walletProvider   WalletProvider?
+  web3Verified     Boolean @default(false)
+
+  // OTP and Security
+  otpSecret        String?
+  otpVerifiedAt    DateTime?
+  lastLoginAt      DateTime?
+
+  // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
   kycRecords KYCRecord[]
   auditLogs  AuditLog[]
+  sessions   UserSession[]
+  accessTokens AccessToken[]
 
   @@map("users")
+}
+
+// User sessions for authentication tracking
+model UserSession {
+  id          String   @id @default(cuid())
+  userId      String
+  token       String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  lastUsedAt  DateTime @default(now())
+
+  // Device/Browser info
+  userAgent   String?
+  ipAddress   String?
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+// Access tokens for organization sharing
+model AccessToken {
+  id          String   @id @default(cuid())
+  userId      String
+  token       String   @unique
+  purpose     TokenPurpose
+  expiresAt   DateTime
+  isActive    Boolean  @default(true)
+  usageCount  Int      @default(0)
+  maxUsage    Int      @default(1)
+
+  // Permissions and scope
+  permissions Json     // What data can be accessed
+  requesterInfo Json?  // Organization requesting access
+
+  createdAt   DateTime @default(now())
+  lastUsedAt  DateTime?
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("access_tokens")
 }
 
 // Main KYC record model - stores all user submission data
@@ -169,4 +234,29 @@ enum AuditAction {
   STATUS_CHANGED
   ADMIN_REVIEW
   BLOCKCHAIN_TRANSACTION
+  USER_LOGIN
+  USER_LOGOUT
+  WALLET_CONNECTED
+  TOKEN_SHARED
+}
+
+enum UserRole {
+  USER
+  VERIFIER
+  ADMIN
+  ORGANIZATION
+}
+
+enum WalletProvider {
+  METAMASK
+  WALLET_CONNECT
+  COINBASE_WALLET
+  OTHER
+}
+
+enum TokenPurpose {
+  DOCUMENT_ACCESS
+  VERIFICATION_CHECK
+  ORGANIZATION_SHARE
+  TEMPORARY_ACCESS
 }
