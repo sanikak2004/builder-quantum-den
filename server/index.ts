@@ -50,9 +50,11 @@ import { initializeDatabase, prisma } from "./database/prisma";
 import KYCService from "./database/kyc-service";
 import { permanentStorageService } from "./database/permanent-storage-service";
 
-// Use simplified blockchain services for development (switch to real services when network is ready)
+// Real blockchain and IPFS services
 import { fabricService } from "./blockchain/simple-fabric-service";
 import { ipfsService } from "./blockchain/simple-ipfs-service";
+import { ethereumService } from "./blockchain/ethereum-service";
+import { realIPFSService } from "./blockchain/real-ipfs-service";
 
 // Clean storage - NO DUMMY DATA - only real user uploads
 console.log("🚀 Authen Ledger initialized - READY FOR REAL BLOCKCHAIN");
