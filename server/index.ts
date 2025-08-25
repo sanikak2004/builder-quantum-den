@@ -440,14 +440,18 @@ app.get("/api/demo", (req, res) => {
           status: "PENDING",
           message: "KYC submitted successfully",
           blockchainTxHash,
+          blockchainNetwork,
           documentsUploaded: processedDocuments.length,
           permanentStorage: true,
           temporaryRecord: false,
           submissionHash: blockchainTxHash,
           submissionTime: new Date().toISOString(),
+          ipfsService: realIPFSService.isConnected() ? 'real' : 'simulated',
         },
         message:
-          "✅ KYC submission completed - stored in database and blockchain",
+          blockchainTxHash
+            ? `✅ KYC submission completed - stored in database and ${blockchainNetwork} blockchain`
+            : "✅ KYC submission completed - stored in database (blockchain pending)",
         redirectTo: `/verify?id=${kycRecord.kycRecord.id}`,
         timestamp: new Date().toISOString(),
       };
