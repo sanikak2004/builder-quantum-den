@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { Link, useParams, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useParams, Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "@/hooks/useAuth";
+import { useWeb3, formatAddress } from "@/hooks/useWeb3";
 import {
   Shield,
   Mail,
@@ -14,16 +16,25 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  Wallet,
+  CheckCircle,
+  Phone,
 } from "lucide-react";
 
 export default function Auth() {
   const { mode } = useParams<{ mode: "login" | "register" }>();
+  const navigate = useNavigate();
+  const { login, register, isAuthenticated, isLoading: authLoading, error: authError, clearError, connectWallet } = useAuth();
+  const { wallet, isMetaMaskInstalled } = useWeb3();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
   });
@@ -34,18 +45,101 @@ export default function Auth() {
 
   const isLogin = mode === "login";
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Clear errors when switching modes
+  useEffect(() => {
+    setError("");
+    setSuccess("");
+    clearError();
+  }, [mode, clearError]);
+
+  // Show auth errors
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+    setSuccess("");
+    clearError();
 
-    // Placeholder implementation
-    setTimeout(() => {
+    try {
+      if (isLogin) {
+        // Login
+        if (!formData.email || !formData.password) {
+          setError("Email and password are required");
+          setIsLoading(false);
+          return;
+        }
+
+        const success = await login(formData.email, formData.password);
+        if (success) {
+          setSuccess("Login successful! Redirecting...");
+          setTimeout(() => {
+            navigate('/');
+          }, 1000);
+        }
+      } else {
+        // Register
+        if (!formData.name || !formData.email || !formData.password) {
+          setError("Name, email, and password are required");
+          setIsLoading(false);
+          return;
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+          setError("Passwords do not match");
+          setIsLoading(false);
+          return;
+        }
+
+        if (formData.password.length < 8) {
+          setError("Password must be at least 8 characters long");
+          setIsLoading(false);
+          return;
+        }
+
+        const success = await register(
+          formData.name,
+          formData.email,
+          formData.password,
+          formData.phone || undefined
+        );
+
+        if (success) {
+          setSuccess("Registration successful! You can now access your dashboard.");
+          setTimeout(() => {
+            navigate('/');
+          }, 1000);
+        }
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
       setIsLoading(false);
-      setError(
-        "Authentication is not yet implemented. This is a placeholder page.",
-      );
-    }, 1000);
+    }
+  };
+
+  const handleConnectWallet = async () => {
+    try {
+      setError("");
+      const success = await connectWallet();
+      if (success) {
+        setSuccess("Wallet connected successfully!");
+      }
+    } catch (err) {
+      setError("Failed to connect wallet. Please try again.");
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -104,16 +198,39 @@ export default function Auth() {
                 {!isLogin && (
                   <div>
                     <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) =>
-                        handleInputChange("name", e.target.value)
-                      }
-                      placeholder="Enter your full name"
-                      required={!isLogin}
-                    />
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                      <Input
+                        id="name"
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) =>
+                          handleInputChange("name", e.target.value)
+                        }
+                        placeholder="Enter your full name"
+                        className="pl-10"
+                        required={!isLogin}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {!isLogin && (
+                  <div>
+                    <Label htmlFor="phone">Phone Number (Optional)</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) =>
+                          handleInputChange("phone", e.target.value)
+                        }
+                        placeholder="Enter your phone number"
+                        className="pl-10"
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -171,15 +288,26 @@ export default function Auth() {
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                       <Input
                         id="confirmPassword"
-                        type="password"
+                        type={showConfirmPassword ? "text" : "password"}
                         value={formData.confirmPassword}
                         onChange={(e) =>
                           handleInputChange("confirmPassword", e.target.value)
                         }
                         placeholder="Confirm your password"
-                        className="pl-10"
+                        className="pl-10 pr-10"
                         required={!isLogin}
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
                     </div>
                   </div>
                 )}
@@ -192,12 +320,21 @@ export default function Auth() {
                   </Alert>
                 )}
 
+                {success && (
+                  <Alert className="border-green-200 bg-green-50">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">
+                      {success}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <Button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || authLoading}
                   className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                 >
-                  {isLoading ? (
+                  {(isLoading || authLoading) ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       {isLogin ? "Signing In..." : "Creating Account..."}
@@ -208,6 +345,37 @@ export default function Auth() {
                     "Create Account"
                   )}
                 </Button>
+
+                {/* Web3 Wallet Connection */}
+                {isLogin && isMetaMaskInstalled && (
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-muted-foreground">
+                        Or connect with
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {isLogin && isMetaMaskInstalled && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleConnectWallet}
+                    disabled={isLoading || authLoading}
+                    className="w-full"
+                  >
+                    <Wallet className="h-4 w-4 mr-2" />
+                    {wallet.isConnected ? (
+                      `Connected: ${formatAddress(wallet.address!)}`
+                    ) : (
+                      "Connect MetaMask Wallet"
+                    )}
+                  </Button>
+                )}
 
                 <div className="text-center pt-4">
                   <p className="text-sm text-slate-600">
@@ -236,8 +404,23 @@ export default function Auth() {
               <p className="text-sm text-slate-600">
                 Your identity data is protected by enterprise-grade blockchain
                 encryption and stored across distributed networks for maximum
-                security.
+                security. Connect your Web3 wallet for additional verification.
               </p>
+              {!isMetaMaskInstalled && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-xs text-yellow-700">
+                    📦 Install MetaMask to connect your Web3 wallet for enhanced security
+                  </p>
+                  <a
+                    href="https://metamask.io/download/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:text-blue-700 underline"
+                  >
+                    Download MetaMask
+                  </a>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
