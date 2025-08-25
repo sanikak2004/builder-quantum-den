@@ -315,7 +315,7 @@ app.get("/api/demo", (req, res) => {
         });
       }
 
-      // Process documents
+      // Process documents with real IPFS
       console.log(
         `📤 Processing ${files.length} documents for REAL IPFS upload...`,
       );
@@ -333,11 +333,22 @@ app.get("/api/demo", (req, res) => {
           `🔐 Document hash generated: ${documentHash.substring(0, 16)}...`,
         );
 
-        // Upload to IPFS
-        const ipfsResult = await ipfsService.uploadFile(file.buffer, {
-          filename: file.originalname,
-          contentType: file.mimetype,
-        });
+        // Try real IPFS first, fallback to simple IPFS
+        let ipfsResult;
+        if (realIPFSService.isConnected()) {
+          console.log(`🌐 Uploading to real IPFS network...`);
+          ipfsResult = await realIPFSService.uploadFile(file.buffer, {
+            filename: file.originalname,
+            contentType: file.mimetype,
+            pin: true // Pin for permanent storage
+          });
+        } else {
+          console.log(`🔄 Falling back to simulated IPFS...`);
+          ipfsResult = await ipfsService.uploadFile(file.buffer, {
+            filename: file.originalname,
+            contentType: file.mimetype,
+          });
+        }
 
         if (!ipfsResult.success) {
           throw new Error(`IPFS upload failed: ${ipfsResult.error}`);
