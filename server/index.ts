@@ -56,6 +56,9 @@ import { ipfsService } from "./blockchain/simple-ipfs-service";
 import { ethereumService } from "./blockchain/ethereum-service";
 import { realIPFSService } from "./blockchain/real-ipfs-service";
 
+// Security services
+import { EncryptionService } from "./services/encryption-service";
+
 // Clean storage - NO DUMMY DATA - only real user uploads
 console.log("🚀 Authen Ledger initialized - READY FOR REAL BLOCKCHAIN");
 console.log("📋 Hyperledger Fabric: Ready for real blockchain integration");
@@ -406,7 +409,7 @@ app.get("/api/demo", (req, res) => {
 
       // Fallback to Hyperledger Fabric
       if (!blockchainTxHash) {
-        console.log("🔗 Submitting KYC data to Hyperledger Fabric blockchain...");
+        console.log("��� Submitting KYC data to Hyperledger Fabric blockchain...");
         const fabricResult = await fabricService.submitKYC({
           personalInfo: validatedData,
           documents: processedDocuments,
