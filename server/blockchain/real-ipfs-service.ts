@@ -34,7 +34,7 @@ export class RealIPFSService {
   private readonly IPFS_API_URL = process.env.IPFS_API_URL || 'http://127.0.0.1:5001';
   private readonly IPFS_GATEWAY_URL = process.env.IPFS_GATEWAY_URL || 'https://ipfs.io/ipfs/';
   private readonly PINATA_API_KEY = process.env.PINATA_API_KEY || '';
-  private readonly PINATA_SECRET_KEY = process.env.PINATA_SECRET_KEY || '';
+  private readonly PINATA_SECRET_KEY = process.env.PINATA_SECRET_API_KEY || '';
   private readonly USE_PINATA = process.env.USE_PINATA === 'true';
 
   constructor() {
