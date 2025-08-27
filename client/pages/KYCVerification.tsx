@@ -7,6 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Shield,
   Search,
   CheckCircle,
@@ -22,6 +29,12 @@ import {
   Calendar,
   User,
   ExternalLink,
+  Copy,
+  MapPin,
+  CreditCard,
+  Smartphone,
+  Monitor,
+  RefreshCw,
 } from "lucide-react";
 import { KYCRecord, KYCVerificationResponse, ApiResponse } from "@shared/api";
 
@@ -89,15 +102,15 @@ export default function KYCVerification() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "VERIFIED":
-        return <CheckCircle className="h-5 w-5" />;
+        return <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />;
       case "PENDING":
-        return <Clock className="h-5 w-5" />;
+        return <Clock className="h-4 w-4 sm:h-5 sm:w-5" />;
       case "REJECTED":
-        return <XCircle className="h-5 w-5" />;
+        return <XCircle className="h-4 w-4 sm:h-5 sm:w-5" />;
       case "EXPIRED":
-        return <AlertTriangle className="h-5 w-5" />;
+        return <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />;
       default:
-        return <Clock className="h-5 w-5" />;
+        return <Clock className="h-4 w-4 sm:h-5 sm:w-5" />;
     }
   };
 
@@ -114,27 +127,34 @@ export default function KYCVerification() {
     }
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/50">
-        <div className="container mx-auto px-6 py-4">
+      {/* Mobile-optimized Header */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/50 sticky top-0 z-50">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-lg">
-                <Shield className="h-6 w-6 text-white" />
+                <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-800">
+                <h1 className="text-lg sm:text-xl font-bold text-slate-800">
                   Authen Ledger
                 </h1>
                 <p className="text-xs text-slate-500">Verify KYC Status</p>
               </div>
             </div>
             <Link to="/">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="hidden sm:flex">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Home
+              </Button>
+              <Button variant="ghost" size="sm" className="sm:hidden p-2">
+                <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -142,61 +162,67 @@ export default function KYCVerification() {
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="max-w-4xl mx-auto">
-          {/* Search Section */}
+          {/* Mobile-optimized Search Section */}
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg mb-8">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <Search className="h-5 w-5 text-blue-600" />
                 Verify KYC Status
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="search">
-                    Search by KYC ID, PAN, or Email
+              {/* Mobile-first search interface */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="searchType" className="text-sm font-medium">
+                    Search by
                   </Label>
-                  <div className="flex mt-2">
-                    <select
-                      value={searchType}
-                      onChange={(e) =>
-                        setSearchType(e.target.value as "id" | "pan" | "email")
-                      }
-                      className="rounded-l-lg border border-r-0 border-slate-300 px-3 py-2 text-sm bg-white"
-                    >
-                      <option value="id">KYC ID</option>
-                      <option value="pan">PAN</option>
-                      <option value="email">Email</option>
-                    </select>
+                  <Select value={searchType} onValueChange={(value: "id" | "pan" | "email") => setSearchType(value)}>
+                    <SelectTrigger className="w-full mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="id">KYC ID</SelectItem>
+                      <SelectItem value="pan">PAN Number</SelectItem>
+                      <SelectItem value="email">Email Address</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="search" className="text-sm font-medium">
+                    {searchType === "id" ? "KYC ID" : searchType === "pan" ? "PAN Number" : "Email Address"}
+                  </Label>
+                  <div className="flex flex-col sm:flex-row gap-2 mt-1">
                     <Input
                       id="search"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={`Enter ${searchType === "id" ? "KYC ID" : searchType === "pan" ? "PAN number" : "email address"}`}
-                      className="rounded-l-none"
+                      className="flex-1 text-base" // Prevents zoom on iOS
                       onKeyPress={(e) => e.key === "Enter" && handleSearch()}
                     />
+                    <Button
+                      onClick={handleSearch}
+                      disabled={isSearching || !searchQuery.trim()}
+                      className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600"
+                    >
+                      {isSearching ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Searching...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="h-4 w-4 mr-2" />
+                          Verify
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
-                <Button
-                  onClick={handleSearch}
-                  disabled={isSearching || !searchQuery.trim()}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 md:mt-7"
-                >
-                  {isSearching ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Searching...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="h-4 w-4 mr-2" />
-                      Verify
-                    </>
-                  )}
-                </Button>
               </div>
 
               {searchError && (
@@ -213,26 +239,24 @@ export default function KYCVerification() {
           {/* Verification Results */}
           {verificationResult && (
             <div className="space-y-6">
-              {/* Status Overview */}
+              {/* Mobile-optimized Status Overview */}
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <span className="flex items-center gap-2">
-                      {getStatusIcon(
-                        verificationResult.record?.status || "PENDING",
-                      )}
+                      {getStatusIcon(verificationResult.record?.status || "PENDING")}
                       Verification Status
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Badge
-                        className={getStatusColor(
+                        className={`${getStatusColor(
                           verificationResult.record?.status || "PENDING",
-                        )}
+                        )} text-xs sm:text-sm`}
                       >
                         {verificationResult.record?.status}
                       </Badge>
                       {verificationResult.blockchainVerified && (
-                        <Badge className="bg-green-100 text-green-800">
+                        <Badge className="bg-green-100 text-green-800 text-xs sm:text-sm">
                           <Hash className="h-3 w-3 mr-1" />
                           Blockchain Verified
                         </Badge>
@@ -241,14 +265,13 @@ export default function KYCVerification() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {/* 🔒 Security Status */}
+                  {/* Security Status Alerts */}
                   {verificationResult.record?.temporaryRecord && (
                     <Alert className="mb-4 bg-orange-50 border-orange-200">
                       <Clock className="h-4 w-4 text-orange-600" />
-                      <AlertDescription className="text-orange-800">
+                      <AlertDescription className="text-orange-800 text-sm">
                         <strong>⏳ Temporary Storage:</strong> Your KYC is
-                        awaiting admin verification for permanent blockchain
-                        storage.
+                        awaiting admin verification for permanent blockchain storage.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -256,46 +279,47 @@ export default function KYCVerification() {
                   {verificationResult.record?.permanentStorage && (
                     <Alert className="mb-4 bg-green-50 border-green-200">
                       <CheckCircle className="h-4 w-4 text-green-600" />
-                      <AlertDescription className="text-green-800">
+                      <AlertDescription className="text-green-800 text-sm">
                         <strong>✅ Permanent Storage:</strong> Your KYC is
                         permanently stored on the blockchain.
                       </AlertDescription>
                     </Alert>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">
+                  {/* Mobile-responsive status grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="text-center sm:text-left">
+                      <p className="text-sm text-slate-500 mb-2">
                         Verification Level
                       </p>
                       <Badge
-                        className={getVerificationLevelColor(
+                        className={`${getVerificationLevelColor(
                           verificationResult.verificationLevel || "L1",
-                        )}
+                        )} text-sm px-3 py-1`}
                       >
                         {verificationResult.verificationLevel}
                       </Badge>
                     </div>
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">
+                    <div className="text-center sm:text-left">
+                      <p className="text-sm text-slate-500 mb-2">
                         Blockchain Status
                       </p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex justify-center sm:justify-start">
                         {verificationResult.blockchainVerified ? (
-                          <Badge className="bg-green-100 text-green-800">
+                          <Badge className="bg-green-100 text-green-800 text-sm">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Verified
                           </Badge>
                         ) : (
-                          <Badge className="bg-yellow-100 text-yellow-800">
+                          <Badge className="bg-yellow-100 text-yellow-800 text-sm">
                             <Clock className="h-3 w-3 mr-1" />
                             Pending
                           </Badge>
                         )}
                       </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">Message</p>
+                    <div className="text-center sm:text-left">
+                      <p className="text-sm text-slate-500 mb-2">Message</p>
                       <p className="text-sm font-medium text-slate-700">
                         {verificationResult.message}
                       </p>
@@ -304,116 +328,143 @@ export default function KYCVerification() {
                 </CardContent>
               </Card>
 
-              {/* Blockchain Information */}
+              {/* Mobile-optimized Blockchain Information */}
               {verificationResult.record && (
                 <Card className="bg-blue-50 border-blue-200">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-lg">
                       <Hash className="h-5 w-5 text-blue-600" />
                       Blockchain Information
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      {/* Transaction Hash */}
                       <div>
-                        <p className="text-sm text-slate-500 mb-2">
+                        <p className="text-sm text-slate-500 mb-2 flex items-center gap-2">
+                          <Hash className="h-4 w-4" />
                           Blockchain Transaction Hash
                         </p>
                         <div className="bg-white p-3 rounded-lg">
-                          <p className="font-mono text-xs break-all">
-                            {verificationResult.record.blockchainTxHash ||
-                              "N/A"}
-                          </p>
-                        </div>
-                      </div>
-
-                      {verificationResult.record.submissionHash && (
-                        <div>
-                          <p className="text-sm text-slate-500 mb-2">
-                            Submission Hash
-                          </p>
-                          <div className="bg-white p-3 rounded-lg">
-                            <p className="font-mono text-xs break-all">
-                              {verificationResult.record.submissionHash}
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-mono text-xs break-all flex-1">
+                              {verificationResult.record.blockchainTxHash || "N/A"}
                             </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {verificationResult.record.blockchainBlockNumber && (
-                        <div>
-                          <p className="text-sm text-slate-500 mb-2">
-                            Block Number
-                          </p>
-                          <div className="bg-white p-3 rounded-lg">
-                            <p className="font-mono text-sm">
-                              {verificationResult.record.blockchainBlockNumber}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {verificationResult.record.adminBlockchainTxHash && (
-                        <div>
-                          <p className="text-sm text-slate-500 mb-2">
-                            Admin Verification Hash
-                          </p>
-                          <div className="bg-white p-3 rounded-lg">
-                            <p className="font-mono text-xs break-all">
-                              {verificationResult.record.adminBlockchainTxHash}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {verificationResult.record.ipfsHashes &&
-                      verificationResult.record.ipfsHashes.length > 0 && (
-                        <div className="mt-4">
-                          <p className="text-sm text-slate-500 mb-2">
-                            IPFS Document Hashes (
-                            {verificationResult.record.ipfsHashes.length})
-                          </p>
-                          <div className="space-y-2 max-h-32 overflow-y-auto">
-                            {verificationResult.record.ipfsHashes.map(
-                              (hash, index) => (
-                                <div
-                                  key={index}
-                                  className="bg-white p-2 rounded text-xs font-mono break-all"
-                                >
-                                  {hash}
-                                </div>
-                              ),
+                            {verificationResult.record.blockchainTxHash && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  copyToClipboard(verificationResult.record!.blockchainTxHash!)
+                                }
+                                className="shrink-0"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
                             )}
                           </div>
                         </div>
-                      )}
+                      </div>
+
+                      {/* Additional blockchain info in mobile-friendly layout */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {verificationResult.record.submissionHash && (
+                          <div>
+                            <p className="text-sm text-slate-500 mb-2">
+                              Submission Hash
+                            </p>
+                            <div className="bg-white p-3 rounded-lg">
+                              <p className="font-mono text-xs break-all">
+                                {verificationResult.record.submissionHash}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {verificationResult.record.blockchainBlockNumber && (
+                          <div>
+                            <p className="text-sm text-slate-500 mb-2">
+                              Block Number
+                            </p>
+                            <div className="bg-white p-3 rounded-lg">
+                              <p className="font-mono text-sm">
+                                {verificationResult.record.blockchainBlockNumber}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* IPFS Hashes */}
+                      {verificationResult.record.ipfsHashes &&
+                        verificationResult.record.ipfsHashes.length > 0 && (
+                          <div>
+                            <p className="text-sm text-slate-500 mb-2 flex items-center gap-2">
+                              <FileText className="h-4 w-4" />
+                              IPFS Document Hashes ({verificationResult.record.ipfsHashes.length})
+                            </p>
+                            <div className="space-y-2 max-h-32 overflow-y-auto">
+                              {verificationResult.record.ipfsHashes.map(
+                                (hash, index) => (
+                                  <div
+                                    key={index}
+                                    className="bg-white p-3 rounded-lg flex items-center justify-between gap-2"
+                                  >
+                                    <p className="font-mono text-xs break-all flex-1">
+                                      {hash}
+                                    </p>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => copyToClipboard(hash)}
+                                        className="p-1"
+                                      >
+                                        <Copy className="h-3 w-3" />
+                                      </Button>
+                                      <a
+                                        href={`https://ipfs.io/ipfs/${hash}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        <Button variant="ghost" size="sm" className="p-1">
+                                          <ExternalLink className="h-3 w-3" />
+                                        </Button>
+                                      </a>
+                                    </div>
+                                  </div>
+                                ),
+                              )}
+                            </div>
+                          </div>
+                        )}
+                    </div>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Detailed Information */}
+              {/* Mobile-optimized Information Cards */}
               {verificationResult.record && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-6">
                   {/* Personal Information */}
                   <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-lg">
                         <User className="h-5 w-5 text-blue-600" />
                         Personal Information
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 gap-3">
+                    <CardContent>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-slate-500">Name</p>
-                          <p className="font-medium text-slate-800">
+                          <p className="font-medium text-slate-800 break-words">
                             {verificationResult.record.name}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-slate-500">Email</p>
-                          <p className="font-medium text-slate-800">
+                          <p className="font-medium text-slate-800 break-all">
                             {verificationResult.record.email}
                           </p>
                         </div>
@@ -429,10 +480,8 @@ export default function KYCVerification() {
                             {verificationResult.record.pan}
                           </p>
                         </div>
-                        <div>
-                          <p className="text-sm text-slate-500">
-                            Date of Birth
-                          </p>
+                        <div className="sm:col-span-2">
+                          <p className="text-sm text-slate-500">Date of Birth</p>
                           <p className="font-medium text-slate-800">
                             {verificationResult.record.dateOfBirth}
                           </p>
@@ -441,74 +490,11 @@ export default function KYCVerification() {
                     </CardContent>
                   </Card>
 
-                  {/* Technical Details */}
-                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Hash className="h-5 w-5 text-blue-600" />
-                        Technical Details
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <p className="text-sm text-slate-500">KYC ID</p>
-                        <p className="font-mono text-sm font-medium text-slate-800 break-all">
-                          {verificationResult.record.id}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-500">Created At</p>
-                        <p className="text-sm font-medium text-slate-800">
-                          {new Date(
-                            verificationResult.record.createdAt,
-                          ).toLocaleString()}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-500">Last Updated</p>
-                        <p className="text-sm font-medium text-slate-800">
-                          {new Date(
-                            verificationResult.record.updatedAt,
-                          ).toLocaleString()}
-                        </p>
-                      </div>
-                      {verificationResult.record.verifiedAt && (
-                        <div>
-                          <p className="text-sm text-slate-500">Verified At</p>
-                          <p className="text-sm font-medium text-slate-800">
-                            {new Date(
-                              verificationResult.record.verifiedAt,
-                            ).toLocaleString()}
-                          </p>
-                        </div>
-                      )}
-                      {verificationResult.record.blockchainTxHash && (
-                        <div>
-                          <p className="text-sm text-slate-500">
-                            Blockchain Transaction
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <p className="font-mono text-xs text-slate-600 break-all">
-                              {verificationResult.record.blockchainTxHash.substring(
-                                0,
-                                20,
-                              )}
-                              ...
-                            </p>
-                            <Button variant="ghost" size="sm" className="p-1">
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
                   {/* Address Information */}
                   <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <User className="h-5 w-5 text-blue-600" />
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <MapPin className="h-5 w-5 text-blue-600" />
                         Address Information
                       </CardTitle>
                     </CardHeader>
@@ -529,68 +515,120 @@ export default function KYCVerification() {
                     </CardContent>
                   </Card>
 
+                  {/* Technical Details */}
+                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <CreditCard className="h-5 w-5 text-blue-600" />
+                        Technical Details
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm text-slate-500">KYC ID</p>
+                          <div className="flex items-center justify-between gap-2 mt-1">
+                            <p className="font-mono text-sm font-medium text-slate-800 break-all flex-1">
+                              {verificationResult.record.id}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => copyToClipboard(verificationResult.record!.id)}
+                              className="shrink-0"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-slate-500">Created At</p>
+                            <p className="text-sm font-medium text-slate-800">
+                              {new Date(verificationResult.record.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-500">Last Updated</p>
+                            <p className="text-sm font-medium text-slate-800">
+                              {new Date(verificationResult.record.updatedAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        {verificationResult.record.verifiedAt && (
+                          <div>
+                            <p className="text-sm text-slate-500">Verified At</p>
+                            <p className="text-sm font-medium text-slate-800">
+                              {new Date(verificationResult.record.verifiedAt).toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
                   {/* Documents */}
                   <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-lg">
                         <FileText className="h-5 w-5 text-blue-600" />
                         Documents ({verificationResult.record.documents.length})
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {verificationResult.record.documents.map(
-                          (doc, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
-                            >
-                              <div className="flex items-center space-x-3">
-                                <FileText className="h-5 w-5 text-blue-600" />
-                                <div>
-                                  <p className="text-sm font-medium text-slate-700">
-                                    {doc.type}
-                                  </p>
-                                  <p className="text-xs text-slate-500">
-                                    Uploaded:{" "}
-                                    {new Date(
-                                      doc.uploadedAt,
-                                    ).toLocaleDateString()}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Button variant="ghost" size="sm">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm">
-                                  <Download className="h-4 w-4" />
-                                </Button>
+                        {verificationResult.record.documents.map((doc, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                          >
+                            <div className="flex items-center space-x-3 min-w-0 flex-1">
+                              <FileText className="h-5 w-5 text-blue-600 shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-slate-700">
+                                  {doc.type}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}
+                                </p>
                               </div>
                             </div>
-                          ),
-                        )}
+                            <div className="flex items-center space-x-2 shrink-0">
+                              <Button variant="ghost" size="sm" className="p-2">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="p-2">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </CardContent>
                   </Card>
                 </div>
               )}
 
-              {/* Actions */}
+              {/* Mobile-optimized Action Buttons */}
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="pt-6">
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link to={`/history?id=${verificationResult.record?.id}`}>
-                      <Button variant="outline">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <Link 
+                      to={`/history?id=${verificationResult.record?.id}`}
+                      className="w-full"
+                    >
+                      <Button variant="outline" className="w-full">
                         <Calendar className="h-4 w-4 mr-2" />
                         View History
                       </Button>
                     </Link>
-                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-600">
+                    <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600">
                       <Download className="h-4 w-4 mr-2" />
                       Download Certificate
                     </Button>
-                    <Button variant="outline">
+                    <Button variant="outline" className="w-full">
                       <FileText className="h-4 w-4 mr-2" />
                       Generate Report
                     </Button>
@@ -600,29 +638,29 @@ export default function KYCVerification() {
             </div>
           )}
 
-          {/* Quick Actions */}
+          {/* Mobile-optimized Quick Actions */}
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+              <CardTitle className="text-lg">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Link to="/submit">
-                  <Button variant="outline" className="w-full h-20 flex-col">
-                    <FileText className="h-6 w-6 mb-2" />
-                    Submit New KYC
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Link to="/submit" className="block">
+                  <Button variant="outline" className="w-full h-16 sm:h-20 flex-col">
+                    <FileText className="h-5 w-5 sm:h-6 sm:w-6 mb-2" />
+                    <span className="text-sm">Submit New KYC</span>
                   </Button>
                 </Link>
-                <Link to="/history">
-                  <Button variant="outline" className="w-full h-20 flex-col">
-                    <Calendar className="h-6 w-6 mb-2" />
-                    View All History
+                <Link to="/history" className="block">
+                  <Button variant="outline" className="w-full h-16 sm:h-20 flex-col">
+                    <Calendar className="h-5 w-5 sm:h-6 sm:w-6 mb-2" />
+                    <span className="text-sm">View All History</span>
                   </Button>
                 </Link>
-                <Link to="/">
-                  <Button variant="outline" className="w-full h-20 flex-col">
-                    <Shield className="h-6 w-6 mb-2" />
-                    Back to Home
+                <Link to="/" className="block">
+                  <Button variant="outline" className="w-full h-16 sm:h-20 flex-col">
+                    <Shield className="h-5 w-5 sm:h-6 sm:w-6 mb-2" />
+                    <span className="text-sm">Back to Home</span>
                   </Button>
                 </Link>
               </div>
