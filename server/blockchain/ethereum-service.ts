@@ -355,7 +355,7 @@ export class EthereumService {
   private networkId: number = 0;
 
   // Configuration from environment variables
-  private readonly RPC_URL = process.env.ETHEREUM_RPC_URL || 'https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID';
+  private readonly RPC_URL = process.env.ETHEREUM_RPC_URL || `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID || 'YOUR_INFURA_PROJECT_ID'}`;
   private readonly CONTRACT_ADDRESS = process.env.KYC_CONTRACT_ADDRESS || '';
   private readonly PRIVATE_KEY = process.env.ETHEREUM_PRIVATE_KEY || '';
   private readonly CHAIN_ID = parseInt(process.env.ETHEREUM_CHAIN_ID || '11155111'); // Sepolia testnet
