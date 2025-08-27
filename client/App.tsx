@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import KYCSubmission from "./pages/KYCSubmission";
 import KYCVerification from "./pages/KYCVerification";
 import KYCHistory from "./pages/KYCHistory";
+import UserDashboard from "./pages/UserDashboard";
 import Auth from "./pages/Auth";
 import AdminKYC from "./pages/AdminKYC";
 import AdminDashboard from "./pages/AdminDashboard";
