@@ -32,6 +32,7 @@ const App = () => (
             <Route path="/submit" element={<KYCSubmission />} />
             <Route path="/verify" element={<KYCVerification />} />
             <Route path="/history" element={<KYCHistory />} />
+            <Route path="/dashboard" element={<UserDashboard />} />
             <Route path="/auth/:mode" element={<Auth />} />
             <Route
               path="/admin"
