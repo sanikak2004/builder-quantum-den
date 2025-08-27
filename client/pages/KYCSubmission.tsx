@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useRef, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,29 +37,46 @@ import {
   Hash,
   Database,
   Server,
+  X,
+  Camera,
+  Smartphone,
+  Monitor,
 } from "lucide-react";
 import { KYCSubmissionRequest, ApiResponse, KYCRecord } from "@shared/api";
+import { useAuth } from "@/hooks/useAuth";
 
-// Define the backend response type based on your logs
+// Define the backend response type based on server implementation
 interface BackendKYCSuccessResponse {
   success: true;
-  txHash: string;
-  blockNumber: number;
+  data: {
+    kycId: string;
+    status: string;
+    message: string;
+    blockchainTxHash?: string;
+    blockchainNetwork?: string;
+    documentsUploaded: number;
+    permanentStorage: boolean;
+    temporaryRecord: boolean;
+    submissionHash?: string;
+    submissionTime: string;
+    ipfsService: string;
+  };
   message: string;
-  kycId: string;
-  // Add these fields to your backend response to get IPFS data
-  ipfsHashes?: string[];
-  documentUrls?: string[];
+  redirectTo?: string;
+  timestamp: string;
 }
 
 export default function KYCSubmission() {
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [submittedRecord, setSubmittedRecord] = useState<KYCRecord | null>(
-    null,
-  );
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [submittedRecord, setSubmittedRecord] = useState<KYCRecord | null>(null);
   const [submissionDetails, setSubmissionDetails] = useState<{
     txHash: string;
     blockNumber?: number;
@@ -73,8 +90,8 @@ export default function KYCSubmission() {
   } | null>(null);
 
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    name: user?.name || "",
+    email: user?.email || "",
     phone: "",
     pan: "",
     dateOfBirth: "",
@@ -88,6 +105,13 @@ export default function KYCSubmission() {
   });
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  // Redirect to auth if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    navigate("/auth/login?redirect=/submit");
+    return null;
+  }
 
   const handleInputChange = (field: string, value: string) => {
     if (field.startsWith("address.")) {
@@ -107,8 +131,36 @@ export default function KYCSubmission() {
     }
   };
 
+  // Enhanced file handling with drag & drop
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files).filter(file => {
+      const isValidType = file.type.includes('pdf') || file.type.includes('image');
+      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+      return isValidType && isValidSize;
+    });
+    
+    setSelectedFiles((prev) => [...prev, ...files]);
+  }, []);
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+    const files = Array.from(event.target.files || []).filter(file => {
+      const isValidType = file.type.includes('pdf') || file.type.includes('image');
+      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+      return isValidType && isValidSize;
+    });
     setSelectedFiles((prev) => [...prev, ...files]);
   };
 
@@ -144,28 +196,48 @@ export default function KYCSubmission() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setSubmitError("");
+    setUploadProgress(0);
 
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("data", JSON.stringify(formData));
+      
       selectedFiles.forEach((file) => {
         formDataToSend.append(`documents`, file);
       });
 
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
       const response = await fetch("/api/kyc/submit", {
         method: "POST",
         body: formDataToSend,
+        headers: {
+          // Include auth token if available
+          ...(user && { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` })
+        }
       });
 
-      const result: BackendKYCSuccessResponse | ApiResponse =
-        await response.json();
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      const result: BackendKYCSuccessResponse | ApiResponse = await response.json();
 
       if (result.success) {
         const successResult = result as BackendKYCSuccessResponse;
 
         // Create record with the actual data from backend
         const completeRecord: KYCRecord = {
-          id: successResult.kycId,
+          id: successResult.data.kycId,
+          userId: user?.id || "anonymous",
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
@@ -173,19 +245,21 @@ export default function KYCSubmission() {
           dateOfBirth: formData.dateOfBirth,
           address: formData.address,
           status: "PENDING",
-          verificationLevel: "BASIC",
+          verificationLevel: "L0",
           createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           documents: selectedFiles.map((file, index) => ({
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            // Use actual IPFS hash from backend if available
-            documentHash:
-              successResult.ipfsHashes?.[index] || `IPFS_HASH_${index}`,
-            ipfsUrl: successResult.ipfsHashes?.[index]
-              ? `https://ipfs.io/ipfs/${successResult.ipfsHashes[index]}`
-              : "#",
+            id: `doc_${index}`,
+            type: file.name.toLowerCase().includes('pan') ? 'PAN' : 
+                  file.name.toLowerCase().includes('aadhaar') ? 'AADHAAR' : 'OTHER',
+            documentHash: `hash_${index}`,
+            fileName: file.name,
+            fileSize: file.size,
+            uploadedAt: new Date().toISOString(),
           })),
+          blockchainTxHash: successResult.data.blockchainTxHash,
+          permanentStorage: successResult.data.permanentStorage,
+          temporaryRecord: successResult.data.temporaryRecord,
         };
 
         setSubmitSuccess(true);
@@ -193,49 +267,40 @@ export default function KYCSubmission() {
 
         // Store enhanced blockchain details from backend response
         setSubmissionDetails({
-          txHash:
-            result.data?.blockchainInfo?.transactionHash ||
-            successResult.txHash,
-          blockNumber:
-            result.data?.blockchainInfo?.blockNumber ||
-            successResult.blockNumber,
-          submissionHash: result.data?.blockchainInfo?.submissionHash,
-          ipfsHashes: result.data?.blockchainInfo?.ipfsHashes || [],
-          documentHashes: result.data?.blockchainInfo?.documentHashes || [],
-          documentCount: result.data?.blockchainInfo?.documentCount || 0,
-          kycId: result.data?.id || successResult.kycId,
-          temporaryStorage: result.data?.temporaryRecord || false,
-          approvalRequired: result.data?.approvalRequired || false,
+          txHash: successResult.data.blockchainTxHash || "pending",
+          submissionHash: successResult.data.submissionHash,
+          ipfsHashes: [],
+          kycId: successResult.data.kycId,
+          temporaryStorage: successResult.data.temporaryRecord,
+          approvalRequired: true,
+          documentCount: successResult.data.documentsUploaded,
         });
 
-        // 🔄 Auto-redirect to verification page after 5 seconds
-        if (result.redirectTo) {
+        // Auto-redirect to verification page after 5 seconds
+        if (successResult.redirectTo) {
           setTimeout(() => {
-            window.location.href = result.redirectTo;
+            navigate(successResult.redirectTo!);
           }, 5000);
         }
       } else {
         const errorResult = result as ApiResponse;
         let errorMessage = errorResult.message || "Submission failed";
 
-        if (errorMessage.includes("PAN format")) {
-          errorMessage =
-            "PAN Number format is invalid. Please use format: ABCDE1234F (5 letters + 4 digits + 1 letter)";
-        } else if (errorMessage.includes("email")) {
-          errorMessage = "Please enter a valid email address";
-        } else if (errorMessage.includes("phone")) {
-          errorMessage = "Please enter a valid phone number";
+        if (errorMessage.includes("DUPLICATE_PAN")) {
+          errorMessage = "This PAN number is already registered. Please check your verification status.";
+        } else if (errorMessage.includes("PAN format")) {
+          errorMessage = "PAN Number format is invalid. Please use format: ABCDE1234F";
         } else if (errorMessage.includes("document")) {
-          errorMessage =
-            "Please upload at least one valid document (PDF, JPG, PNG)";
+          errorMessage = "Please upload at least one valid document (PDF, JPG, PNG)";
         }
 
         setSubmitError(errorMessage);
       }
     } catch (error) {
-      setSubmitError("Network error. Please try again.");
+      setSubmitError("Network error. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(0);
     }
   };
 
@@ -253,18 +318,19 @@ export default function KYCSubmission() {
     navigator.clipboard.writeText(text);
   };
 
+  // Success page
   if (submitSuccess && submittedRecord && submissionDetails) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        {/* Header */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/50">
-          <div className="container mx-auto px-6 py-4">
+        {/* Mobile-optimized Header */}
+        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/50 sticky top-0 z-50">
+          <div className="container mx-auto px-4 sm:px-6 py-4">
             <div className="flex items-center space-x-3">
               <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-lg">
-                <Shield className="h-6 w-6 text-white" />
+                <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-800">
+                <h1 className="text-lg sm:text-xl font-bold text-slate-800">
                   Authen Ledger
                 </h1>
                 <p className="text-xs text-slate-500">
@@ -275,38 +341,38 @@ export default function KYCSubmission() {
           </div>
         </header>
 
-        {/* Success Content */}
-        <div className="container mx-auto px-6 py-12">
+        {/* Mobile-optimized Success Content */}
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8">
-              <div className="bg-green-100 p-6 rounded-full w-fit mx-auto mb-6">
-                <CheckCircle className="h-16 w-16 text-green-600" />
+              <div className="bg-green-100 p-4 sm:p-6 rounded-full w-fit mx-auto mb-6">
+                <CheckCircle className="h-12 w-12 sm:h-16 sm:w-16 text-green-600" />
               </div>
-              <h1 className="text-4xl font-bold text-slate-800 mb-4">
+              <h1 className="text-2xl sm:text-4xl font-bold text-slate-800 mb-4">
                 KYC Submitted Successfully!
               </h1>
-              <p className="text-xl text-slate-600 mb-8">
-                Your KYC application has been processed and recorded on the
-                blockchain.
+              <p className="text-lg sm:text-xl text-slate-600 mb-8">
+                Your KYC application has been processed and recorded on the blockchain.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Mobile-responsive cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <User className="h-5 w-5 text-blue-600" />
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <User className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                     Personal Details
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
                     <p className="text-sm text-slate-500">Name</p>
-                    <p className="font-medium">{submittedRecord.name}</p>
+                    <p className="font-medium break-words">{submittedRecord.name}</p>
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">Email</p>
-                    <p className="font-medium">{submittedRecord.email}</p>
+                    <p className="font-medium break-all">{submittedRecord.email}</p>
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">PAN Number</p>
@@ -319,15 +385,15 @@ export default function KYCSubmission() {
 
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <FileText className="h-5 w-5 text-blue-600" />
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                     Submission Details
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
                     <p className="text-sm text-slate-500">KYC ID</p>
-                    <p className="font-mono text-sm font-semibold">
+                    <p className="font-mono text-sm font-semibold break-all">
                       {submittedRecord.id}
                     </p>
                   </div>
@@ -347,11 +413,11 @@ export default function KYCSubmission() {
               </Card>
             </div>
 
-            {/* Blockchain Transaction Details */}
+            {/* Mobile-optimized Blockchain Details */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg mb-8">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-purple-600" />
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
                   Blockchain Verification
                 </CardTitle>
               </CardHeader>
@@ -362,12 +428,10 @@ export default function KYCSubmission() {
                     🔒 Blockchain Security Confirmed
                   </AlertTitle>
                   <AlertDescription className="text-blue-700">
-                    Your KYC data has been securely stored on Hyperledger Fabric
-                    blockchain and IPFS.
+                    Your KYC data has been securely stored on blockchain and IPFS.
                     {submissionDetails.temporaryStorage && (
                       <span className="block mt-1 text-orange-700 font-medium">
-                        ⏳ Currently in temporary storage - awaiting admin
-                        verification for permanent storage.
+                        ⏳ Currently in temporary storage - awaiting admin verification.
                       </span>
                     )}
                   </AlertDescription>
@@ -380,129 +444,56 @@ export default function KYCSubmission() {
                       ⏳ Approval Required
                     </AlertTitle>
                     <AlertDescription className="text-orange-700">
-                      Your KYC is pending admin verification. You will be
-                      redirected to the verification page in 5 seconds to track
-                      status.
+                      Your KYC is pending admin verification. Redirecting to status page in 5 seconds.
                     </AlertDescription>
                   </Alert>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Mobile-responsive blockchain details */}
+                <div className="space-y-4">
                   <div>
                     <p className="text-sm text-slate-500 mb-1 flex items-center gap-1">
-                      <Hash className="h-4 w-4" /> Blockchain Transaction Hash
+                      <Hash className="h-4 w-4" /> Transaction Hash
                     </p>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono text-xs break-all bg-slate-100 p-2 rounded">
+                      <p className="font-mono text-xs break-all bg-slate-100 p-2 rounded flex-1">
                         {submissionDetails.txHash}
                       </p>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="shrink-0"
-                        onClick={() =>
-                          copyToClipboard(submissionDetails.txHash)
-                        }
+                        onClick={() => copyToClipboard(submissionDetails.txHash)}
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1 flex items-center gap-1">
-                      <Database className="h-4 w-4" /> Block Number
-                    </p>
-                    <p className="font-mono text-sm bg-slate-100 p-2 rounded">
-                      {submissionDetails.blockNumber || "Pending"}
-                    </p>
-                  </div>
-
-                  {submissionDetails.submissionHash && (
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1 flex items-center gap-1">
-                        <Hash className="h-4 w-4" /> Submission Hash
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <p className="font-mono text-xs break-all bg-green-100 p-2 rounded">
-                          {submissionDetails.submissionHash}
-                        </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="shrink-0"
-                          onClick={() =>
-                            copyToClipboard(submissionDetails.submissionHash)
-                          }
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
+                  
                   <div>
                     <p className="text-sm text-slate-500 mb-1 flex items-center gap-1">
                       <FileCheck className="h-4 w-4" /> Documents Processed
                     </p>
                     <p className="font-mono text-sm bg-slate-100 p-2 rounded">
-                      {submissionDetails.documentCount ||
-                        submissionDetails.ipfsHashes.length}{" "}
-                      documents
+                      {submissionDetails.documentCount} documents
                     </p>
                   </div>
                 </div>
-
-                {submissionDetails.ipfsHashes.length > 0 && (
-                  <div>
-                    <p className="text-sm text-slate-500 mb-2 flex items-center gap-1">
-                      <FileCheck className="h-4 w-4" /> IPFS Document Hashes
-                    </p>
-                    <div className="space-y-2">
-                      {submissionDetails.ipfsHashes.map((hash, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <p className="font-mono text-xs break-all bg-slate-100 p-2 rounded flex-1">
-                            {hash}
-                          </p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="shrink-0"
-                            onClick={() => copyToClipboard(hash)}
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                          <a
-                            href={`https://ipfs.io/ipfs/${hash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="shrink-0"
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
 
+            {/* Mobile-optimized action buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to={`/verify?id=${submittedRecord.id}`}>
+              <Link to={`/verify?id=${submittedRecord.id}`} className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600"
+                  className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600"
                 >
                   Check Verification Status
                 </Button>
               </Link>
-              <Link to="/">
-                <Button variant="outline" size="lg">
+              <Link to="/" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   Back to Home
                 </Button>
               </Link>
@@ -513,21 +504,31 @@ export default function KYCSubmission() {
     );
   }
 
-  // ... (keep the rest of your form UI code exactly as it was)
-  // The form UI code remains unchanged, only the submission handling has been updated
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
+  // Main form UI with mobile responsiveness
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/50">
-        <div className="container mx-auto px-6 py-4">
+      {/* Mobile-optimized Header */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/50 sticky top-0 z-50">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-lg">
-                <Shield className="h-6 w-6 text-white" />
+                <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-800">
+                <h1 className="text-lg sm:text-xl font-bold text-slate-800">
                   Authen Ledger
                 </h1>
                 <p className="text-xs text-slate-500">
@@ -536,21 +537,24 @@ export default function KYCSubmission() {
               </div>
             </div>
             <Link to="/">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="hidden sm:flex">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Home
+              </Button>
+              <Button variant="ghost" size="sm" className="sm:hidden p-2">
+                <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Progress Bar */}
+      {/* Mobile-optimized Progress Bar */}
       <div className="bg-white/60 backdrop-blur-sm border-b border-slate-200/50 py-4">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold text-slate-800">
-              KYC Submission Process
+            <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+              KYC Submission
             </h2>
             <span className="text-sm text-slate-600">
               Step {currentStep} of 4
@@ -558,24 +562,16 @@ export default function KYCSubmission() {
           </div>
           <Progress value={(currentStep / 4) * 100} className="h-2" />
           <div className="flex justify-between mt-2 text-xs text-slate-500">
-            <span
-              className={currentStep >= 1 ? "text-blue-600 font-medium" : ""}
-            >
-              Personal Info
+            <span className={currentStep >= 1 ? "text-blue-600 font-medium" : ""}>
+              Personal
             </span>
-            <span
-              className={currentStep >= 2 ? "text-blue-600 font-medium" : ""}
-            >
+            <span className={currentStep >= 2 ? "text-blue-600 font-medium" : ""}>
               Address
             </span>
-            <span
-              className={currentStep >= 3 ? "text-blue-600 font-medium" : ""}
-            >
+            <span className={currentStep >= 3 ? "text-blue-600 font-medium" : ""}>
               Documents
             </span>
-            <span
-              className={currentStep >= 4 ? "text-blue-600 font-medium" : ""}
-            >
+            <span className={currentStep >= 4 ? "text-blue-600 font-medium" : ""}>
               Review
             </span>
           </div>
@@ -583,7 +579,7 @@ export default function KYCSubmission() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="max-w-2xl mx-auto">
           {submitError && (
             <Alert className="mb-6 border-red-200 bg-red-50">
@@ -592,6 +588,22 @@ export default function KYCSubmission() {
                 {submitError}
               </AlertDescription>
             </Alert>
+          )}
+
+          {/* Upload Progress */}
+          {isSubmitting && uploadProgress > 0 && (
+            <Card className="mb-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                  <span className="font-medium">Uploading and processing...</span>
+                </div>
+                <Progress value={uploadProgress} className="h-2" />
+                <p className="text-xs text-slate-500 mt-1">
+                  Encrypting documents and storing on blockchain
+                </p>
+              </CardContent>
+            </Card>
           )}
 
           {/* Step 1: Personal Information */}
@@ -604,39 +616,43 @@ export default function KYCSubmission() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
                     <Label htmlFor="name">Full Name *</Label>
                     <Input
                       id="name"
                       value={formData.name}
-                      onChange={(e) =>
-                        handleInputChange("name", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange("name", e.target.value)}
                       placeholder="Enter your full name"
+                      className="text-base" // Better for mobile
                     />
                   </div>
-                  <div>
+                  <div className="sm:col-span-2">
                     <Label htmlFor="email">Email Address *</Label>
                     <Input
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) =>
-                        handleInputChange("email", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange("email", e.target.value)}
                       placeholder="Enter your email"
+                      className="text-base"
+                      disabled={!!user?.email} // Disable if user is logged in
                     />
+                    {user?.email && (
+                      <p className="text-xs text-slate-500 mt-1">
+                        Using your account email
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="phone">Phone Number *</Label>
                     <Input
                       id="phone"
+                      type="tel"
                       value={formData.phone}
-                      onChange={(e) =>
-                        handleInputChange("phone", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange("phone", e.target.value)}
                       placeholder="Enter your phone number"
+                      className="text-base"
                     />
                   </div>
                   <div>
@@ -644,41 +660,29 @@ export default function KYCSubmission() {
                     <Input
                       id="pan"
                       value={formData.pan}
-                      onChange={(e) =>
-                        handleInputChange("pan", e.target.value.toUpperCase())
-                      }
+                      onChange={(e) => handleInputChange("pan", e.target.value.toUpperCase())}
                       placeholder="ABCDE1234F"
                       maxLength={10}
-                      className={
-                        formData.pan &&
-                        !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan)
+                      className={`text-base ${
+                        formData.pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan)
                           ? "border-red-300 focus:border-red-500"
                           : ""
-                      }
+                      }`}
                     />
-                    {formData.pan &&
-                      !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan) && (
-                        <p className="text-xs text-red-600 mt-1">
-                          PAN must be 10 characters: 5 letters + 4 digits + 1
-                          letter (e.g., ABCDE1234F)
-                        </p>
-                      )}
-                    {!formData.pan && (
-                      <p className="text-xs text-slate-500 mt-1">
-                        Format: 5 letters + 4 digits + 1 letter (e.g.,
-                        ABCDE1234F)
+                    {formData.pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan) && (
+                      <p className="text-xs text-red-600 mt-1">
+                        PAN must be 10 characters: 5 letters + 4 digits + 1 letter
                       </p>
                     )}
                   </div>
-                  <div className="md:col-span-2">
+                  <div className="sm:col-span-2">
                     <Label htmlFor="dob">Date of Birth *</Label>
                     <Input
                       id="dob"
                       type="date"
                       value={formData.dateOfBirth}
-                      onChange={(e) =>
-                        handleInputChange("dateOfBirth", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
+                      className="text-base"
                     />
                   </div>
                 </div>
@@ -701,23 +705,21 @@ export default function KYCSubmission() {
                   <Textarea
                     id="street"
                     value={formData.address.street}
-                    onChange={(e) =>
-                      handleInputChange("address.street", e.target.value)
-                    }
+                    onChange={(e) => handleInputChange("address.street", e.target.value)}
                     placeholder="Enter your complete street address"
                     rows={3}
+                    className="text-base resize-none"
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="city">City *</Label>
                     <Input
                       id="city"
                       value={formData.address.city}
-                      onChange={(e) =>
-                        handleInputChange("address.city", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange("address.city", e.target.value)}
                       placeholder="Enter your city"
+                      className="text-base"
                     />
                   </div>
                   <div>
@@ -725,10 +727,9 @@ export default function KYCSubmission() {
                     <Input
                       id="state"
                       value={formData.address.state}
-                      onChange={(e) =>
-                        handleInputChange("address.state", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange("address.state", e.target.value)}
                       placeholder="Enter your state"
+                      className="text-base"
                     />
                   </div>
                   <div>
@@ -736,22 +737,19 @@ export default function KYCSubmission() {
                     <Input
                       id="pincode"
                       value={formData.address.pincode}
-                      onChange={(e) =>
-                        handleInputChange("address.pincode", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange("address.pincode", e.target.value)}
                       placeholder="Enter PIN code"
                       maxLength={6}
+                      className="text-base"
                     />
                   </div>
                   <div>
                     <Label htmlFor="country">Country *</Label>
                     <Select
                       value={formData.address.country}
-                      onValueChange={(value) =>
-                        handleInputChange("address.country", value)
-                      }
+                      onValueChange={(value) => handleInputChange("address.country", value)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="text-base">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -767,7 +765,7 @@ export default function KYCSubmission() {
             </Card>
           )}
 
-          {/* Step 3: Document Upload */}
+          {/* Step 3: Enhanced Document Upload with Drag & Drop */}
           {currentStep === 3 && (
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
               <CardHeader>
@@ -777,64 +775,96 @@ export default function KYCSubmission() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
-                  <Upload className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-slate-700 mb-2">
-                    Upload Identity Documents
-                  </h3>
-                  <p className="text-slate-500 mb-4">
-                    Upload PAN Card, Aadhaar, Passport, or other identity
-                    documents
-                  </p>
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <Label htmlFor="file-upload">
-                    <Button asChild>
-                      <span>Select Files</span>
-                    </Button>
-                  </Label>
-                  <p className="text-xs text-slate-400 mt-2">
-                    Supported formats: PDF, JPG, PNG (Max 5MB each)
-                  </p>
+                {/* Enhanced drag & drop area */}
+                <div
+                  className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors ${
+                    isDragOver
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-slate-300 hover:border-slate-400"
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="flex items-center justify-center space-x-2 text-slate-400">
+                      <Upload className="h-8 w-8 sm:h-12 sm:w-12" />
+                      <div className="hidden sm:flex space-x-2">
+                        <Smartphone className="h-6 w-6" />
+                        <Monitor className="h-6 w-6" />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-slate-700 mb-2">
+                        Upload Identity Documents
+                      </h3>
+                      <p className="text-slate-500 mb-4 text-sm sm:text-base">
+                        Drag & drop files here or click to select
+                      </p>
+                      <p className="text-slate-500 mb-4 text-sm">
+                        PAN Card, Aadhaar, Passport, Bank Statement, etc.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        id="file-upload"
+                      />
+                      <Label htmlFor="file-upload">
+                        <Button asChild className="w-full sm:w-auto">
+                          <span className="flex items-center gap-2">
+                            <Camera className="h-4 w-4" />
+                            Select Files
+                          </span>
+                        </Button>
+                      </Label>
+                      <p className="text-xs text-slate-400">
+                        Supported: PDF, JPG, PNG (Max 5MB each)
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
+                {/* Selected files list with mobile optimization */}
                 {selectedFiles.length > 0 && (
                   <div className="space-y-3">
-                    <h4 className="font-medium text-slate-700">
-                      Selected Files:
+                    <h4 className="font-medium text-slate-700 flex items-center gap-2">
+                      <FileCheck className="h-4 w-4" />
+                      Selected Files ({selectedFiles.length})
                     </h4>
-                    {selectedFiles.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between bg-slate-50 p-3 rounded-lg"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <FileText className="h-5 w-5 text-blue-600" />
-                          <div>
-                            <p className="text-sm font-medium text-slate-700">
-                              {file.name}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {(file.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(index)}
-                          className="text-red-600 hover:text-red-700"
+                    <div className="space-y-2">
+                      {selectedFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between bg-slate-50 p-3 rounded-lg"
                         >
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-slate-700 truncate">
+                                {file.name}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                            className="text-red-600 hover:text-red-700 flex-shrink-0 ml-2"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -851,97 +881,90 @@ export default function KYCSubmission() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  {/* Personal Info */}
                   <div>
-                    <h4 className="font-medium text-slate-700 mb-3">
+                    <h4 className="font-medium text-slate-700 mb-3 flex items-center gap-2">
+                      <User className="h-4 w-4" />
                       Personal Information
                     </h4>
-                    <div className="space-y-2 text-sm">
-                      <p>
-                        <span className="text-slate-500">Name:</span>{" "}
-                        {formData.name}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">Email:</span>{" "}
-                        {formData.email}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">Phone:</span>{" "}
-                        {formData.phone}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">PAN:</span>{" "}
-                        {formData.pan}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">DOB:</span>{" "}
-                        {formData.dateOfBirth}
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-slate-700 mb-3">Address</h4>
-                    <div className="space-y-2 text-sm">
-                      <p>
-                        <span className="text-slate-500">Street:</span>{" "}
-                        {formData.address.street}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">City:</span>{" "}
-                        {formData.address.city}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">State:</span>{" "}
-                        {formData.address.state}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">PIN:</span>{" "}
-                        {formData.address.pincode}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">Country:</span>{" "}
-                        {formData.address.country}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-medium text-slate-700 mb-3">
-                    Documents ({selectedFiles.length})
-                  </h4>
-                  <div className="space-y-2">
-                    {selectedFiles.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center space-x-2 text-sm"
-                      >
-                        <FileText className="h-4 w-4 text-blue-600" />
-                        <span>{file.name}</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-slate-500">Name:</span>
+                        <p className="font-medium">{formData.name}</p>
                       </div>
-                    ))}
+                      <div>
+                        <span className="text-slate-500">Email:</span>
+                        <p className="font-medium break-all">{formData.email}</p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Phone:</span>
+                        <p className="font-medium">{formData.phone}</p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">PAN:</span>
+                        <p className="font-mono font-medium">{formData.pan}</p>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <span className="text-slate-500">Date of Birth:</span>
+                        <p className="font-medium">{formData.dateOfBirth}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Address */}
+                  <div>
+                    <h4 className="font-medium text-slate-700 mb-3 flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Address
+                    </h4>
+                    <div className="text-sm space-y-1">
+                      <p><span className="text-slate-500">Street:</span> {formData.address.street}</p>
+                      <p><span className="text-slate-500">City:</span> {formData.address.city}</p>
+                      <p><span className="text-slate-500">State:</span> {formData.address.state}</p>
+                      <p><span className="text-slate-500">PIN:</span> {formData.address.pincode}</p>
+                      <p><span className="text-slate-500">Country:</span> {formData.address.country}</p>
+                    </div>
+                  </div>
+
+                  {/* Documents */}
+                  <div>
+                    <h4 className="font-medium text-slate-700 mb-3 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Documents ({selectedFiles.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center space-x-2 text-sm">
+                          <FileText className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                          <span className="truncate">{file.name}</span>
+                          <span className="text-slate-500 text-xs">
+                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 <Alert className="border-blue-200 bg-blue-50">
                   <Shield className="h-4 w-4 text-blue-600" />
                   <AlertDescription className="text-blue-800">
-                    Your documents will be encrypted and stored securely.
-                    Document hashes will be recorded on the blockchain for
-                    immutable verification.
+                    Your documents will be encrypted and stored securely. Document hashes will be 
+                    recorded on the blockchain for immutable verification.
                   </AlertDescription>
                 </Alert>
               </CardContent>
             </Card>
           )}
 
-          {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8">
+          {/* Mobile-optimized Navigation Buttons */}
+          <div className="flex flex-col sm:flex-row justify-between gap-4 mt-8">
             <Button
               variant="outline"
               onClick={prevStep}
               disabled={currentStep === 1}
-              className="px-6"
+              className="w-full sm:w-auto order-2 sm:order-1"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Previous
@@ -951,7 +974,7 @@ export default function KYCSubmission() {
               <Button
                 onClick={nextStep}
                 disabled={!validateStep(currentStep)}
-                className="px-6"
+                className="w-full sm:w-auto order-1 sm:order-2"
               >
                 Next
                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -960,7 +983,7 @@ export default function KYCSubmission() {
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8"
+                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 order-1 sm:order-2"
               >
                 {isSubmitting ? (
                   <>

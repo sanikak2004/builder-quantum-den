@@ -83,6 +83,12 @@ export default function Index() {
                 History
               </Link>
               <Link
+                to="/dashboard"
+                className="text-slate-600 hover:text-green-600 transition-colors font-medium"
+              >
+                Dashboard
+              </Link>
+              <Link
                 to="/admin/dashboard"
                 className="text-slate-600 hover:text-purple-600 transition-colors font-medium"
               >

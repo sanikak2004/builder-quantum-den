@@ -50,9 +50,19 @@ import { initializeDatabase, prisma } from "./database/prisma";
 import KYCService from "./database/kyc-service";
 import { permanentStorageService } from "./database/permanent-storage-service";
 
-// Use simplified blockchain services for development (switch to real services when network is ready)
+// Real blockchain and IPFS services
 import { fabricService } from "./blockchain/simple-fabric-service";
 import { ipfsService } from "./blockchain/simple-ipfs-service";
+import { ethereumService } from "./blockchain/ethereum-service";
+import { realIPFSService } from "./blockchain/real-ipfs-service";
+
+// Security services
+import { EncryptionService } from "./services/encryption-service";
+
+// Route imports
+import authRoutes from "./routes/auth";
+import documentRoutes from "./routes/documents";
+import permissionRoutes from "./routes/permissions";
 
 // Clean storage - NO DUMMY DATA - only real user uploads
 console.log("🚀 Authen Ledger initialized - READY FOR REAL BLOCKCHAIN");
@@ -71,10 +81,16 @@ const initializeServices = async (): Promise<void> => {
     // Initialize PostgreSQL database connection
     await initializeDatabase();
 
-    // Initialize Hyperledger Fabric connection
+    // Initialize Hyperledger Fabric connection (fallback)
     await fabricService.initializeConnection();
 
-    // Initialize IPFS connection
+    // Initialize Ethereum blockchain service
+    await ethereumService.initializeConnection();
+
+    // Initialize Real IPFS connection
+    await realIPFSService.initializeConnection();
+
+    // Initialize Simple IPFS as fallback
     await ipfsService.initializeConnection();
 
     // Start permanent storage monitoring service
@@ -109,11 +125,24 @@ export const createServer = () => {
   app.get("/api/blockchain/status", async (req, res) => {
     try {
       const fabricConnected = fabricService.isConnected();
+      const ethereumConnected = ethereumService.isConnected();
       const ipfsStatus = await ipfsService.getStatus();
+      const realIPFSStatus = await realIPFSService.getStatus();
+
+      // Get Ethereum network info if connected
+      const ethereumInfo = ethereumConnected ? await ethereumService.getNetworkInfo() : null;
 
       res.json({
         success: true,
         blockchain: {
+          ethereum: {
+            connected: ethereumConnected,
+            network: ethereumInfo ? `Chain ID: ${ethereumInfo.chainId}` : "Not Connected",
+            contractAddress: ethereumInfo?.contractAddress || "Not Deployed",
+            blockNumber: ethereumInfo?.blockNumber || 0,
+            gasPrice: ethereumInfo?.gasPrice || "0 gwei",
+            type: "REAL - Ethereum Network",
+          },
           hyperledgerFabric: {
             connected: fabricConnected,
             network: fabricConnected
@@ -122,16 +151,23 @@ export const createServer = () => {
             type: "REAL - Hyperledger Fabric 2.5.4",
           },
           ipfs: {
-            connected: ipfsStatus.connected,
-            version: ipfsStatus.version || "Unknown",
-            peerId: ipfsStatus.peerId || "Unknown",
-            type: "REAL - IPFS Network",
+            real: {
+              connected: realIPFSStatus.connected,
+              version: realIPFSStatus.version || "Unknown",
+              peerId: realIPFSStatus.peerId || "Unknown",
+              type: "REAL - IPFS Network",
+            },
+            fallback: {
+              connected: ipfsStatus.connected,
+              version: ipfsStatus.version || "Unknown",
+              type: "Simulated IPFS (Development)",
+            }
           },
         },
         message:
-          fabricConnected && ipfsStatus.connected
-            ? "✅ All blockchain services connected - REAL IMPLEMENTATION"
-            : "⚠️ Some blockchain services not connected",
+          ethereumConnected && realIPFSStatus.connected
+            ? "✅ All real blockchain services connected"
+            : "⚠️ Some blockchain services using fallback mode",
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -144,10 +180,19 @@ export const createServer = () => {
     }
   });
 
-  // Demo endpoint (simplified)
-  app.get("/api/demo", (req, res) => {
-    res.json({ message: "Hello from Express server" });
-  });
+  // Authentication routes
+  app.use("/api/auth", authRoutes);
+
+  // Document retrieval routes
+  app.use("/api/documents", documentRoutes);
+
+  // Permission sharing routes
+  app.use("/api/permissions", permissionRoutes);
+
+// Demo endpoint (simplified)
+app.get("/api/demo", (req, res) => {
+  res.json({ message: "Hello from Express server" });
+});
 
   // KYC Stats endpoint with REAL database data
   app.get("/api/kyc/stats", async (req, res) => {
@@ -283,36 +328,22 @@ export const createServer = () => {
         });
       }
 
-      // Process documents
+      // Process documents with encryption and real IPFS
       console.log(
-        `📤 Processing ${files.length} documents for REAL IPFS upload...`,
+        `📤 Processing ${files.length} documents with encryption for REAL IPFS upload...`,
       );
       const documentPromises = files.map(async (file, index) => {
         console.log(
           `🔄 Processing file ${index + 1}: ${file.originalname} (${file.size} bytes)`,
         );
 
-        // Calculate document hash for security
-        const documentHash = crypto
+        // Calculate original document hash for integrity
+        const originalDocumentHash = crypto
           .createHash("sha256")
           .update(file.buffer)
           .digest("hex");
         console.log(
-          `🔐 Document hash generated: ${documentHash.substring(0, 16)}...`,
-        );
-
-        // Upload to IPFS
-        const ipfsResult = await ipfsService.uploadFile(file.buffer, {
-          filename: file.originalname,
-          contentType: file.mimetype,
-        });
-
-        if (!ipfsResult.success) {
-          throw new Error(`IPFS upload failed: ${ipfsResult.error}`);
-        }
-
-        console.log(
-          `📊 File ${index + 1} uploaded to IPFS: ${ipfsResult.hash}`,
+          `🔐 Original document hash: ${originalDocumentHash.substring(0, 16)}...`,
         );
 
         // Determine document type based on filename
@@ -327,35 +358,109 @@ export const createServer = () => {
                 ? "BANK_STATEMENT"
                 : "OTHER";
 
+        // Create secure encrypted package
+        const userKey = validatedData.email + validatedData.pan; // User-specific encryption key
+        const securePackage = await EncryptionService.createSecurePackage(
+          file.buffer,
+          {
+            filename: file.originalname,
+            contentType: file.mimetype,
+            userId: validatedData.email, // Will be updated with actual user ID later
+            kycId: crypto.randomUUID(), // Will be updated with actual KYC ID later
+            documentType
+          },
+          userKey
+        );
+
+        console.log(`🔒 Document encrypted: ${file.originalname}`);
+
+        // Upload encrypted package to IPFS
+        let ipfsResult;
+        if (realIPFSService.isConnected()) {
+          console.log(`🌐 Uploading encrypted document to real IPFS network...`);
+          ipfsResult = await realIPFSService.uploadFile(
+            securePackage.encryptedPackage.encryptedData,
+            {
+              filename: `encrypted_${file.originalname}.enc`,
+              contentType: 'application/octet-stream', // Encrypted data
+              pin: true // Pin for permanent storage
+            }
+          );
+        } else {
+          console.log(`🔄 Falling back to simulated IPFS...`);
+          ipfsResult = await ipfsService.uploadFile(
+            securePackage.encryptedPackage.encryptedData,
+            {
+              filename: `encrypted_${file.originalname}.enc`,
+              contentType: 'application/octet-stream',
+            }
+          );
+        }
+
+        if (!ipfsResult.success) {
+          throw new Error(`IPFS upload failed: ${ipfsResult.error}`);
+        }
+
+        console.log(
+          `📊 Encrypted file ${index + 1} uploaded to IPFS: ${ipfsResult.hash}`,
+        );
+
         return {
           type: documentType,
           fileName: file.originalname,
           fileSize: file.size,
-          documentHash,
+          documentHash: originalDocumentHash,
+          encryptedHash: securePackage.packageHash,
           ipfsHash: ipfsResult.hash,
           ipfsUrl: ipfsResult.url,
+          // Store encryption metadata (will be stored securely in database)
+          encryptionKey: securePackage.encryptedPackage.key,
+          encryptionIV: securePackage.encryptedPackage.iv,
+          encryptionAlgorithm: securePackage.encryptedPackage.algorithm,
+          encryptionAuthTag: securePackage.encryptedPackage.authTag,
+          encrypted: true
         };
       });
 
       const processedDocuments = await Promise.all(documentPromises);
       console.log("✅ All documents processed successfully");
 
-      // Submit to blockchain
-      console.log("🔗 Submitting KYC data to Hyperledger Fabric blockchain...");
-      const blockchainResult = await fabricService.submitKYC({
-        personalInfo: validatedData,
-        documents: processedDocuments,
-      });
-
+      // Submit to blockchain (try Ethereum first, fallback to Fabric)
       let blockchainTxHash = null;
-      if (blockchainResult.success) {
-        blockchainTxHash = blockchainResult.txId;
-        console.log(`⛓️  KYC submitted to blockchain: ${blockchainTxHash}`);
-      } else {
-        console.warn(
-          "⚠️  Blockchain submission failed:",
-          blockchainResult.error,
-        );
+      let blockchainNetwork = 'none';
+
+      if (ethereumService.isConnected()) {
+        console.log("🔗 Submitting KYC data to Ethereum blockchain...");
+        const ethereumResult = await ethereumService.submitKYC({
+          kycId: crypto.randomUUID(), // Will be set from DB record
+          personalInfo: validatedData,
+          documents: processedDocuments,
+        });
+
+        if (ethereumResult.success) {
+          blockchainTxHash = ethereumResult.txId;
+          blockchainNetwork = 'ethereum';
+          console.log(`⛓️  KYC submitted to Ethereum: ${blockchainTxHash}`);
+        } else {
+          console.warn("⚠️  Ethereum submission failed:", ethereumResult.error);
+        }
+      }
+
+      // Fallback to Hyperledger Fabric
+      if (!blockchainTxHash) {
+        console.log("🔗 Submitting KYC data to Hyperledger Fabric blockchain...");
+        const fabricResult = await fabricService.submitKYC({
+          personalInfo: validatedData,
+          documents: processedDocuments,
+        });
+
+        if (fabricResult.success) {
+          blockchainTxHash = fabricResult.txId;
+          blockchainNetwork = 'fabric';
+          console.log(`⛓️  KYC submitted to Fabric: ${blockchainTxHash}`);
+        } else {
+          console.warn("⚠️  Fabric submission failed:", fabricResult.error);
+        }
       }
 
       // Save to database
@@ -377,14 +482,18 @@ export const createServer = () => {
           status: "PENDING",
           message: "KYC submitted successfully",
           blockchainTxHash,
+          blockchainNetwork,
           documentsUploaded: processedDocuments.length,
           permanentStorage: true,
           temporaryRecord: false,
           submissionHash: blockchainTxHash,
           submissionTime: new Date().toISOString(),
+          ipfsService: realIPFSService.isConnected() ? 'real' : 'simulated',
         },
         message:
-          "✅ KYC submission completed - stored in database and blockchain",
+          blockchainTxHash
+            ? `✅ KYC submission completed - stored in database and ${blockchainNetwork} blockchain`
+            : "✅ KYC submission completed - stored in database (blockchain pending)",
         redirectTo: `/verify?id=${kycRecord.kycRecord.id}`,
         timestamp: new Date().toISOString(),
       };
