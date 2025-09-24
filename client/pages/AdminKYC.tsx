@@ -86,17 +86,15 @@ export default function AdminKYC() {
       const result: ApiResponse<KYCStats> = await response.json();
       if (result.success && result.data) {
         setStats(result.data);
+      } else {
+        console.warn("Stats API returned no data");
+        // Let stats remain null to show loading state
+        setStats(null);
       }
     } catch (error) {
       console.error("Error fetching stats:", error);
-      // Mock stats for development
-      setStats({
-        totalSubmissions: 1543,
-        pendingVerifications: 89,
-        verifiedRecords: 1332,
-        rejectedRecords: 122,
-        averageProcessingTime: 2.5,
-      });
+      // Let stats remain null to show error state
+      setStats(null);
     }
   };
 
@@ -114,17 +112,29 @@ export default function AdminKYC() {
         search: searchQuery,
       });
 
+      console.log(`🔄 Fetching KYC records with params:`, Object.fromEntries(params));
       const response = await fetch(`/api/admin/kyc/all?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const result: ApiResponse = await response.json();
+      console.log(`📊 API Response:`, result);
 
       if (result.success && result.data) {
-        setRecords(result.data.records || []);
+        const recordsData = result.data.records || result.data;
+        console.log(`✅ Retrieved ${recordsData.length} KYC records`);
+        setRecords(Array.isArray(recordsData) ? recordsData : []);
       } else {
+        console.warn(`⚠️ API returned unsuccessful response:`, result.message);
         setError(result.message || "Failed to fetch records");
+        setRecords([]); // Set empty array on error
       }
     } catch (error) {
-      setError("Network error. Please try again.");
-      console.error("Failed to fetch KYC records:", error);
+      console.error(`❌ Error fetching KYC records:`, error);
+      setError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}. Please check your connection and try again.`);
+      setRecords([]); // Set empty array on error
     } finally {
       setIsLoading(false);
     }

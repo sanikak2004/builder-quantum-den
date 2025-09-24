@@ -80,10 +80,10 @@ export class HyperledgerFabricService {
       console.log("🔗 Initializing Hyperledger Fabric connection...");
 
       // Create wallet and add admin identity
-      const wallet = await Wallets.newFileSystemWallet(this.config.walletPath);
+      const wallet = await Wallets.newFileSystemWallet();
 
       // Check if admin identity exists
-      const adminExists = await wallet.get("admin");
+      const adminExists = await wallet.get();
       if (!adminExists) {
         console.log("📋 Creating admin identity in wallet...");
         await this.createAdminIdentity(wallet);

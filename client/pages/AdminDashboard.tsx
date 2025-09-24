@@ -81,48 +81,59 @@ export default function AdminDashboard() {
     setError("");
 
     try {
-      // Fetch all dashboard data in parallel
-      const [statsResponse, metricsResponse, activityResponse] =
-        await Promise.all([
-          fetch("/api/admin/stats"),
-          fetch("/api/admin/system-metrics"),
-          fetch("/api/admin/recent-activity"),
-        ]);
-
-      // Process stats
-      if (statsResponse.ok) {
-        const statsResult: ApiResponse<KYCStats> = await statsResponse.json();
-        if (statsResult.success && statsResult.data) {
-          setStats(statsResult.data);
+      // Fetch comprehensive dashboard data from new endpoint
+      const response = await fetch("/api/admin/dashboard");
+      
+      if (response.ok) {
+        const result: ApiResponse<any> = await response.json();
+        if (result.success && result.data) {
+          setStats(result.data.stats);
+          setSystemMetrics(result.data.systemMetrics);
+          setRecentActivity(result.data.recentActivity);
         }
       } else {
-        console.warn("Stats API not available");
-      }
+        // Fallback to individual endpoints if comprehensive endpoint fails
+        const [statsResponse, metricsResponse, activityResponse] =
+          await Promise.all([
+            fetch("/api/admin/stats"),
+            fetch("/api/admin/system-metrics"),
+            fetch("/api/admin/recent-activity"),
+          ]);
 
-      // Process system metrics
-      if (metricsResponse.ok) {
-        const metricsResult: ApiResponse<SystemMetrics> =
-          await metricsResponse.json();
-        if (metricsResult.success && metricsResult.data) {
-          setSystemMetrics(metricsResult.data);
+        // Process stats
+        if (statsResponse.ok) {
+          const statsResult: ApiResponse<KYCStats> = await statsResponse.json();
+          if (statsResult.success && statsResult.data) {
+            setStats(statsResult.data);
+          }
         }
-      } else {
-        console.warn("System metrics API not available");
-      }
 
-      // Process recent activity
-      if (activityResponse.ok) {
-        const activityResult: ApiResponse<RecentActivity[]> =
-          await activityResponse.json();
-        if (activityResult.success && activityResult.data) {
-          setRecentActivity(activityResult.data);
+        // Process system metrics
+        if (metricsResponse.ok) {
+          const metricsResult: ApiResponse<SystemMetrics> =
+            await metricsResponse.json();
+          if (metricsResult.success && metricsResult.data) {
+            setSystemMetrics(metricsResult.data);
+          }
         }
-      } else {
-        console.warn("Recent activity API not available");
+
+        // Process recent activity
+        if (activityResponse.ok) {
+          const activityResult: ApiResponse<RecentActivity[]> =
+            await activityResponse.json();
+          if (activityResult.success && activityResult.data) {
+            setRecentActivity(activityResult.data);
+          }
+        }
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      setError("Failed to load dashboard data. Using cached/mock data.");
+      setError("Failed to load dashboard data. Please check your connection.");
+      
+      // Keep loading state to show error instead of empty values
+      setStats(null);
+      setSystemMetrics(null);
+      setRecentActivity([]);
     } finally {
       setIsLoading(false);
     }

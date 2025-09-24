@@ -9,6 +9,7 @@ import {
   KYCRecord as SharedKYCRecord,
   KYCDocument as SharedKYCDocument,
 } from "@shared/api";
+import { prisma, updateSystemStats } from "./prisma";
 
 export interface CreateKYCRecordInput {
   name: string;
@@ -27,6 +28,7 @@ export interface CreateKYCRecordInput {
     type: DocumentType;
     fileName: string;
     fileSize: number;
+    mimeType: string;
     documentHash: string;
     ipfsHash: string;
     ipfsUrl: string;
@@ -72,10 +74,11 @@ export class KYCService {
                 type: doc.type,
                 fileName: doc.fileName,
                 fileSize: doc.fileSize,
+                mimeType: doc.mimeType || 'application/octet-stream',
                 documentHash: doc.documentHash,
                 ipfsHash: doc.ipfsHash,
                 ipfsUrl: doc.ipfsUrl,
-              },
+              } as any,
             }),
           ),
         );
@@ -237,24 +240,40 @@ export class KYCService {
     }
   }
 
-  // Update KYC status
+  // Update KYC status with enhanced error handling and blockchain integration
   static async updateKYCStatus(
     id: string,
     updateData: UpdateKYCStatusInput,
   ): Promise<any> {
     try {
+      console.log(`🔄 Updating KYC status for ID: ${id} to ${updateData.status}`);
+      
       const result = await prisma.$transaction(async (tx) => {
+        // First, fetch the current record to get previous status
+        const currentRecord = await tx.kYCRecord.findUnique({
+          where: { id },
+          select: { status: true, name: true, email: true }
+        });
+        
+        if (!currentRecord) {
+          throw new Error(`KYC record not found with ID: ${id}`);
+        }
+        
+        const previousStatus = currentRecord.status;
+        
         // Update the KYC record
         const updatePayload: any = {
           status: updateData.status,
           remarks: updateData.remarks,
           verifiedBy: updateData.verifiedBy,
           lastBlockchainTxHash: updateData.blockchainTxHash,
+          updatedAt: new Date(),
         };
 
         if (updateData.status === "VERIFIED") {
           updatePayload.verifiedAt = new Date();
           updatePayload.blockchainVerificationTx = updateData.blockchainTxHash;
+          updatePayload.verificationLevel = "L2"; // Set verification level
         } else if (updateData.status === "REJECTED") {
           updatePayload.rejectedAt = new Date();
           updatePayload.blockchainRejectionTx = updateData.blockchainTxHash;
@@ -265,35 +284,46 @@ export class KYCService {
           data: updatePayload,
           include: {
             documents: true,
+            auditLogs: {
+              orderBy: { performedAt: "desc" },
+              take: 5
+            }
           },
         });
 
-        // Create audit log
-        await tx.auditLog.create({
-          data: {
-            kycRecordId: id,
-            action: updateData.status === "VERIFIED" ? "VERIFIED" : "REJECTED",
-            performedBy: updateData.verifiedBy || "admin",
-            txId: updateData.blockchainTxHash,
-            details: {
-              previousStatus: "PENDING",
-              newStatus: updateData.status,
-              blockchainTx: updateData.blockchainTxHash,
-            },
-            remarks: updateData.remarks,
+        // Create comprehensive audit log
+        const auditLogData = {
+          kycRecordId: id,
+          action: updateData.status === "VERIFIED" ? "VERIFIED" as const : "REJECTED" as const,
+          performedBy: updateData.verifiedBy || "admin@system.com",
+          txId: updateData.blockchainTxHash,
+          details: {
+            previousStatus,
+            newStatus: updateData.status,
+            blockchainTx: updateData.blockchainTxHash,
+            verifiedBy: updateData.verifiedBy,
+            userName: currentRecord.name,
+            userEmail: currentRecord.email,
+            timestamp: new Date().toISOString(),
+            action: `KYC ${updateData.status.toLowerCase()} by admin`
           },
-        });
-
+          remarks: updateData.remarks || `KYC ${updateData.status.toLowerCase()} by admin`,
+        };
+        
+        await tx.auditLog.create({ data: auditLogData });
+        
+        console.log(`✅ KYC record ${id} updated successfully to ${updateData.status}`);
         return updatedRecord;
       });
 
-      // Update system statistics
+      // Update system statistics after successful transaction
       await updateSystemStats();
-
+      
+      console.log(`📊 System statistics updated after status change`);
       return this.formatKYCRecord(result);
     } catch (error) {
-      console.error("Error updating KYC status:", error);
-      throw error;
+      console.error("❌ Error updating KYC status:", error);
+      throw new Error(`Failed to update KYC status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

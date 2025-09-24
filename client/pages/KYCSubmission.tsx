@@ -43,11 +43,34 @@ import { KYCSubmissionRequest, ApiResponse, KYCRecord } from "@shared/api";
 // Define the backend response type based on your logs
 interface BackendKYCSuccessResponse {
   success: true;
-  txHash: string;
-  blockNumber: number;
+  data?: {
+    kycId: string;
+    status: string;
+    message: string;
+    blockchainTxHash: string;
+    documentsUploaded: number;
+    permanentStorage: boolean;
+    temporaryRecord: boolean;
+    submissionHash: string;
+    submissionTime: string;
+    blockchainInfo?: {
+      transactionHash: string;
+      blockNumber: number;
+      submissionHash: string;
+      ipfsHashes: string[];
+      documentHashes: string[];
+      documentCount: number;
+    };
+    id?: string;
+    approvalRequired?: boolean;
+  };
   message: string;
-  kycId: string;
-  // Add these fields to your backend response to get IPFS data
+  redirectTo?: string;
+  timestamp: string;
+  // Backwards compatibility
+  txHash?: string;
+  blockNumber?: number;
+  kycId?: string;
   ipfsHashes?: string[];
   documentUrls?: string[];
 }
@@ -165,7 +188,8 @@ export default function KYCSubmission() {
 
         // Create record with the actual data from backend
         const completeRecord: KYCRecord = {
-          id: successResult.kycId,
+          id: successResult.kycId || result.data?.kycId || result.data?.id || `kyc_${Date.now()}`,
+          userId: "anonymous_user", // Add required userId field
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
@@ -173,18 +197,25 @@ export default function KYCSubmission() {
           dateOfBirth: formData.dateOfBirth,
           address: formData.address,
           status: "PENDING",
-          verificationLevel: "BASIC",
+          verificationLevel: "L0",
           createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(), // Add required updatedAt field
           documents: selectedFiles.map((file, index) => ({
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            // Use actual IPFS hash from backend if available
+            id: `doc_${Date.now()}_${index}`,
+            type: "OTHER" as const,
             documentHash:
-              successResult.ipfsHashes?.[index] || `IPFS_HASH_${index}`,
-            ipfsUrl: successResult.ipfsHashes?.[index]
-              ? `https://ipfs.io/ipfs/${successResult.ipfsHashes[index]}`
+              successResult.ipfsHashes?.[index] || 
+              result.data?.blockchainInfo?.documentHashes?.[index] ||
+              `IPFS_HASH_${index}`,
+            ipfsHash: successResult.ipfsHashes?.[index] || 
+                     result.data?.blockchainInfo?.ipfsHashes?.[index],
+            ipfsUrl: successResult.ipfsHashes?.[index] || 
+                    result.data?.blockchainInfo?.ipfsHashes?.[index]
+              ? `https://ipfs.io/ipfs/${successResult.ipfsHashes?.[index] || result.data?.blockchainInfo?.ipfsHashes?.[index]}`
               : "#",
+            fileName: file.name,
+            fileSize: file.size,
+            uploadedAt: new Date().toISOString(),
           })),
         };
 
@@ -195,23 +226,26 @@ export default function KYCSubmission() {
         setSubmissionDetails({
           txHash:
             result.data?.blockchainInfo?.transactionHash ||
+            result.data?.blockchainTxHash ||
             successResult.txHash,
           blockNumber:
             result.data?.blockchainInfo?.blockNumber ||
             successResult.blockNumber,
-          submissionHash: result.data?.blockchainInfo?.submissionHash,
+          submissionHash: result.data?.blockchainInfo?.submissionHash ||
+                         result.data?.submissionHash,
           ipfsHashes: result.data?.blockchainInfo?.ipfsHashes || [],
           documentHashes: result.data?.blockchainInfo?.documentHashes || [],
           documentCount: result.data?.blockchainInfo?.documentCount || 0,
-          kycId: result.data?.id || successResult.kycId,
+          kycId: result.data?.id || result.data?.kycId || successResult.kycId,
           temporaryStorage: result.data?.temporaryRecord || false,
           approvalRequired: result.data?.approvalRequired || false,
         });
 
         // 🔄 Auto-redirect to verification page after 5 seconds
-        if (result.redirectTo) {
+        const redirectUrl = (result as BackendKYCSuccessResponse).redirectTo;
+        if (redirectUrl) {
           setTimeout(() => {
-            window.location.href = result.redirectTo;
+            window.location.href = redirectUrl;
           }, 5000);
         }
       } else {

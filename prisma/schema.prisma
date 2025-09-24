@@ -1,4 +1,3 @@
-// Prisma schema for eKYC system with real persistent storage
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,145 +7,260 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User model for authentication and basic info
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  kycRecords KYCRecord[]
+  id         String      @id @default(cuid())
+  email      String      @unique
+  name       String?
+  role       UserRole    @default(USER)
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  lastLogin  DateTime?
   auditLogs  AuditLog[]
+  kycRecords KYCRecord[]
 
   @@map("users")
 }
 
-// Main KYC record model - stores all user submission data
 model KYCRecord {
-  id               String   @id @default(cuid())
-  userId           String?  // Optional for anonymous submissions
-  
-  // Personal Information
-  name             String
-  email            String
-  phone            String
-  pan              String   @unique
-  dateOfBirth      String
-  
-  // Address Information (stored as JSON)
-  address          Json
-  
-  // KYC Status and Verification
-  status           KYCStatus        @default(PENDING)
-  verificationLevel VerificationLevel @default(L1)
-  
-  // Admin Actions
-  remarks          String?
-  verifiedBy       String?
-  verifiedAt       DateTime?
-  rejectedAt       DateTime?
-  
-  // Blockchain Integration
-  blockchainTxHash           String?  // Initial submission transaction
-  lastBlockchainTxHash       String?  // Latest blockchain transaction
-  blockchainVerificationTx   String?  // Verification transaction hash
-  blockchainRejectionTx      String?  // Rejection transaction hash
-  
-  // Timestamps
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  
-  // Relations
-  user             User?        @relation(fields: [userId], references: [id])
-  documents        Document[]
-  auditLogs        AuditLog[]
-  
+  id                       String            @id @default(cuid())
+  userId                   String?
+  name                     String
+  email                    String
+  phone                    String
+  pan                      String            @unique
+  dateOfBirth              String
+  address                  Json
+  status                   KYCStatus         @default(PENDING)
+  verificationLevel        VerificationLevel @default(L1)
+  remarks                  String?
+  verifiedBy               String?
+  verifiedAt               DateTime?
+  rejectedAt               DateTime?
+  expiresAt                DateTime?
+  blockchainTxHash         String?
+  lastBlockchainTxHash     String?
+  blockchainVerificationTx String?
+  blockchainRejectionTx    String?
+  blockchainBlockNumber    Int?
+  processingStartedAt      DateTime?
+  processingCompletedAt    DateTime?
+  processingTimeHours      Float?
+  riskScore                Float?            @default(0.0)
+  complianceFlags          Json?
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  auditLogs                AuditLog[]
+  documents                Document[]
+  user                     User?             @relation(fields: [userId], references: [id])
+  riskAssessments          RiskAssessment[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([verificationLevel])
   @@map("kyc_records")
 }
 
-// Document storage model - stores file metadata and IPFS hashes
 model Document {
-  id          String   @id @default(cuid())
-  kycRecordId String
-  
-  // Document Information
-  type        DocumentType
-  fileName    String
-  fileSize    Int
-  
-  // Security and Verification
-  documentHash String  // SHA256 hash of file content
-  ipfsHash     String  // IPFS content hash
-  ipfsUrl      String  // IPFS gateway URL
-  
-  // Timestamps
-  uploadedAt  DateTime @default(now())
-  
-  // Relations
-  kycRecord   KYCRecord @relation(fields: [kycRecordId], references: [id], onDelete: Cascade)
-  
+  id              String       @id @default(cuid())
+  kycRecordId     String
+  type            DocumentType
+  fileName        String
+  fileSize        Int
+  mimeType        String
+  documentHash    String
+  ipfsHash        String
+  ipfsUrl         String
+  isProcessed     Boolean      @default(false)
+  processingError String?
+  ocrResults      Json?
+  analysisResults Json?
+  uploadedAt      DateTime     @default(now())
+  processedAt     DateTime?
+  kycRecord       KYCRecord    @relation(fields: [kycRecordId], references: [id], onDelete: Cascade)
+
+  @@index([type])
+  @@index([uploadedAt])
   @@map("documents")
 }
 
-// Audit log for complete traceability
+model RiskAssessment {
+  id                String    @id @default(cuid())
+  kycRecordId       String
+  riskLevel         RiskLevel
+  riskScore         Float
+  riskFactors       Json
+  assessedBy        String
+  assessedAt        DateTime  @default(now())
+  sanctionCheck     Boolean   @default(false)
+  pepCheck          Boolean   @default(false)
+  adverseMediaCheck Boolean   @default(false)
+  kycRecord         KYCRecord @relation(fields: [kycRecordId], references: [id], onDelete: Cascade)
+
+  @@map("risk_assessments")
+}
+
 model AuditLog {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   kycRecordId String
   userId      String?
-  
-  // Action Details
   action      AuditAction
   performedBy String
-  
-  // Transaction Information
-  txId        String?   // Blockchain transaction ID
-  details     Json?     // Additional action details
+  ipAddress   String?
+  userAgent   String?
+  sessionId   String?
+  txId        String?
+  details     Json?
   remarks     String?
-  
-  // Timestamps
-  performedAt DateTime  @default(now())
-  
-  // Relations
-  kycRecord   KYCRecord @relation(fields: [kycRecordId], references: [id], onDelete: Cascade)
-  user        User?     @relation(fields: [userId], references: [id])
-  
+  performedAt DateTime    @default(now())
+  kycRecord   KYCRecord   @relation(fields: [kycRecordId], references: [id], onDelete: Cascade)
+  user        User?       @relation(fields: [userId], references: [id])
+
+  @@index([performedAt])
+  @@index([action])
   @@map("audit_logs")
 }
 
-// System statistics for dashboard
 model SystemStats {
-  id        String   @id @default("system_stats")
-  
-  // KYC Statistics
-  totalSubmissions     Int @default(0)
-  pendingVerifications Int @default(0)
-  verifiedRecords      Int @default(0)
-  rejectedRecords      Int @default(0)
-  
-  // Performance Metrics
-  averageProcessingTimeHours Float @default(0)
-  
-  // System Information
-  lastUpdated DateTime @updatedAt
-  
+  id                         String    @id @default("system_stats")
+  totalSubmissions           Int       @default(0)
+  pendingVerifications       Int       @default(0)
+  verifiedRecords            Int       @default(0)
+  rejectedRecords            Int       @default(0)
+  expiredRecords             Int       @default(0)
+  averageProcessingTimeHours Float     @default(0)
+  averageRiskScore           Float     @default(0)
+  totalBlockchainTxs         Int       @default(0)
+  lastBlockchainSync         DateTime?
+  blockchainHeight           Int       @default(0)
+  totalDocuments             Int       @default(0)
+  totalDocumentSize          BigInt    @default(0)
+  lastUpdated                DateTime  @updatedAt
+
   @@map("system_stats")
 }
 
-// Enums for type safety
+model SystemConfig {
+  id                  String   @id @default("system_config")
+  autoApprovalEnabled Boolean  @default(false)
+  maxFileSize         Int      @default(5242880)
+  maxFilesPerUpload   Int      @default(10)
+  riskThresholds      Json
+  miningDifficulty    Int      @default(4)
+  miningReward        Float    @default(100)
+  gasPrice            Float    @default(1)
+  emailNotifications  Boolean  @default(true)
+  smsNotifications    Boolean  @default(false)
+  maintenanceMode     Boolean  @default(false)
+  maintenanceMessage  String?
+  updatedAt           DateTime @updatedAt
+  updatedBy           String?
+
+  @@map("system_config")
+}
+
+model DocumentHashRegistry {
+  id                  String             @id @default(cuid())
+  documentHash        String             @unique
+  ipfsHash            String
+  originalFileName    String
+  fileSize            Int
+  mimeType            String
+  firstSubmittedBy    String
+  firstSubmissionTime DateTime           @default(now())
+  firstKycRecordId    String
+  submissionCount     Int                @default(1)
+  lastSubmittedBy     String
+  lastSubmissionTime  DateTime           @default(now())
+  lastKycRecordId     String
+  isVerified          Boolean            @default(false)
+  verificationStatus  VerificationStatus @default(PENDING)
+  blockchainTxHash    String?
+  blockNumber         Int?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  forgeryReports      ForgeryReport[]
+
+  @@index([documentHash])
+  @@index([firstSubmittedBy])
+  @@index([submissionCount])
+  @@map("document_hash_registry")
+}
+
+model TransactionHashRegistry {
+  id                String    @id @default(cuid())
+  transactionHash   String    @unique
+  kycRecordId       String
+  blockNumber       Int?
+  blockHash         String?
+  documentHashes    Json
+  contentHash       String
+  submittedBy       String
+  submittedAt       DateTime  @default(now())
+  isVerified        Boolean   @default(false)
+  verifiedAt        DateTime?
+  verificationError String?
+  confirmations     Int       @default(0)
+  isConfirmed       Boolean   @default(false)
+  confirmedAt       DateTime?
+
+  @@index([transactionHash])
+  @@index([kycRecordId])
+  @@index([submittedBy])
+  @@map("transaction_hash_registry")
+}
+
+model ForgeryReport {
+  id                    String                @id @default(cuid())
+  forgeryType           ForgeryType
+  severity              RiskLevel
+  title                 String
+  description           String
+  suspiciousKycRecordId String
+  originalKycRecordId   String?
+  documentHashId        String?
+  transactionHash       String?
+  detectedBy            String
+  detectionMethod       String
+  evidence              Json
+  status                VerificationStatus    @default(PENDING)
+  investigatedBy        String?
+  investigatedAt        DateTime?
+  resolution            String?
+  actionsTaken          Json?
+  isResolved            Boolean               @default(false)
+  resolvedAt            DateTime?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  documentHash          DocumentHashRegistry? @relation(fields: [documentHashId], references: [id])
+
+  @@index([forgeryType])
+  @@index([severity])
+  @@index([status])
+  @@index([createdAt])
+  @@map("forgery_reports")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+  AUDITOR
+}
+
 enum KYCStatus {
   PENDING
   UNDER_REVIEW
   VERIFIED
   REJECTED
   EXPIRED
+  SUSPENDED
 }
 
 enum VerificationLevel {
-  L1  // Basic verification
-  L2  // Full verification
-  L3  // Enhanced verification
+  L1
+  L2
+  L3
 }
 
 enum DocumentType {
@@ -157,7 +271,16 @@ enum DocumentType {
   UTILITY_BILL
   DRIVING_LICENSE
   VOTER_ID
+  BIRTH_CERTIFICATE
+  INCOME_CERTIFICATE
   OTHER
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
 
 enum AuditAction {
@@ -165,8 +288,34 @@ enum AuditAction {
   UPDATED
   VERIFIED
   REJECTED
+  EXPIRED
+  SUSPENDED
   DOCUMENT_UPLOADED
+  DOCUMENT_PROCESSED
   STATUS_CHANGED
   ADMIN_REVIEW
+  RISK_ASSESSMENT
   BLOCKCHAIN_TRANSACTION
+  LOGIN
+  LOGOUT
+  CONFIG_CHANGED
+  FORGERY_DETECTED
+  DUPLICATE_DOCUMENT
+  HASH_MISMATCH
+}
+
+enum ForgeryType {
+  DOCUMENT_HASH_MISMATCH
+  DUPLICATE_SUBMISSION
+  TAMPERED_CONTENT
+  FAKE_TRANSACTION_HASH
+  BLOCKCHAIN_INCONSISTENCY
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  FAILED
+  SUSPICIOUS
+  FLAGGED
 }

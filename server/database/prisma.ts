@@ -10,28 +10,39 @@ const prisma =
   globalThis.prisma ||
   new PrismaClient({
     log: ["query", "info", "warn", "error"],
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
   });
 
 if (process.env.NODE_ENV !== "production") {
   globalThis.prisma = prisma;
 }
 
-// Initialize database connection
+// Initialize database connection with better error handling
 export const initializeDatabase = async (): Promise<void> => {
   try {
     console.log("🔄 Connecting to Prisma PostgreSQL database...");
 
-    // Test the connection
-    await prisma.$connect();
+    // Test the connection with timeout
+    const connectionTest = await Promise.race([
+      prisma.$connect(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timeout')), 10000)
+      )
+    ]);
+    
     console.log("✅ Database connection established successfully");
 
     // Initialize system stats if they don't exist
     await initializeSystemStats();
   } catch (error) {
     console.error("❌ Failed to connect to database:", error);
-    throw new Error(
-      `Database connection failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
+    
+    // Don't throw error to prevent app crash - continue with limited functionality
+    console.warn("⚠️  Continuing with limited database functionality");
   }
 };
 

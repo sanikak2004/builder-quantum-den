@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,12 +17,14 @@ import {
   Link2,
   Database,
   Cloud,
+  Hash,
 } from "lucide-react";
 import { KYCStats } from "@shared/api";
 
 export default function Index() {
   const [stats, setStats] = useState<KYCStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -30,19 +32,53 @@ export default function Index() {
 
   const fetchStats = async () => {
     try {
+      setIsLoading(true);
+      setHasError(false);
+      
       const response = await fetch("/api/kyc/stats");
       if (response.ok) {
         const data = await response.json();
-        setStats(data.data);
+        if (data.success && data.data) {
+          setStats(data.data);
+        } else {
+          console.warn("Stats API returned no data");
+          // Let stats remain null to show loading/error state
+          setStats(null);
+        }
       } else {
-        console.warn("Stats API not available");
+        console.warn("Stats API not available, using database data");
+        setHasError(true);
+        setStats(null);
       }
     } catch (error) {
       console.error("Error fetching stats:", error);
+      setHasError(true);
+      // Let stats remain null to show error state
+      setStats(null);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Loading screen to prevent white screen
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-lg animate-pulse">
+              <Shield className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">Authen Ledger</h1>
+              <p className="text-sm text-slate-500">Loading dashboard...</p>
+            </div>
+          </div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -83,10 +119,22 @@ export default function Index() {
                 History
               </Link>
               <Link
+                to="/blockchain"
+                className="text-slate-600 hover:text-indigo-600 transition-colors font-medium"
+              >
+                Blockchain
+              </Link>
+              <Link
                 to="/admin/dashboard"
                 className="text-slate-600 hover:text-purple-600 transition-colors font-medium"
               >
                 Admin Dashboard
+              </Link>
+              <Link
+                to="/workflow-testing"
+                className="text-slate-600 hover:text-green-600 transition-colors font-medium"
+              >
+                Workflow Testing
               </Link>
               <Link to="/auth/login">
                 <Button variant="outline" size="sm">
@@ -140,14 +188,42 @@ export default function Index() {
                 <FileCheck className="ml-2 h-5 w-5" />
               </Button>
             </Link>
+            <Link to="/transaction-verifier">
+              <Button
+                variant="outline"
+                size="lg"
+                className="px-8 py-3 rounded-lg font-semibold border-2 border-purple-300 text-purple-700 hover:bg-purple-50"
+              >
+                Check Transaction
+                <Hash className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link to="/workflow-testing">
+              <Button
+                variant="outline"
+                size="lg"
+                className="px-8 py-3 rounded-lg font-semibold border-2 border-green-300 text-green-700 hover:bg-green-50"
+              >
+                Test Workflow
+                <Zap className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      {!isLoading && stats && (
+      {stats && (
         <section className="py-16 px-6 bg-white/50 backdrop-blur-sm">
           <div className="container mx-auto">
+            {hasError && (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-center gap-2 text-yellow-800">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span className="text-sm">Unable to fetch live statistics. Showing default values.</span>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-6 text-center">
@@ -361,6 +437,96 @@ export default function Index() {
                     Cloud Native
                   </Badge>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Testing & Workflow Section */}
+      <section className="py-16 px-6 bg-gradient-to-r from-green-50 to-emerald-50">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium mb-4">
+              <Zap className="h-4 w-4 mr-2" />
+              Testing & Workflow Management
+            </div>
+            <h2 className="text-3xl font-bold text-slate-800 mb-4">
+              Complete Workflow Testing Dashboard
+            </h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Test and monitor the complete eKYC process from document upload to blockchain validation. 
+              Watch your workflow in real-time with comprehensive testing tools.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all">
+              <CardHeader>
+                <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-3 rounded-lg w-fit">
+                  <Zap className="h-6 w-6 text-white" />
+                </div>
+                <CardTitle className="text-xl text-slate-800">
+                  Workflow Testing
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600 mb-4">
+                  Comprehensive testing dashboard with automated test suites for KYC submission, 
+                  blockchain operations, validation processes, and end-to-end integration.
+                </p>
+                <Link to="/workflow-testing">
+                  <Button className="w-full bg-green-600 hover:bg-green-700">
+                    Launch Testing Dashboard
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all">
+              <CardHeader>
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-3 rounded-lg w-fit">
+                  <Database className="h-6 w-6 text-white" />
+                </div>
+                <CardTitle className="text-xl text-slate-800">
+                  Blockchain Explorer
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600 mb-4">
+                  Monitor blockchain operations, view transaction history, 
+                  track mining progress, and analyze network performance in real-time.
+                </p>
+                <Link to="/blockchain">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700" variant="outline">
+                    View Blockchain
+                    <Link2 className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all">
+              <CardHeader>
+                <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-lg w-fit">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+                <CardTitle className="text-xl text-slate-800">
+                  Admin Dashboard
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600 mb-4">
+                  Access administrative functions for KYC management, 
+                  user verification, system monitoring, and audit trail review.
+                </p>
+                <Link to="/admin/dashboard">
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700" variant="outline">
+                    Admin Access
+                    <Shield className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
