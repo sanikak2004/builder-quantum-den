@@ -1,49 +1,38 @@
 #!/bin/bash
 
-# Render Production Deployment Script
-# This script prepares and deploys the eKYC Blockchain application to Render
+# Render Deployment Automation Script
+# This script automates the deployment of your eKYC Blockchain System to Render
 
-echo "🚀 Starting Render Deployment for eKYC Blockchain System..."
+echo "🚀 Starting Render Deployment Automation..."
 
-# Check if running on Render
-if [ "$RENDER" = "true" ]; then
-    echo "✅ Running on Render platform"
-    
-    # Install dependencies
-    echo "📦 Installing dependencies..."
-    npm install
-    
-    # Generate Prisma client
-    echo "🔧 Generating Prisma client..."
-    npx prisma generate
-    
-    # Run database migrations
-    echo "🗄️ Running database migrations..."
-    npx prisma migrate deploy
-    
-    # Build the application
-    echo "🏗️ Building application..."
-    npm run build:render
-    
-    echo "✅ Render deployment preparation complete!"
-    
-else
-    echo "⚠️ Not running on Render platform"
-    echo "📝 To deploy manually, follow these steps:"
-    echo ""
-    echo "1. Create PostgreSQL database on Render"
-    echo "2. Create Web Service on Render"
-    echo "3. Connect GitHub repository"
-    echo "4. Set environment variables:"
-    echo "   - DATABASE_URL"
-    echo "   - NODE_ENV=production"
-    echo "   - JWT_SECRET"
-    echo "   - BLOCKCHAIN_NETWORK_ID"
-    echo "   - IPFS_GATEWAY_URL"
-    echo "   - FABRIC_NETWORK_CONFIG"
-    echo ""
-    echo "5. Use build command: npm run build:render"
-    echo "6. Use start command: npm run start:render"
-    echo ""
-    echo "For detailed instructions, see RENDER-DEPLOYMENT-GUIDE.md"
+# Check if Render CLI is installed
+if ! command -v render &> /dev/null
+then
+    echo "❌ Render CLI not found. Installing Render CLI..."
+    npm install -g render-cli
 fi
+
+echo "✅ Render CLI is available"
+
+# Create Render project
+echo "🏗️ Creating Render project..."
+render create --name ekyc-blockchain-app --env node
+
+# Set environment variables
+echo "🔐 Setting environment variables..."
+render env set DATABASE_URL "postgres://avnadmin:AVNS_ltoOZ6TzwV4Xg61XsSI@blockchain-maskeriya338-1f80.f.aivencloud.com:27251/defaultdb?sslmode=require"
+render env set NODE_ENV "production"
+render env set JWT_SECRET "super_secure_jwt_secret_key_here_32_characters_min"
+render env set ENCRYPTION_KEY "32_character_encryption_key_for_data_protection"
+
+# Set build and start commands
+echo "⚙️ Configuring build and start commands..."
+render config set buildCommand "npm run build:render"
+render config set startCommand "npm run start:render"
+
+# Deploy the application
+echo "🚀 Deploying application..."
+render deploy
+
+echo "🎉 Deployment initiated! Check your Render dashboard for progress."
+echo "🔗 Your application will be available at: https://ekyc-blockchain-app.onrender.com"
