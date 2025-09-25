@@ -113,10 +113,23 @@ export default function AdminKYC() {
       });
 
       console.log(`🔄 Fetching KYC records with params:`, Object.fromEntries(params));
+      
+      // Add explicit error handling for the response
       const response = await fetch(`/api/admin/kyc/all?${params}`);
       
+      // Check if the response is OK
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ HTTP Error ${response.status}: ${response.statusText}`, errorText);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      // Check content type
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const errorText = await response.text();
+        console.error(`❌ Expected JSON but got ${contentType}`, errorText);
+        throw new Error(`Expected JSON response but got ${contentType}`);
       }
       
       const result: ApiResponse = await response.json();
@@ -178,6 +191,21 @@ export default function AdminKYC() {
         }),
       });
 
+      // Check if the response is OK
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ HTTP Error ${response.status}: ${response.statusText}`, errorText);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      // Check content type
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const errorText = await response.text();
+        console.error(`❌ Expected JSON but got ${contentType}`, errorText);
+        throw new Error(`Expected JSON response but got ${contentType}`);
+      }
+
       const result: ApiResponse<KYCRecord> = await response.json();
 
       if (result.success && result.data) {
@@ -199,19 +227,12 @@ export default function AdminKYC() {
             : `❌ REJECTED! KYC for ${result.data.name} has been rejected`;
 
         alert(successMessage);
-
-        // Auto-refresh to show live updates
-        setTimeout(() => {
-          fetchKYCRecords();
-          fetchDashboardStats();
-        }, 1000);
       } else {
-        console.error("❌ UPDATE FAILED:", result.message);
-        alert(`❌ Update failed: ${result.message || "Unknown error"}`);
+        throw new Error(result.message || "Failed to update KYC status");
       }
     } catch (error) {
-      console.error("❌ NETWORK ERROR:", error);
-      alert("❌ Network error. Please check connection and try again.");
+      console.error(`❌ Error updating KYC status:`, error);
+      alert(`Error updating KYC status: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setIsUpdating(false);
     }

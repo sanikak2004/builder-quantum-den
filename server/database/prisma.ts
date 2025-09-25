@@ -30,7 +30,7 @@ export const initializeDatabase = async (): Promise<void> => {
     const connectionTest = await Promise.race([
       prisma.$connect(),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 10000)
+        setTimeout(() => reject(new Error('Connection timeout')), 15000)
       )
     ]);
     

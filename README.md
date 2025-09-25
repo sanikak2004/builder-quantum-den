@@ -10,7 +10,7 @@ A complete **electronic Know Your Customer (eKYC) system** built with **React**,
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   React Frontend │    │   Express API    │    │ Hyperledger     │
 │   (Port 3000)    │────│   (Port 8080)    │────│ Fabric Network  │
-└�����───────────────┘    └──────────────────┘    └─────────────────┘
+└─────────────────┘    └──────────────────┘    └─────────────────┘
          │                        │                        │
          │              ┌──────────────────┐               │
          └──────────────│      IPFS        │───────────────┘
@@ -97,6 +97,43 @@ Once started, you can access:
 
 **📋 Detailed Installation Guide**: See [INSTALLATION-GUIDE.md](./INSTALLATION-GUIDE.md) for comprehensive setup instructions.
 
+## ☁️ Netlify Deployment
+
+### Prerequisites
+
+- A Netlify account
+- Access to your GitHub/GitLab/Bitbucket repository
+
+### Deployment Steps
+
+1. **Connect Your Repository to Netlify**
+   - Go to [Netlify Dashboard](https://app.netlify.com/)
+   - Click "New site from Git"
+   - Select your Git provider and repository
+   - Configure the build settings:
+     - Build command: `npm run netlify-build`
+     - Publish directory: `dist/spa`
+
+2. **Set Environment Variables**
+   In Netlify Dashboard:
+   - Go to Site settings > Environment variables
+   - Add the following variables:
+     ```
+     DATABASE_URL=postgres://avnadmin:AVNS_ltoOZ6TzwV4Xg61XsSI@blockchain-maskeriya338-1f80.f.aivencloud.com:27251/defaultdb?sslmode=require
+     NODE_ENV=production
+     PORT=8080
+     JWT_SECRET=your_super_secure_jwt_secret_here_replace_with_random_string
+     ENCRYPTION_KEY=your_32_character_encryption_key_here
+     CORS_ALLOWED_ORIGINS=https://your-netlify-app.netlify.app
+     ```
+
+3. **Deploy**
+   - Click "Deploy site"
+   - Wait for the build to complete
+   - Your site will be available at the provided Netlify URL
+
+**📋 Detailed Deployment Guide**: See [NETLIFY-DEPLOYMENT-GUIDE.md](./NETLIFY-DEPLOYMENT-GUIDE.md) for comprehensive deployment instructions.
+
 ## 📋 Project Structure
 
 ```
@@ -112,7 +149,7 @@ ekyc-blockchain-system/
 │   └── App.tsx                # Main app with routing
 ├── server/                    # Express Backend
 │   ├── routes/
-│   │   ├─��� kyc.ts            # KYC API endpoints
+│   │   ├── kyc.ts            # KYC API endpoints
 │   │   └── demo.ts           # Demo endpoints
 │   └── index.ts              # Server configuration
 ├── shared/                    # Shared TypeScript types
@@ -144,7 +181,7 @@ ekyc-blockchain-system/
 
 - `GET /api/ping` - Health check endpoint
 
-## ��️ Hyperledger Fabric Network
+## 🧱 Hyperledger Fabric Network
 
 ### Network Components
 

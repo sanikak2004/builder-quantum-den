@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authen Ledger - eKYC System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .status {
+            font-size: 1.2em;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 255, 0, 0.2);
+            border-radius: 10px;
+            border-left: 4px solid #00ff00;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .feature {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .feature h3 {
+            color: #ffeb3b;
+            margin-bottom: 10px;
+        }
+        .deploy-info {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            font-family: monospace;
+        }
+        .success-message {
+            font-size: 1.5em;
+            color: #4caf50;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Authen Ledger</h1>
+        <p style="font-size: 1.3em; margin-bottom: 30px;">Advanced eKYC Blockchain System</p>
+        
+        <div class="status">
+            ✅ Successfully Deployed on Vercel!
+        </div>
+        
+        <div class="success-message">
+            🎉 Your eKYC Blockchain System is Live!
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>🔗 Blockchain Ready</h3>
+                <p>Custom blockchain with Hyperledger Fabric integration</p>
+            </div>
+            <div class="feature">
+                <h3>🗃️ Database Connected</h3>
+                <p>PostgreSQL database with Prisma ORM</p>
+            </div>
+            <div class="feature">
+                <h3>📋 eKYC Processing</h3>
+                <p>Complete KYC verification and document management</p>
+            </div>
+            <div class="feature">
+                <h3>🔐 Secure & Compliant</h3>
+                <p>Enterprise-grade security and compliance features</p>
+            </div>
+        </div>
+        
+        <div class="deploy-info">
+            <h3>🚀 Deployment Information</h3>
+            <p><strong>Platform:</strong> Vercel</p>
+            <p><strong>Build:</strong> React + Vite + TypeScript</p>
+            <p><strong>Database:</strong> Aiven PostgreSQL</p>
+            <p><strong>Deployment Time:</strong> <span id="timestamp"></span></p>
+            <p><strong>Status:</strong> Live & Ready</p>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html>

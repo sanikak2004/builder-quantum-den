@@ -52,6 +52,7 @@ import HashVerificationService from "./services/hash-verification-service-simple
 
 // Use simplified blockchain services for development (switch to real services when network is ready)
 import { fabricService } from "./blockchain/simple-fabric-service";
+import { realFabricService } from "./blockchain/fabric-config";
 import { ipfsService } from "./blockchain/simple-ipfs-service";
 
 // Custom blockchain implementation with complete mining and validation
@@ -894,15 +895,45 @@ const initializeServices = async (): Promise<void> => {
 // Initialize on server startup
 initializeServices();
 
+// Initialize blockchain services with better error handling
+async function initializeBlockchainServices() {
+  try {
+    console.log("🔗 Initializing blockchain services...");
+    
+    // Initialize the fabric service (which will handle real vs simulated internally)
+    await fabricService.initializeConnection();
+    
+    console.log("✅ Blockchain services initialized");
+  } catch (error) {
+    console.error("❌ Failed to initialize blockchain services:", error);
+    console.log("⚠️  Continuing with limited blockchain functionality...");
+  }
+}
+
 export const createServer = () => {
   const app = express();
 
-  // Enable CORS for all origins in development
-  app.use(cors());
+  // Enable CORS for all origins in development with proper configuration
+  app.use(cors({
+    origin: process.env.CORS_ALLOWED_ORIGINS?.split(',') || ["http://localhost:8080", "http://localhost:8081", "http://localhost:8082", "http://localhost:8083"],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Length', 'X-Requested-With']
+  }));
+
+  // Handle preflight requests
+  app.options('*', cors());
 
   // Parse JSON bodies
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+  // Middleware to log all API requests
+  app.use("/api", (req, res, next) => {
+    console.log(`📥 API Request: ${req.method} ${req.path}`);
+    next();
+  });
 
   // Database testing and diagnostics endpoint
   app.get("/api/database/test", async (req, res) => {
@@ -1879,16 +1910,32 @@ export const createServer = () => {
       // Check blockchain status
       const blockchainStats = customBlockchain.getStats();
       
-      // Check services status
+      // Check services status with more detailed blockchain information
+      const fabricConnected = fabricService.isConnected();
+      const isUsingRealFabric = fabricService.isUsingRealFabric ? fabricService.isUsingRealFabric() : false;
+      const ipfsConnected = ipfsService.isConnected();
+      
       const servicesStatus = {
         database: !!dbStatus,
         blockchain: blockchainStats.isValid,
-        fabric: fabricService.isConnected(),
-        ipfs: ipfsService.isConnected(),
+        fabric: {
+          connected: fabricConnected,
+          usingRealNetwork: isUsingRealFabric,
+          status: fabricConnected 
+            ? (isUsingRealFabric ? "Connected to real Hyperledger Fabric" : "Using simulated blockchain") 
+            : "Not connected",
+        },
+        ipfs: ipfsConnected,
         mining: true // Mining system is running
       };
       
-      const overallHealth = Object.values(servicesStatus).every(status => status);
+      const overallHealth = Object.values(servicesStatus).every(status => {
+        // For fabric, check the connected property
+        if (typeof status === 'object' && status !== null && 'connected' in status) {
+          return (status as {connected: boolean}).connected;
+        }
+        return status as boolean;
+      });
       
       res.status(overallHealth ? 200 : 503).json({
         success: true,
