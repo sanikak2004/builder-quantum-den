@@ -1870,6 +1870,23 @@ export const createServer = () => {
         `✅ KYC record saved to database with ID: ${kycRecord.kycRecord.id}`,
       );
 
+      // Store transaction hash for verification
+      if (blockchainTxHash) {
+        try {
+          await HashVerificationService.storeTransactionHash(
+            blockchainTxHash,
+            kycRecord.kycRecord.id,
+            validatedData.email, // Using email as user identifier
+            documentHashes,
+            "Hyperledger Fabric"
+          );
+          console.log(`✅ Transaction hash stored for verification: ${blockchainTxHash.substring(0, 16)}...`);
+        } catch (storeError) {
+          console.error("❌ Failed to store transaction hash:", storeError);
+          // Don't fail the entire submission if hash storage fails
+        }
+      }
+
       const response = {
         success: true,
         data: {

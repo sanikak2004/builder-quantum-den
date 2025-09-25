@@ -136,23 +136,42 @@ export class HashVerificationService {
     try {
       console.log(`💾 Storing transaction hash: ${transactionHash.substring(0, 16)}...`);
       
-      // Create a simple audit log entry for transaction storage
-      await prisma.auditLog.create({
-        data: {
-          kycRecordId,
-          userId: associatedUserId,
-          action: "BLOCKCHAIN_TRANSACTION",
-          performedBy: "system",
-          txId: transactionHash,
-          details: {
-            transactionHash,
-            documentHashCount: documentHashes.length,
-            blockchainNetwork,
-            timestamp: new Date().toISOString()
-          },
-          remarks: `Transaction hash stored for blockchain verification`
-        }
+      // Check if KYC record exists before creating audit log
+      const kycRecordExists = await prisma.kYCRecord.findUnique({
+        where: { id: kycRecordId }
       });
+      
+      // Only create audit log if KYC record exists
+      if (kycRecordExists) {
+        await prisma.auditLog.create({
+          data: {
+            kycRecordId,
+            userId: associatedUserId,
+            action: "BLOCKCHAIN_TRANSACTION",
+            performedBy: "system",
+            txId: transactionHash,
+            details: {
+              transactionHash,
+              documentHashCount: documentHashes.length,
+              blockchainNetwork,
+              timestamp: new Date().toISOString()
+            },
+            remarks: `Transaction hash stored for blockchain verification`
+          }
+        });
+      } else {
+        // If KYC record doesn't exist, store in TransactionHashRegistry instead
+        await prisma.transactionHashRegistry.create({
+          data: {
+            transactionHash,
+            kycRecordId,
+            documentHashes: documentHashes,
+            contentHash: documentHashes.join(''), // Simple content hash
+            submittedBy: associatedUserId,
+            isVerified: true
+          }
+        });
+      }
 
       console.log(`✅ Transaction hash stored successfully`);
     } catch (error) {
@@ -168,8 +187,8 @@ export class HashVerificationService {
     try {
       console.log(`🔍 Checking transaction hash: ${transactionHash.substring(0, 16)}...`);
       
-      // Find audit log with this transaction hash
-      const auditLog = await prisma.auditLog.findFirst({
+      // First, check in audit logs
+      let auditLog = await prisma.auditLog.findFirst({
         where: { 
           txId: transactionHash,
           action: "BLOCKCHAIN_TRANSACTION"
@@ -193,7 +212,36 @@ export class HashVerificationService {
         }
       });
 
+      // If not found in audit logs, check in transaction hash registry
+      let txRecord = null;
+      let txKycRecord = null;
       if (!auditLog) {
+        txRecord = await prisma.transactionHashRegistry.findUnique({
+          where: { transactionHash }
+        });
+        
+        // If found in registry, get the associated KYC record
+        if (txRecord) {
+          txKycRecord = await prisma.kYCRecord.findUnique({
+            where: { id: txRecord.kycRecordId },
+            select: {
+              pan: true,
+              name: true,
+              status: true,
+              createdAt: true,
+              documents: {
+                select: {
+                  documentHash: true,
+                  type: true,
+                  fileName: true
+                }
+              }
+            }
+          });
+        }
+      }
+
+      if (!auditLog && !txRecord) {
         return {
           found: false,
           isValid: false,
@@ -202,8 +250,19 @@ export class HashVerificationService {
         };
       }
 
+      // Use data from either source
+      const recordData = auditLog ? auditLog.kycRecord : txKycRecord;
+      const performedAt = auditLog ? auditLog.performedAt : txRecord?.submittedAt;
+      const txId = auditLog ? auditLog.txId : txRecord?.transactionHash;
+      const details = auditLog ? auditLog.details : {
+        transactionHash: txRecord?.transactionHash,
+        documentHashCount: txRecord?.documentHashes?.length || 0,
+        blockchainNetwork: "local",
+        timestamp: txRecord?.submittedAt?.toISOString()
+      };
+
       // Check if user is authorized to view this transaction
-      const isAuthorized = !userPan || auditLog.kycRecord?.pan === userPan;
+      const isAuthorized = !userPan || recordData?.pan === userPan;
 
       if (!isAuthorized) {
         return {
@@ -218,18 +277,18 @@ export class HashVerificationService {
         found: true,
         isValid: true,
         isConfirmed: true,
-        submittedAt: auditLog.performedAt,
+        submittedAt: performedAt || new Date(),
         kycRecord: isAuthorized ? {
-          name: auditLog.kycRecord?.name,
-          status: auditLog.kycRecord?.status,
-          createdAt: auditLog.kycRecord?.createdAt,
-          documentCount: auditLog.kycRecord?.documents.length
+          name: recordData?.name,
+          status: recordData?.status,
+          createdAt: recordData?.createdAt,
+          documentCount: recordData?.documents?.length || 0
         } : null,
         message: "Transaction verified successfully",
         evidence: {
-          txId: auditLog.txId,
-          performedAt: auditLog.performedAt,
-          details: auditLog.details
+          txId: txId,
+          performedAt: performedAt,
+          details: details
         }
       };
 
