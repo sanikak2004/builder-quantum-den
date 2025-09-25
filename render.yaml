@@ -1,0 +1,28 @@
+# Render Blueprint for eKYC Blockchain System
+# This file defines the services and databases for deployment on Render
+
+services:
+  - type: web
+    name: ekyc-blockchain-app
+    env: node
+    plan: starter
+    buildCommand: npm run build:render
+    startCommand: npm run start:render
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false  # Set this to true if you create a Render database, or false to use your existing Aiven database
+      - key: JWT_SECRET
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: PORT
+        value: 10000
+
+# If you want to use a Render PostgreSQL database instead of your Aiven database, uncomment the section below:
+# databases:
+#   - name: ekyc-blockchain-db
+#     databaseName: ekyc_production
+#     user: ekyc_user
+#     plan: free
